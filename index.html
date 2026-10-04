@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V6.8</title>
+<title>今天在隱花王國尋寶 V7.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -439,7 +439,16 @@ textarea.field{resize:vertical;font-family:inherit}
 .sh-i{font-size:24px}
 .tbtn.ghostb{background:transparent;color:var(--ink);border:1.5px solid var(--line);margin-left:6px}
 select.field{appearance:auto;-webkit-appearance:menulist}
-body.admin #app{max-width:760px}
+body.admin #app{max-width:1100px}
+.admpane,.adm-bar{max-width:760px;margin-left:auto;margin-right:auto}
+.adm-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin:4px 0 14px}
+.adm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:720px){.adm-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}.adm-card{min-height:120px;padding:20px 22px}.adm-card b{font-size:20px}.adm-card small{font-size:14px}}
+.adm-card{text-align:left;border:0;border-radius:18px;background:color-mix(in srgb,var(--fig) 5%,var(--card));padding:14px 14px 16px;display:flex;flex-direction:column;gap:8px;min-height:104px;cursor:pointer;color:var(--ink);font:inherit;box-shadow:0 1px 0 color-mix(in srgb,var(--fig) 10%,transparent)}
+.adm-card b{font-size:16px;font-weight:800}.adm-card small{font-size:12.5px;line-height:1.55;color:var(--muted)}
+.adm-card:hover{background:color-mix(in srgb,var(--fig) 10%,var(--card))}.adm-card:active{transform:scale(.98)}
+.adm-card.hi{background:color-mix(in srgb,var(--fig) 13%,var(--card))}.adm-card.hi b{color:color-mix(in srgb,var(--fig) 65%,var(--ink))}
+.adm-bar{position:sticky;top:env(safe-area-inset-top,0px);display:flex;align-items:center;gap:10px;background:var(--bg);padding:8px 0;z-index:5;margin-bottom:6px}.adm-bar b{font-size:16px}
 #admin{padding:14px 16px 40px}
 .admtabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:8px 0;z-index:5}
 .zrow{display:flex;gap:10px;align-items:center}
@@ -678,7 +687,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div id="memberQR" class="mqr"></div>
       <p class="lvtxt" id="memberNo" style="text-align:center"></p>
       <button id="btnCardDl" class="btn main">📥 下載會員卡圖片</button>
-      <button id="btnBkDl" class="btn ghost">💾 下載完整資料備份</button>
+      <button id="btnBkDl" class="btn ghost">💾 下載我的資料（選用）</button>
       <p class="lvtxt" id="bkLast" style="text-align:center"></p>
     </div>
   </div>
@@ -704,19 +713,22 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <p class="hint" id="admHint"></p>
   </div>
   <div id="admMain" class="hide">
-    <div class="admtabs" id="admTabs">
-      <button class="chip" data-a="print">印 QR</button>
-      <button class="chip" data-a="batch">批次紀錄</button>
-      <button class="chip" data-a="coupon">核銷優惠券</button>
-      <button class="chip" data-a="zone">溫室階段</button>
-      <button class="chip" data-a="weather">天氣</button>
-      <button class="chip" data-a="feed">貼文</button>
-      <button class="chip" data-a="pool">寶箱獎池</button>
-      <button class="chip" data-a="photo">照片</button>
-      <button class="chip" data-a="stats">數據</button>
-      <button class="chip" id="btnAdmOut">登出</button>
+    <div id="admHome">
+      <div class="adm-head"><div><h2 class="h2 wk" style="margin:0">隱花王國後台</h2><p class="sub" style="margin:4px 0 0">網址 hidden-fig-kingdom.vercel.app/?admin・<span id="admVer"></span></p></div><button class="chip" id="btnAdmOut">登出</button></div>
+      <div class="adm-grid" id="admTabs">
+        <button class="adm-card" data-a="print"><b>印 QR</b><small>依溫室、採收日、售價發一次性 QR</small></button>
+        <button class="adm-card" data-a="batch"><b>批次紀錄</b><small>查歷次批次，重印未用的 QR</small></button>
+        <button class="adm-card" data-a="coupon"><b>核銷優惠券</b><small>輸入券號或掃券 QR 標記已用</small></button>
+        <button class="adm-card" data-a="zone"><b>溫室階段</b><small>每週自動輪替，可手動調整</small></button>
+        <button class="adm-card" data-a="weather"><b>天氣</b><small>公告當天天氣，決定守護挑戰</small></button>
+        <button class="adm-card" data-a="feed"><b>貼文</b><small>留言板貼文、每週通關密語</small></button>
+        <button class="adm-card" data-a="pool"><b>寶箱獎池</b><small>設定每日獎項數量與免單頻率</small></button>
+        <button class="adm-card" data-a="photo"><b>照片</b><small>依溫室／年／月上傳、看讚數</small></button>
+        <button class="adm-card hi" data-a="stats"><b>數據</b><small>排行、寶箱紀錄、公告與私訊</small></button>
+      </div>
     </div>
-    <div class="admpane" id="ap-print">
+    <div class="adm-bar hide" id="admBar"><button class="chip" id="btnAdmHome">← 後台首頁</button><b id="admCur"></b></div>
+    <div class="admpane hide" id="ap-print">
       <h2 class="h2 wk">產生果盒 QR 並列印</h2>
       <p class="sub">每張 QR 只能兌換一次。兌換的人得到果友值和 2 張分享券。</p>
       <div class="card">
@@ -814,6 +826,8 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div class="card"><b>📢 對全體玩家發言</b><p class="lvtxt" style="margin:2px 0 6px">玩家下次打開遊戲會跳出這則公告（每則只跳一次）。</p>
         <textarea id="ntText" class="field" rows="3" maxlength="200" placeholder="例如：本週六農場開放採果，歡迎來玩！"></textarea>
         <button id="btnNotice" class="btn main">發布公告</button><div id="ntNow" class="lvtxt"></div></div>
+      <div class="card"><b>🗄️ 匯出全部玩家資料</b><p class="lvtxt" style="margin:2px 0 8px">下載一份存在自己電腦，作為雲端以外的第二份備份。JSON 含完整資料與會員卡金鑰，請妥善保管、不要外傳；CSV 可用 Excel 開啟。</p>
+        <div class="grid2"><button id="btnExpJson" class="btn main" style="margin:0">下載 JSON（完整）</button><button id="btnExpCsv" class="btn ghost" style="margin:0">下載 CSV（摘要）</button></div><div id="expMsg" class="lvtxt"></div></div>
       <div id="statBox"></div>
     </div>
   </div>
@@ -845,7 +859,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V6.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V7.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2163,13 +2177,19 @@ const Admin = {
   },
   main(){
     $('#admLogin').classList.add('hide'); $('#admMain').classList.remove('hide');
-    Admin.tab('print');
+    $('#admVer').textContent = '版本 '+APP_VERSION; Admin.home();
     const v = new URLSearchParams(location.search).get('v');          // 掃顧客券 QR 進來：直接查這張券
     if(v){ Admin.tab('coupon'); $('#cpIn').value = v.toUpperCase(); Admin.findCoupon(); }
   },
+  home(){
+    $('#admHome').classList.remove('hide'); $('#admBar').classList.add('hide');
+    document.querySelectorAll('.admpane').forEach(p=>p.classList.add('hide')); window.scrollTo(0,0);
+  },
   tab(k){
-    document.querySelectorAll('#admTabs button').forEach(b=>b.classList.toggle('sel', b.dataset.a===k));
-    document.querySelectorAll('.admpane').forEach(p=>p.classList.toggle('hide', p.id!=='ap-'+k));
+    const c = document.querySelector(`.adm-card[data-a="${k}"]`);
+    $('#admHome').classList.add('hide'); $('#admBar').classList.remove('hide'); $('#admCur').textContent = c ? c.querySelector('b').textContent : '';
+    document.querySelectorAll('.admpane').forEach(p=>p.classList.toggle('hide', p.id!=='ap-'+k)); window.scrollTo(0,0);
+    if(!(history.state && history.state.adm)) history.pushState({adm:1}, '');
     if(k==='batch') Admin.batches();
     if(k==='zone') Admin.zones();
     if(k==='stats') Admin.stats();
@@ -2272,6 +2292,28 @@ const Admin = {
       <div class="card"><div class="lbl" style="margin-top:0">👥 全部玩家（點名字看寶箱、私訊）</div><div class="pl-all">${players.map(p=>`<button class="chip pl-row" data-pid="${p.id}">${LEVELS[lvIndex(p.points)].icon} ${esc(p.name)}</button>`).join('') || '<p class="sub">還沒有玩家</p>'}</div></div>`;
     $('#statBox').querySelectorAll('.pl-row').forEach(r=>r.onclick=()=>Admin.player(r.dataset.pid));
   },
+  async exportAll(fmt){
+    const msg = $('#expMsg'), btns = [$('#btnExpJson'), $('#btnExpCsv')]; btns.forEach(b=>b.disabled = true);
+    try{
+      msg.textContent = '讀取玩家資料中…';
+      const ps = (await DB.list('players')).sort((a,b)=>(a.created||0)-(b.created||0)), stamp = new Date().toISOString().slice(0,16).replace(/[-:T]/g,'');
+      const cps = {}; let done = 0;
+      for(let i=0;i<ps.length;i+=20){ await Promise.all(ps.slice(i,i+20).map(async p=>{ try{ cps[p.id] = await DB.list(`players/${p.id}/coupons`); }catch(e){ cps[p.id] = []; } })); done = Math.min(ps.length, i+20); msg.textContent = `讀取優惠券中…（${done}/${ps.length}）`; }
+      if(fmt==='json'){
+        const data = {app:'hidden-fig-kingdom', kind:'admin-export', version:APP_VERSION, exported:new Date().toISOString(), count:ps.length, players:ps.map(p=>({...p, coupons:cps[p.id]||[]}))};
+        saveBlob(new Blob([JSON.stringify(data, null, 1)], {type:'application/json'}), `隱花王國_全部玩家_${stamp}.json`);
+      } else {
+        const d = t=>t ? new Date(t).toLocaleDateString('zh-TW') : '';
+        const head = ['會員編號','名字','角色','等級','果友值','兌換盒數','連續登入','最後登入','建立日期','可用優惠券','已用優惠券','寶箱追逐賽勝場','最近寶箱'];
+        const rows = ps.map(p=>{ const c = cps[p.id]||[], last = (p.chestLog||[]).at(-1);
+          return [p.id, p.name||'', p.role ? roleName(p.role) : '', LEVELS[lvIndex(p.points||0)].n, p.points||0, p.boxes||0, p.streak||0, p.lastDay||'', d(p.created), c.filter(x=>!x.used && x.exp>Date.now()).length, c.filter(x=>x.used).length, p.chaseWins||0, last ? `${d(last.t)} ${last.s} ${last.r}` : '']; });
+        const csv = [head, ...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
+        saveBlob(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'}), `隱花王國_玩家摘要_${stamp}.csv`);
+      }
+      msg.textContent = `已匯出 ${ps.length} 位玩家（${new Date().toLocaleString('zh-TW')}）`;
+    }catch(e){ console.error(e); msg.textContent = '匯出失敗：'+(e.message||''); }
+    btns.forEach(b=>b.disabled = false);
+  },
   async player(pid){
     const p = (Admin.ps||[]).find(x=>x.id===pid); if(!p) return;
     const tm = t=>new Date(t).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
@@ -2294,7 +2336,8 @@ $('#btnAdm').onclick = async()=>{
   catch(e){ $('#admHint').textContent = '登入失敗：'+(e.message||''); }
   $('#btnAdm').disabled = false;
 };
-document.querySelectorAll('#admTabs button').forEach(b=>b.onclick=()=>Admin.tab(b.dataset.a));
+document.querySelectorAll('#admTabs .adm-card').forEach(b=>b.onclick=()=>Admin.tab(b.dataset.a));
+$('#btnAdmHome').onclick = ()=>{ if(history.state && history.state.adm) history.back(); else Admin.home(); };
 $('#btnGen').onclick = ()=>Admin.gen();
 $('#qPrice').oninput = ()=>$('#ptsHint').textContent = `每盒果友值 ${Math.floor((+$('#qPrice').value||0)/10)} 分`;
 $('#btnCp').onclick = ()=>Admin.findCoupon();
@@ -2308,6 +2351,8 @@ $('#btnResetDay').onclick = ()=>{ P.daily.ch={}; P.daily.knightMet=false; P.dail
 $('#btnResetDiff').onclick = ()=>{ P.diff={}; Auth.save(); renderAll(); toast('難度都重設為低'); };
 $('#btnSkip').onclick = ()=>{ const T=treeObj(); T.lastDay=shiftDate(T.lastDay,-1); CARE_TASKS.forEach(c=>T.care[c.id]=shiftDate(T.care[c.id],-1)); Auth.save(); renderAll(); toast('樹的時間往前過了 1 天'); };
 $('#btnSkipOld').onclick = ()=>{ if(P.tree){ P.tree.last=0; } P.daily.cares=0; Auth.save(); renderAll(); toast('已跳過等待時間'); };
+$('#btnExpJson').onclick = ()=>Admin.exportAll('json');
+$('#btnExpCsv').onclick = ()=>Admin.exportAll('csv');
 $('#btnNotice').onclick = async()=>{ const v = $('#ntText').value.trim(); if(!v){ toast('請輸入公告內容'); return; }
   await DB.set('config/notice', {id:'N'+Date.now().toString(36), text:v, created:Date.now()}); $('#ntText').value=''; toast('公告已發布'); Admin.stats(); };
 $('#btnFd').onclick = async()=>{ const v=$('#fdText').value.trim(); if(!v){ toast('請輸入貼文內容'); return; } await DB.set('feed/'+'P'+Date.now().toString(36), {text:v, created:Date.now()}); $('#fdText').value=''; toast('貼文已發布'); };
@@ -4190,7 +4235,7 @@ function compressImage(file, maxSide, q){
 /* ---------- V6.8：會員卡圖片、資料備份、從相簿或備份檔登入（每個帳號唯一一張登入 QR） ---------- */
 function cardLink(){ return `${SITE_URL}?r=${PID}.${P.rtok}`; }
 function saveBlob(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
-function stampDone(){ P.cardSaved = true; P.bkAt = Date.now(); Auth.save(); if($('#home').classList.contains('on')) renderMe(); }
+function stampDone(kind){ if(kind==='card') P.cardSaved = true; else { P.cardSaved = true; P.bkAt = Date.now(); } Auth.save(); if($('#home').classList.contains('on')) renderMe(); }
 async function downloadCard(){
   if(!P || !P.rtok){ toast('找不到會員卡資料'); return; }
   if(typeof qrcode==='undefined'){ toast('QR 元件還沒載入，請重新整理再試'); return; }
@@ -4210,13 +4255,13 @@ async function downloadCard(){
   x.fillText('換手機時用相機掃描，或在登入頁', W/2, oy + size + 96); x.fillText('選「從相簿選會員卡圖片」即可找回帳號', W/2, oy + size + 128);
   x.fillStyle = '#C9566E'; x.font = font(700, 22); x.fillText('請勿分享給他人', W/2, oy + size + 172);
   x.fillStyle = '#9A8F98'; x.font = font(400, 16); x.fillText('Copyright © 2026 Sam pksun. All rights reserved.', W/2, H - 28);
-  c.toBlob(b=>{ if(!b){ toast('產生圖片失敗'); return; } saveBlob(b, `隱花王國會員卡_${PID}.png`); stampDone(); toast('會員卡已下載，請存到相簿保存'); }, 'image/png');
+  c.toBlob(b=>{ if(!b){ toast('產生圖片失敗'); return; } saveBlob(b, `隱花王國會員卡_${PID}.png`); stampDone('card'); toast('會員卡已下載，請存到相簿保存'); }, 'image/png');
 }
 function downloadBackup(){
   if(!P || !P.rtok){ toast('找不到帳號資料'); return; }
   const player = {}; for(const [k,v] of Object.entries(P)) if(!['uids','claim'].includes(k)) player[k] = v;
   const data = {app:'hidden-fig-kingdom', kind:'player-backup', v:1, version:APP_VERSION, exported:new Date().toISOString(), memberNo:PID, card:`${PID}.${P.rtok}`, loginUrl:cardLink(), player, coupons:MY_COUPONS};
-  saveBlob(new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}), `隱花王國備份_${PID}_${today()}.json`); stampDone();
+  saveBlob(new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}), `隱花王國備份_${PID}_${today()}.json`); stampDone('backup');
   toast('備份檔已下載，可用它在新手機登入');
 }
 async function loginFromBackup(file){
@@ -4237,12 +4282,13 @@ async function loginFromCardImage(file){
     await Login.anon(); await recover(tok);
   }catch(e){ console.error(e); info('⚠️','讀取失敗','請檢查網路後再試一次。'); }
 }
+// V7.1：玩家端只提醒保存會員卡一次（資料一直在雲端，由農場端備份）
 async function cardRemind(){
-  if(!P || P.guest || P.cardSaved || P.cardRemind===today()) return;
-  P.cardRemind = today(); Auth.save();
-  openSheet(`<div class="big pop">🔑</div><h2 class="h2 wk">先保存你的會員卡</h2><p class="sub">會員卡 QR 是你帳號唯一的登入鑰匙。換手機、清除瀏覽器資料時，靠它就能找回角色、果友值和優惠券。</p>
-    <button class="btn main" id="rmCard">📥 下載會員卡圖片</button><button class="btn ghost" id="rmBk">💾 下載完整資料備份</button><button class="btn ghost" onclick="closeSheet()">之後再說</button>`, true);
-  $('#rmCard').onclick = ()=>{ downloadCard(); closeSheet(); }; $('#rmBk').onclick = ()=>{ downloadBackup(); closeSheet(); };
+  if(!P || P.guest || P.cardAsked || P.cardSaved) return;
+  P.cardAsked = true; Auth.save();
+  openSheet(`<div class="big pop">🔑</div><h2 class="h2 wk">先保存你的會員卡</h2><p class="sub">會員卡 QR 是你帳號唯一的登入鑰匙。換手機、清除瀏覽器資料時，靠它就能找回角色、果友值和優惠券。<br>之後隨時可以在「我」分頁下載。</p>
+    <button class="btn main" id="rmCard">📥 下載會員卡圖片</button><button class="btn ghost" onclick="closeSheet()">之後再說</button>`, true);
+  $('#rmCard').onclick = ()=>{ downloadCard(); closeSheet(); };
 }
 
 /* ---------- V5.5：保持登入（離開 LINE／FB 內建瀏覽器） ---------- */
@@ -4267,6 +4313,7 @@ const NAV = {last:0};
 function navGuard(){ if(!(history.state && history.state.g)) history.pushState({g:1}, ''); }
 function topOverlay(){ return [...document.body.children].reverse().find(el=>/Ov$/.test(el.id||'')); }
 window.addEventListener('popstate', ()=>{
+  const adm = $('#admin'); if(adm && adm.classList.contains('on')){ if(!$('#admBar').classList.contains('hide')){ if(!$('#sheet').classList.contains('hide')) closeSheet(); Admin.home(); } return; }
   const home = $('#home'); if(!home || !home.classList.contains('on')) return;
   if(!$('#sheet').classList.contains('hide')){ closeSheet(); navGuard(); return; }
   const ov = topOverlay();
