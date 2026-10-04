@@ -2112,22 +2112,29 @@ function knightBattle(zid){
       if(j==='kind'){ const kd = roleBase(P.role)==='alien' ? 8 : 5; warn(`💚 說得好！黑騎士心軟了（搗蛋值 -${kd}）`, 'good'); $('#knSay').textContent = KNIGHT_REPLY[rnd(KNIGHT_REPLY.length)]; hit(kd); }
       else { warn('👍 有說有用！加一點好話會更有效', 'ok'); hit(1); }
     };
-    // 像丟寶貝球：在場地下方往上滑，把無花果丟向左右移動的黑騎士
+    // 像丟寶貝球：在場地下方往上滑，把無花果丟向左右移動的黑騎士（滑的方向決定落點，短短一滑也丟得出去）
     const arena = $('#sheetBox .arena'); arena.classList.add('throw');
-    arena.insertAdjacentHTML('beforeend', `<div class="kfig" id="kFig">${FIG_ICON[2]}</div><div class="khint">↑ 往上滑丟無花果${dmg>1?'（英雄、ㄚ波威力加倍）':''}</div>`);
+    arena.insertAdjacentHTML('beforeend', `<div class="kfig" id="kFig">${FIG_ICON[2]}</div><div class="khint">↑ 手指往上滑丟無花果${dmg>1?'（英雄、ㄚ波威力加倍）':''}</div>`);
     const kn = $('#knAv'), fig = $('#kFig'), kspd = [1.1,1.6,2.2][diffOf('knight')], dmgT = dmg>1 ? 5 : 3;
-    let fl = null, sx = 0, sy = 0, st = 0; const t0k = performance.now();
-    const AW = ()=>arena.clientWidth, AH = ()=>arena.clientHeight;
-    const restFig = ()=>{ fl = null; fig.style.transform = `translate(${AW()/2-22}px, ${AH()-56}px) scale(1)`; };
+    let fl = null, sw = null; const t0k = performance.now();
+    const AW = ()=>arena.clientWidth, AH = ()=>arena.clientHeight, KY = 78;
+    const restFig = ()=>{ fl = null; fig.style.opacity = 1; fig.style.transform = `translate(${AW()/2-22}px, ${AH()-56}px) scale(1)`; };
     restFig();
-    arena.onpointerdown = e=>{ if(over||fl) return; const r=arena.getBoundingClientRect(); sx=e.clientX-r.left; sy=e.clientY-r.top; st=performance.now(); try{ arena.setPointerCapture(e.pointerId); }catch(_){} };
-    arena.onpointerup = e=>{ if(over||fl||!st) return; const r=arena.getBoundingClientRect(), dx=e.clientX-r.left-sx, dy=e.clientY-r.top-sy, dt=Math.max(40, performance.now()-st); st=0;
-      if(dy>-25){ return; } fl = {x:AW()/2, y:AH()-34, vx:Math.max(-9,Math.min(9,dx/dt*9)), vy:Math.max(-17, Math.min(-8, dy/dt*9))}; SND.tick(); };
+    arena.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});       // 不讓視窗跟著捲動
+    const pos = e=>{ const r=arena.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };
+    const launch = ()=>{ if(!sw || fl || over) { sw=null; return; } const dx=sw.x-sw.sx, dy=sw.y-sw.sy; sw=null;
+      if(dy > -12) return;                                                 // 沒有往上滑就不丟
+      const x0 = AW()/2, y0 = AH()-34, tx = Math.max(10, Math.min(AW()-10, x0 + dx/(-dy)*(y0-KY)));
+      fl = {x0, y0, tx, t0:performance.now(), dur:430}; SND.tick(); };
+    arena.onpointerdown = e=>{ if(over||fl) return; const [x,y]=pos(e); sw={sx:x, sy:y, x, y}; try{ arena.setPointerCapture(e.pointerId); }catch(_){} };
+    arena.onpointermove = e=>{ if(!sw) return; const [x,y]=pos(e); sw.x=x; sw.y=y; if(sw.sy-y > 60) launch(); };   // 滑超過一段距離就直接丟出
+    arena.onpointerup = arena.onpointercancel = e=>{ if(!sw) return; const [x,y]=pos(e); if(e.type==='pointerup'){ sw.x=x; sw.y=y; } launch(); };
     const loop = ()=>{ if(over || !document.getElementById('knAv')) return; const tt=(performance.now()-t0k)/1000, w=AW();
       const kx = w/2 + Math.sin(tt*kspd)*(w*.3) + Math.sin(tt*kspd*2.3)*w*.07; kn.style.left = kx+'px';
-      if(fl){ fl.x+=fl.vx; fl.y+=fl.vy; fl.vy+=.42; const sc=Math.max(.45, Math.min(1, fl.y/AH()+.25)); fig.style.transform=`translate(${fl.x-22}px, ${fl.y-22}px) scale(${sc})`;
-        if(fl.y<=125 && fl.y>=25 && Math.abs(fl.x-kx)<44){ danmaku('命中！黑騎士接住了無花果','kind'); restFig(); hit(dmgT); }
-        else if(fl.y<0 || fl.x<-30 || fl.x>w+30 || (fl.vy>0 && fl.y>AH()-30)){ SND.bad(); restFig(); } }
+      if(fl && !fl.done){ const p = Math.min(1, (performance.now()-fl.t0)/fl.dur), x = fl.x0+(fl.tx-fl.x0)*p, y = fl.y0+(KY-fl.y0)*p - Math.sin(Math.PI*p)*40;
+        fig.style.transform = `translate(${x-22}px, ${y-22}px) scale(${1-.45*p}) rotate(${p*360}deg)`;
+        if(p>=1){ if(Math.abs(fl.tx-kx) < 48){ danmaku('命中！黑騎士接住了無花果','kind'); restFig(); hit(dmgT); }
+          else { SND.bad(); fig.style.opacity = .3; fl.done = true; setTimeout(()=>{ if(!over) restFig(); }, 260); } } }
       requestAnimationFrame(loop); };
     requestAnimationFrame(loop);
     $('#kCtl').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>say(b.dataset.q));
