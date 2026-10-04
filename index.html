@@ -824,7 +824,8 @@ const DB = {
   async storage(){   // V5.4：照片改存 Firebase Storage（需 Blaze 方案），只有後台上傳／刪除時才載入
     if(fb.st) return fb.st;
     const st = await import(`https://www.gstatic.com/firebasejs/${FB_VER}/firebase-storage.js`);
-    return fb.st = {...st, S: st.getStorage(fb.app)};
+    const S = st.getStorage(fb.app); S.maxUploadRetryTime = 30000; S.maxOperationRetryTime = 15000;   // 失敗時 30 秒內就回報，不會一直卡住
+    return fb.st = {...st, S};
   },
   _l(){ try{ return JSON.parse(localStorage.getItem('hfk_demo_db')||'{}'); }catch(e){ return DB._mem || (DB._mem={}); } },
   _s(d){ DB._mem=d; try{ localStorage.setItem('hfk_demo_db', JSON.stringify(d)); }catch(e){} },
@@ -2203,6 +2204,7 @@ $('#btnPh').onclick = async()=>{
     } else {
       // 大圖：長邊 2560、畫質 .88，存到 Storage，Firestore 只記網址
       const blob = await compressBlob(f, 2560, .88), st = await DB.storage(), path = `zonephotos/${zid}/${id}.jpg`;
+      $('#btnPh').textContent = `上傳中…（${(blob.size/1048576).toFixed(1)} MB）`;
       try{ await st.uploadBytes(st.ref(st.S, path), blob, {contentType:'image/jpeg', cacheControl:'public,max-age=31536000'}); }
       catch(e){ e.st = 1; throw e; }
       const url = await st.getDownloadURL(st.ref(st.S, path));
