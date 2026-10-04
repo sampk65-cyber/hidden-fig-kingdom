@@ -1057,7 +1057,7 @@ function shade(hex, amt){ // amt -1..1
   r=Math.round((t-r)*p+r);g=Math.round((t-g)*p+g);b=Math.round((t-b)*p+b);
   return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
 }
-function openSheet(html, center){const s=$('#sheet');s.classList.toggle('center',!!center);$('#sheetBox').innerHTML=html;s.classList.remove('hide');}
+function openSheet(html, center){const s=$('#sheet'); if(s.classList.contains('hide') && typeof navGuard==='function') navGuard();s.classList.toggle('center',!!center);$('#sheetBox').innerHTML=html;s.classList.remove('hide');}
 function closeSheet(){$('#sheet').classList.add('hide'); if(typeof stopMG==='function') stopMG();}
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
 
@@ -1410,6 +1410,7 @@ async function loadMine(){
   const u = await DB.get('users/'+Login.uid); if(!u || !u.pid) return false;
   const p = await DB.get('players/'+u.pid); if(!p) return false;
   P = p; PID = u.pid; if(ROLE_MIGRATE[P.role]) P.role = ROLE_MIGRATE[P.role];
+  try{ if(P.rtok) localStorage.setItem('hfk_card', PID+'.'+P.rtok); }catch(e){}   // V5.5：本機備份會員卡，登入狀態遺失時自動找回
   return true;
 }
 async function loadCoupons(){
@@ -1483,7 +1484,7 @@ async function recover(tok){
   try{
     if(DEMO){ const p = await DB.get('players/'+pid); if(!p || p.rtok!==rt) throw new Error('bad'); }
     await DB.batch([{op:'update', path:'players/'+pid, data:{uids:{$union:[Login.uid]}, claim:rt}}, {op:'set', path:'users/'+Login.uid, data:{pid}}]);
-  }catch(e){ return info('🔒','找回失敗','會員卡無效或已更換，請聯絡農場協助。'); }
+  }catch(e){ try{ localStorage.removeItem('hfk_card'); }catch(_){} return info('🔒','找回失敗','會員卡無效或已更換，請聯絡農場協助。'); }
   history.replaceState(null,'',location.pathname);
   await loadMine(); await loadCoupons();
   toast('帳號已找回'); P.role ? startHome() : openCreate();
@@ -1571,7 +1572,7 @@ function stamina(){ return BASE_STAMINA + (roleBase(P.role)==='bunny' ? 1 : 0) +
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
 function startHome(){
   P.route = P.route || 'active';
-  const newDay = ensureDay(); Auth.save(); show('home'); renderAll();
+  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard();
   if(newDay){
     const got = addPts(2); Auth.save(); renderHud();
     openSheet(`<div class="big pop">🌅</div><h2 class="h2 wk">早安，${esc(P.name)}</h2>
@@ -1605,6 +1606,7 @@ function renderHud(){
 document.querySelector('.hud-mid').onclick = ()=>howSheet();
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
   if(P){ const k=b.dataset.tab; if(k==='tools') renderDex(); if(k==='bag') renderBag(); if(k==='move') renderRoute(); if(k==='me'){ renderMe(); renderGuard(); } }
+  if(b.dataset.tab!=='map') navGuard(); else refreshPhotos();
   document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.id==='tab-'+b.dataset.tab));
   window.scrollTo(0,0);
@@ -3541,7 +3543,7 @@ function openEmerald(){
   const z6 = ZONES.find(z=>z.emerald); curZone = z6;
   const ov = document.createElement('div'); ov.id = 'emOv';
   ov.innerHTML = `<canvas id="emCv"></canvas>
-    <div class="em-top"><div><b>🌿 翡翠溫室・五期</b><div class="em-loc" id="emLoc">大門</div></div><div class="em-st" id="emSt"></div><button class="em-x" id="emX">離開</button></div>
+    <div class="em-top"><div><b>🌿 翡翠溫室・五期</b><div class="em-loc" id="emLoc">大門</div></div><div class="em-st" id="emSt"></div>${PHOTO_N[z6.id]>0?`<button class="em-x" id="emPh" style="background:#2A1F2D">🎞️ 實景</button>`:''}<button class="em-x" id="emX">離開</button></div>
     <div class="em-map" id="emStrip"><div class="em-bar"><i id="emDot"></i></div><div class="em-zn">${[1,2,3,4,5].map(i=>`<span>A${i}｜B${i}</span>`).join('')}</div></div>
     <canvas id="emMini" class="hide"></canvas><div class="em-chase hide" id="emChase"></div>
     <div id="emJoy"><div id="emStick"></div><span>走動（上下左右）</span></div>
@@ -3572,6 +3574,7 @@ function openEmerald(){
   };
   const quit = ()=>{ cancelAnimationFrame(EM.raf); removeEventListener('resize', size); removeEventListener('keydown', kd); removeEventListener('keyup', kd); ov.remove(); EM=null; renderAll(); };
   $('#emX').onclick = quit;
+  const eph = $('#emPh'); if(eph) eph.onclick = ()=>openPhotos(z6.id);
   $('#emPick').onclick = ()=>openTask({slot:'pick', zone:z6, task:PICK_TASK, done:(P.daily.tasks||[]).includes('pick'), em:true});
   $('#emHunt').onclick = ()=>chaseIntro();
   const renderSpd = ()=>{ const m=spdMul(), v=[1, 1+(m-1)/2, m]; if(EM.sel==null) EM.sel = 2;
@@ -3998,21 +4001,64 @@ function compressImage(file, maxSide, q){
     img.onerror = rej; img.src = url; });
 }
 
+/* ---------- V5.5：保持登入（離開 LINE／FB 內建瀏覽器） ---------- */
+function escapeInApp(){
+  const ua = navigator.userAgent || '';
+  if(/\bLine\//i.test(ua)){
+    const u = new URL(location.href); if(u.searchParams.get('openExternalBrowser')==='1') return false;
+    u.searchParams.set('openExternalBrowser','1'); location.replace(u.toString()); return true;
+  }
+  if(/FBAN|FBAV|Instagram|Messenger/i.test(ua)){
+    const android = /Android/i.test(ua), url = location.href.replace(/^https?:\/\//,'');
+    info('🌐','請改用瀏覽器開啟', android
+      ? `在這裡登入，下次打開會找不到帳號。<br><br><a class="btn main" href="intent://${esc(url)}#Intent;scheme=https;package=com.android.chrome;end">用 Chrome 開啟</a>`
+      : '在這裡登入，下次打開會找不到帳號。<br>請點右上角「⋯」，選「在 Safari 中打開」，再掃一次或重新開啟。');
+    return true;
+  }
+  return false;
+}
+
+/* ---------- V5.5：手機返回鍵＝回上一層（關視窗 → 離開遊戲 → 回地圖 → 再按一次才離開） ---------- */
+const NAV = {last:0};
+function navGuard(){ if(!(history.state && history.state.g)) history.pushState({g:1}, ''); }
+function topOverlay(){ return [...document.body.children].reverse().find(el=>/Ov$/.test(el.id||'')); }
+window.addEventListener('popstate', ()=>{
+  const home = $('#home'); if(!home || !home.classList.contains('on')) return;
+  if(!$('#sheet').classList.contains('hide')){ closeSheet(); navGuard(); return; }
+  const ov = topOverlay();
+  if(ov){ const x = ov.querySelector('.em-x#emX, .wo-x, [id$="X"]'); if(x) x.click(); else toast('遊戲進行中，結束後再返回'); navGuard(); return; }
+  const mapBtn = document.querySelector('nav button[data-tab="map"]');
+  if(mapBtn && !mapBtn.classList.contains('on')){ mapBtn.click(); navGuard(); return; }
+  if(Date.now() - NAV.last < 2200){ history.back(); return; }
+  NAV.last = Date.now(); toast('再按一次返回鍵，離開隱花王國'); navGuard();
+});
+new MutationObserver(ms=>{ if(ms.some(m=>[...m.addedNodes].some(n=>/Ov$/.test(n.id||'')))) navGuard(); }).observe(document.body, {childList:true});
+
+/* ---------- V5.5：溫室照片數量，回到畫面時自動更新 ---------- */
+async function refreshPhotos(){
+  if(DEMO || !fb || Date.now() - (refreshPhotos.t||0) < 60000) return; refreshPhotos.t = Date.now();
+  try{ const n = await DB.get('config/photos') || {}; if(JSON.stringify(n)!==JSON.stringify(PHOTO_N)){ PHOTO_N = n; if(P && $('#home').classList.contains('on')) renderMap(); } }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') refreshPhotos(); });
+
 /* ---------- 啟動 ---------- */
 async function boot(){
   const q = new URLSearchParams(location.search);
   if(q.has('admin')) return Admin.start();
+  if(escapeInApp()) return;
   if(DEMO) $('#demoBar').classList.remove('hide');
   try{ await DB.init(); await Login.ready(); }catch(e){ console.error(e); return info('⚠️','連線失敗','請檢查網路後重新整理。'); }
   autoStages();
   try{ const z = await DB.get('config/zones'); if(z && z.wk===weekKey()) ZONES.forEach(x=>{ if(z[x.id]) x.stage = z[x.id]; }); }catch(e){}
-  try{ PHOTO_N = await DB.get('config/photos') || {}; }catch(e){}
+  try{ PHOTO_N = await DB.get('config/photos') || {}; refreshPhotos.t = Date.now(); }catch(e){}
   await loadWeather();
   const c = q.get('c'), r = q.get('r');
   if(q.get('fam')){ try{ localStorage.setItem('hfk_fam_invite', q.get('fam')); }catch(e){} }
   try{
     if(c || r){ await Login.anon(); return c ? await redeem(c) : await recover(r); }
     if(await loadMine()){ await loadCoupons(); return P.role ? startHome() : openCreate(); }
+    let card = null; try{ card = localStorage.getItem('hfk_card'); }catch(e){}
+    if(card){ await Login.anon(); return await recover(card); }
   }catch(e){ console.error(e); return info('⚠️','讀取失敗', esc(e.message||'請檢查網路後重新整理。')); }
   show('login');
 }
