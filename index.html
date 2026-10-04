@@ -181,6 +181,8 @@ nav button.on{color:var(--fig);font-weight:700}
 .pop{animation:pop .45s ease-out}
 @media (prefers-reduced-motion:reduce){.pop{animation:none}#toast{transition:none}}
 
+/* ===== V5.3：券 QR ===== */
+.coupon[data-cp]{cursor:pointer}.cpqr{color:var(--fig);font-weight:700;font-size:12px}
 /* ===== V5.2：3 米無花果樹、照顧節奏 ===== */
 .tree3m{width:100%;max-width:260px;height:auto;display:block;margin:0 auto}
 .ctasks{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px}
@@ -431,7 +433,7 @@ body.admin #app{max-width:760px}
     </div>
   </div>
   <h2 class="h2 wk">選擇你的角色</h2>
-  <p class="sub">12 位角色各有本事：農場的貓狗雞龜鸚鵡、手繪的阿無、外星訪客，還有愛搗蛋的黑騎士</p>
+  <p class="sub">16 位角色各有本事：農場的貓狗雞龜鸚鵡、小雪、golden、柴柴、邦尼兔、手繪的阿無、外星訪客，還有愛搗蛋的黑騎士</p>
   <div class="roles" id="roleGrid"></div>
 
   <div id="genderRow">
@@ -625,7 +627,7 @@ body.admin #app{max-width:760px}
     </div>
     <div class="admpane hide" id="ap-coupon">
       <h2 class="h2 wk">核銷優惠券</h2>
-      <p class="sub">輸入顧客出示的券號，例如 K7QX2MPA-3F9A。</p>
+      <p class="sub">用手機相機掃顧客出示的券 QR 會自動帶到這裡；也可以手動輸入券號，例如 K7QX2MPA-3F9A。</p>
       <div style="display:flex;gap:8px"><input id="cpIn" class="field" style="margin:0" autocapitalize="characters" placeholder="會員編號-券號"><button id="btnCp" class="tbtn" style="padding:0 16px">查詢</button></div>
       <div id="cpRes"></div>
     </div>
@@ -820,7 +822,7 @@ const STAGE = {
   '剪枝':{mult:0.8, c:'#B08A5A'}, '度冬':{mult:0.6, c:'#8C8A94'}
 };
 
-// 12 個角色：《綠野仙蹤》原著五種角色 × 男女，加上小呱、碰氣
+// 16 個角色
 const ROLE_BASE = {
   alien:{n:'吃貨外星人',    perk:'說好話感化黑騎士，威力 ×1.6'},
   awu:{n:'阿無',            perk:'知識卡答對多 3 點果友值'},
@@ -833,10 +835,14 @@ const ROLE_BASE = {
   dog:{n:'黑熊',            perk:'愛散步：步數換巡園次數多 10%'},
   kiki:{n:'奇奇',           perk:'身手靈活：挑戰小遊戲多 3 秒'},
   turtle:{n:'小葵',         perk:'慢慢來：照顧我的樹，每次多長 1 格'},
-  hen:{n:'一虎',            perk:'巡園常撿到雞蛋，果友值多 +1'}
+  hen:{n:'一虎',            perk:'巡園常撿到雞蛋，果友值多 +1'},
+  poodle:{n:'小雪',         perk:'黏人精：家人挑戰賽親密值多 20%'},
+  golden:{n:'golden',       perk:'尋回高手：寶箱追逐賽每個寶箱多 3 秒'},
+  shiba:{n:'柴柴',          perk:'眼明手快：摘果挑戰賽熟果停留多 20%'},
+  bunny:{n:'邦尼',          perk:'抱抱充電：每天多 1 點體力，可以多巡一棵樹'}
 };
-// 12 個角色，各不重複
-const ROLES = ['awu_f:awu:f','alien_m:alien:m','robot_m:robot:m','hero:hero:','apo:apo:','knight_m:knight:m','cat:cat:','teddy:teddy:','dog:dog:','kiki:kiki:','turtle:turtle:','hen:hen:']
+// 16 個角色，各不重複
+const ROLES = ['awu_f:awu:f','alien_m:alien:m','robot_m:robot:m','hero:hero:','apo:apo:','knight_m:knight:m','cat:cat:','teddy:teddy:','dog:dog:','kiki:kiki:','turtle:turtle:','hen:hen:','poodle:poodle:','golden:golden:','shiba:shiba:','bunny:bunny:']
   .map(s=>{ const [id,base,g]=s.split(':'); return {id, base, g:g||null}; });
 // 舊版角色代號對應（已建角色的玩家自動轉換）
 const ROLE_MIGRATE = {traveler_f:'alien_m',traveler_m:'alien_m',scarecrow_f:'awu_f',scarecrow_m:'awu_f',tin_f:'robot_m',tin_m:'robot_m',lion_f:'apo',lion_m:'hero',witch_f:'knight_m',witch_m:'knight_m',awu_m:'awu_f',alien_f:'alien_m',robot_f:'robot_m',knight_f:'knight_m'};
@@ -1009,6 +1015,68 @@ function avatar(roleId, mat, color){
       <path d="M55 62 Q60 58 65 62 Q60 68 55 62Z" fill="#D99AA0"/>
       <rect x="57" y="70" width="6" height="5" rx="1" fill="#E08A2E"/>`;
     return wrap('碰氣');
+  }
+  if(role.base==='poodle' || role.base==='golden'){ // 小雪、golden：跟邦尼同款的毛巾布偶風——長枕頭身體、蓬蓬毛邊、點點眼睛、刺繡小鼻子
+    const gold = role.base==='golden';
+    const C = gold ? {fur:'#EAC48C', ear:'#D9A762', line:'#CFA05E', tex:'#D2A866', tail:'#E2B676'} : {fur:'#FBF8F2', ear:'#F1E8DA', line:'#DCD2C4', tex:'#E3DACC', tail:'#F4EEE4'};
+    // 蓬蓬毛邊：沿著圓角長方形取點，每段往外鼓一點
+    const fluffy = (cx,cy,a,b,n,bump,e=.5)=>{ const P=[]; for(let k=0;k<n;k++){ const t=k/n*Math.PI*2, c=Math.cos(t), s2=Math.sin(t);
+        P.push([cx+a*Math.sign(c)*Math.pow(Math.abs(c),e), cy+b*Math.sign(s2)*Math.pow(Math.abs(s2),e)]); }
+      let d=`M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;
+      for(let k=1;k<=n;k++){ const p=P[k%n], q=P[k-1], mx=(p[0]+q[0])/2, my=(p[1]+q[1])/2, dx=mx-cx, dy=my-cy, L=Math.hypot(dx,dy)||1;
+        d+=` Q${(mx+dx/L*bump).toFixed(1)} ${(my+dy/L*bump).toFixed(1)} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`; }
+      return d+'Z'; };
+    const tex = Array.from({length:54},(_,k)=>{ const x=33+((k*37)%54), y=34+((k*53)%104); return `<path d="M${x} ${y} q2 -2.4 4 0" stroke="${C.tex}" stroke-width="1.2" fill="none" stroke-linecap="round"/>`; }).join('');
+    s += `<path d="${fluffy(98,112,8,7,10,2.4)}" fill="${C.tail}" stroke="${C.line}" stroke-width="1.3"/>
+      <path d="${fluffy(60,85,31,62,40,2.6)}" fill="${C.fur}" stroke="${C.line}" stroke-width="1.6"/>
+      ${tex}
+      ${gold
+        ? `<path d="${fluffy(28,68,9,28,18,2.2)}" fill="${C.ear}" stroke="${C.line}" stroke-width="1.4"/><path d="${fluffy(92,68,9,28,18,2.2)}" fill="${C.ear}" stroke="${C.line}" stroke-width="1.4"/>`
+        : `<path d="${fluffy(30,64,13,14,16,2.2,1)}" fill="${C.ear}" stroke="${C.line}" stroke-width="1.4"/><path d="${fluffy(90,64,13,14,16,2.2,1)}" fill="${C.ear}" stroke="${C.line}" stroke-width="1.4"/>
+           <path d="M24 58 q2 -2.4 4 0 M30 70 q2 -2.4 4 0 M86 58 q2 -2.4 4 0 M92 70 q2 -2.4 4 0" stroke="${C.tex}" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+           <path d="${fluffy(60,26,7,5,9,2)}" fill="${C.fur}" stroke="${C.line}" stroke-width="1.3"/>`}
+      <path d="${fluffy(25,104,7,11,10,1.8)}" fill="${C.fur}" stroke="${C.line}" stroke-width="1.3" transform="rotate(25 25 104)"/>
+      <path d="${fluffy(95,104,7,11,10,1.8)}" fill="${C.fur}" stroke="${C.line}" stroke-width="1.3" transform="rotate(-25 95 104)"/>
+      <path d="M38 88 Q60 98 82 88 L81 95 Q60 105 39 95Z" fill="${F}"${trim}/>
+      <circle cx="50" cy="58" r="2.6" fill="#3E2A24"/><circle cx="70" cy="58" r="2.6" fill="#3E2A24"/>
+      <ellipse cx="60" cy="65" rx="4.6" ry="3.2" fill="#3E2A24"/>
+      <path d="M56 70.5 Q60 74 64 70.5" stroke="#3E2A24" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="44" cy="67" rx="3.8" ry="2.2" fill="#F2B8C4" opacity=".4"/><ellipse cx="76" cy="67" rx="3.8" ry="2.2" fill="#F2B8C4" opacity=".4"/>`;
+    return wrap(gold ? 'golden' : '小雪');
+  }
+  if(role.base==='bunny'){ // 邦尼：農場的藍色毛巾兔玩偶——長條枕頭身體、短圓耳、小鰭狀手、刺繡小眼睛和倒三角鼻
+    const tex = Array.from({length:46},(_,k)=>{ const x=34+((k*37)%52), y=40+((k*53)%100); return `<path d="M${x} ${y} q2 -2 4 0" stroke="#A9BBC6" stroke-width="1.2" fill="none" stroke-linecap="round"/>`; }).join('');
+    s += `<path d="M38 26 C34 10 46 4 50 18 L52 34 Z" fill="#C7D5DE" stroke="#AEC0CB" stroke-width="1.4"/><path d="M41 24 C40 14 46 11 48 20 L49 30Z" fill="#B8C9D4"/>
+      <path d="M82 26 C86 10 74 4 70 18 L68 34 Z" fill="#C7D5DE" stroke="#AEC0CB" stroke-width="1.4"/><path d="M79 24 C80 14 74 11 72 20 L71 30Z" fill="#B8C9D4"/>
+      <rect x="30" y="24" width="60" height="122" rx="26" fill="#C9D7E0" stroke="#AEC0CB" stroke-width="1.6"/>
+      ${tex}
+      <path d="M32 92 C20 96 14 108 18 116 C24 118 30 108 34 102Z" fill="#C9D7E0" stroke="#AEC0CB" stroke-width="1.4"/>
+      <path d="M88 92 C100 96 106 108 102 116 C96 118 90 108 86 102Z" fill="#C9D7E0" stroke="#AEC0CB" stroke-width="1.4"/>
+      <path d="M38 88 Q60 98 82 88 L81 95 Q60 105 39 95Z" fill="${F}"${trim}/>
+      <ellipse cx="49" cy="58" rx="2.8" ry="3.3" fill="#4A2A22"/><ellipse cx="71" cy="58" rx="2.8" ry="3.3" fill="#4A2A22"/>
+      <path d="M55 63 L65 63 L60 69Z" fill="#4A2A22" stroke="#4A2A22" stroke-width="1" stroke-linejoin="round"/>
+      <path d="M60 69 L60 72 M60 72 L55 76 M60 72 L65 76" stroke="#4A2A22" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="43" cy="68" rx="4" ry="2.4" fill="#F2B8C4" opacity=".35"/><ellipse cx="77" cy="68" rx="4" ry="2.4" fill="#F2B8C4" opacity=".35"/>`;
+    return wrap('邦尼');
+  }
+  if(role.base==='shiba'){ // 柴柴：赤柴，立耳、白色裏白（臉頰到胸口）、捲尾
+    s += `<path d="M84 104 C108 104 110 80 94 80 C84 80 84 94 94 94 C98 94 98 88 94 88" stroke="#C97A3E" stroke-width="9" fill="none" stroke-linecap="round"/>
+      <path d="M90 92 C96 92 97 86 93 86" stroke="#F6E8CF" stroke-width="3" fill="none" stroke-linecap="round"/>
+      <ellipse cx="60" cy="116" rx="29" ry="26" fill="#D9884A"/>
+      <path d="M46 98 C50 124 70 124 74 98 C70 112 50 112 46 98Z" fill="#F6E8CF"/>
+      <rect x="46" y="116" width="10" height="24" rx="4" fill="#D9884A"/><rect x="64" y="116" width="10" height="24" rx="4" fill="#D9884A"/>
+      <ellipse cx="51" cy="141" rx="8" ry="4.5" fill="#F6E8CF"/><ellipse cx="69" cy="141" rx="8" ry="4.5" fill="#F6E8CF"/>
+      <path d="M36 88 Q60 100 84 88 L82 95 Q60 107 38 95Z" fill="${F}"${trim}/>
+      <path d="M36 48 L38 16 L58 34Z" fill="#D9884A"/><path d="M84 48 L82 16 L62 34Z" fill="#D9884A"/>
+      <path d="M40 42 L41 24 L52 34Z M80 42 L79 24 L68 34Z" fill="#F6E8CF"/>
+      <ellipse cx="60" cy="58" rx="26" ry="24" fill="#D9884A"/>
+      <path d="M36 62 C40 80 52 86 60 86 C68 86 80 80 84 62 C76 70 68 68 60 70 C52 68 44 70 36 62Z" fill="#F6E8CF"/>
+      <ellipse cx="49" cy="46" rx="3" ry="2" fill="#F6E8CF"/><ellipse cx="71" cy="46" rx="3" ry="2" fill="#F6E8CF"/>
+      <path d="M45 54 Q49 51 53 54" stroke="#2A1F1A" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M67 54 Q71 51 75 54" stroke="#2A1F1A" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+      <ellipse cx="60" cy="66" rx="5" ry="3.6" fill="#1E1A1A"/>
+      <path d="M53 72 Q60 78 67 72" stroke="#2A1F1A" stroke-width="1.6" fill="none" stroke-linecap="round"/><path d="M58 75 Q60 81 62 75Z" fill="#E88A9A"/>
+      <circle cx="44" cy="66" r="3" fill="#F29BB4" opacity=".5"/><circle cx="76" cy="66" r="3" fill="#F29BB4" opacity=".5"/>`;
+    return wrap('柴柴');
   }
   if(role.base==='dog'){ // 黑熊：短毛黑狗，立耳，胸口一道白色 V，頭上頂著嫩芽
     s += `<path d="M86 122 C104 116 108 96 100 86 C102 100 96 110 84 114Z" fill="#1A1818"/>
@@ -1204,6 +1272,7 @@ function avatar(roleId, mat, color){
 }
 
 function roleName(roleId){ const r=ROLES.find(x=>x.id===roleId); if(!r) return ''; return ROLE_BASE[r.base].n; }
+function famMul(){ return roleBase(P.role)==='poodle' ? 1.2 : 1; }
 function roleBase(roleId){ return (ROLES.find(x=>x.id===roleId)||ROLES[0]).base; }
 
 /* =========================================================
@@ -1381,7 +1450,7 @@ function levelUp(i){
 }
 function stepPer(){ return [1000,900,800,700,600][P.tools.shoes]; }
 function effSteps(){ const s = P.daily.steps + Math.min(P.daily.manual,6000); return roleBase(P.role)==='dog' ? Math.floor(s*1.1) : s; }
-function stamina(){ return BASE_STAMINA + Math.min(STEP_STAMINA_MAX, Math.floor(effSteps()/stepPer())) + (P.daily.careSt||0) - P.daily.used; }
+function stamina(){ return BASE_STAMINA + (roleBase(P.role)==='bunny' ? 1 : 0) + Math.min(STEP_STAMINA_MAX, Math.floor(effSteps()/stepPer())) + (P.daily.careSt||0) - P.daily.used; }
 
 /* =========================================================
    主畫面
@@ -1728,10 +1797,19 @@ function renderBag(){
     ? `<div class="empty">還沒有優惠券。<br>到王國地圖巡園，寶箱裡會有折扣、免運，運氣好還有免單。</div>`
     : list.map(c=>{
         const t = COUPON_T.find(x=>x.id===c.t), d = Math.ceil((c.exp-Date.now())/864e5);
-        return `<div class="coupon"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
-          <div class="cright"><b>${t.id==='free'?'免單券（上限 NT$500）':t.id==='ship'?'冷藏宅配免運':t.big+'鮮果券'}</b>滿 NT$600 可用・剩 ${d} 天<br>結帳時出示券號 <b style="display:inline;font-size:13px">${PID}-${c.id}</b></div></div>`;
+        const nm = t.id==='free'?'免單券（上限 NT$500）':t.id==='ship'?'冷藏宅配免運':t.id==='half'?'半價券（上限折 NT$600）':t.id==='c200'?'折 200 元（滿 NT$1,000）':t.big+'鮮果券';
+        return `<div class="coupon" data-cp="${c.id}" role="button" tabindex="0"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
+          <div class="cright"><b>${nm}</b>剩 ${d} 天・券號 <b style="display:inline;font-size:13px">${PID}-${c.id}</b><br><span class="cpqr">📱 點這裡出示核銷 QR</span></div></div>`;
       }).join('');
+  $('#couponList').querySelectorAll('[data-cp]').forEach(el=>el.onclick=()=>showCouponQR(el.dataset.cp));
   renderShares();
+}
+// 結帳出示：每張券有自己的 QR，店家用手機相機掃描就會打開後台核銷頁並自動查詢
+function showCouponQR(cid){
+  const c = MY_COUPONS.find(x=>x.id===cid); if(!c) return; const t = COUPON_T.find(x=>x.id===c.t), code = `${PID}-${cid}`;
+  openSheet(`<h2 class="h2 wk" style="margin-top:0">${t.big}・${t.sub}</h2><p class="sub">結帳時請店家用手機相機掃描</p>
+    <div class="mqr">${qrSvg(BASE_URL()+'?admin&v='+code)}</div><p class="lvtxt" style="text-align:center">券號 <b style="font-size:18px;letter-spacing:1px">${code}</b><br>每張券只能用一次，核銷後就會消失</p>
+    <button class="btn main" onclick="closeSheet()">完成</button>`, true);
 }
 async function renderShares(){
   const ids = P.shares||[];
@@ -1818,6 +1896,8 @@ const Admin = {
   main(){
     $('#admLogin').classList.add('hide'); $('#admMain').classList.remove('hide');
     Admin.tab('print');
+    const v = new URLSearchParams(location.search).get('v');          // 掃顧客券 QR 進來：直接查這張券
+    if(v){ Admin.tab('coupon'); $('#cpIn').value = v.toUpperCase(); Admin.findCoupon(); }
   },
   tab(k){
     document.querySelectorAll('#admTabs button').forEach(b=>b.classList.toggle('sel', b.dataset.a===k));
@@ -2352,7 +2432,7 @@ function famWeed(){
     over = true; clearTimeout(st); clearInterval(tm); ov.remove(); MUSIC.stop(); SND.win();
     P.daily.famGames = (P.daily.famGames||0)+1;
     const counted = P.daily.famGames<=3, total = Math.max(0, sc.A)+Math.max(0, sc.B);
-    const gain = counted ? Math.min(60, total) : 0, beforeLv = Math.floor(F.intimacy/100);
+    const gain = counted ? Math.round(Math.min(60, total)*famMul()) : 0, beforeLv = Math.floor(F.intimacy/100);
     F.intimacy += gain; F.games++; F.weedBest = Math.max(F.weedBest||0, sc.A, sc.B);
     const wup = total>=[20,26,32][diffOf('weed')] ? diffAfter('weed', true) : '';
     const pts = P.daily.famGames===1 ? addPts(5) : 0;
@@ -2696,7 +2776,7 @@ const KIKI = ()=>roleBase(P.role)==='kiki' ? 3 : 0;
 const HOWTO = {
   whitefly:d=>({t:'銀葉粉蝨躲在葉背吸汁液，牠們會在葉子間飛來飛去，看準了就點掉。', goal:`${[14,12,10][d]} 秒內點掉 ${[5,7,9][d]} 隻`}),
   rain:    d=>({t:'豪雨把垃圾沖進排水溝：酒瓶、玻璃罐、鋁罐、鐵罐頭、寶特瓶、塑膠袋、樹枝、落葉順著水流下來，越後面水流越快。水溝裡還有小魚，點到魚會扣分！把它們拖到下方正確的分類桶（也可以先點垃圾、再點桶子）。垃圾卡住排水口或丟錯桶，水位都會上升。', goal:`水滿出來之前分類好 ${[8,10,12][d]} 件垃圾`}),
-  rust:    d=>({t:'只摘有黃褐色斑點的病葉 🍂，健康的葉子 🍃 不要摘。', goal:`${[16,14,12][d]} 秒內摘完 ${[4,5,6][d]} 片病葉，摘錯最多 ${[2,1,0][d]} 次`}),
+  rust:    d=>({t:'連續 3 輪，每一輪都要把有黃褐色斑點的病葉 🍂 全部摘掉，健康的葉子 🍃 不要摘。葉子會一直換位置，越後面換得越快。', goal:`${[24,20,16][d]} 秒內完成 3 輪，摘錯最多 ${[2,1,1][d]} 次`}),
   drought: d=>({t:'要連續澆 3 次水：按住「滴灌」讓水位上升，停在綠色區就放開。綠色區一次比一次窄、位置也會變。澆太多會爛根。', goal:`連續 3 次都停在綠色區（寬度 ${[[30,22,14],[24,16,10],[18,12,8]][d].join('% → ')}%）`}),
   heat:    d=>({t:'正中午的陽光一直射下來。手指按住畫面左右滑，陽傘會跟著移動，擋住射向無花果樹的陽光，別讓果子曬傷。', goal:`撐過 ${[12,15,18][d]} 秒，曬傷值不到 100`}),
   wind:    d=>({t:'強風把枝條吹得左右擺。每條吊繩上有一個橘色夾子，等枝條擺到和吊繩一樣垂直（枝條變綠色）時，點那一排，夾子就會把枝條夾在吊繩上。歪的時候點會夾空。', goal:`${[25,22,20][d]} 秒內把 ${[3,4,5][d]} 根枝條都夾直${d>0?'（夾空扣 1 秒）':''}`}),
@@ -2715,7 +2795,7 @@ function startChallenge(k, patrol){
 function runChallenge(k){
   const c = CH[k], d = diffOf(k);
   openSheet(`<h2 class="h2 wk" style="margin-top:0">${c.n}挑戰・難度${DIFF_N[d]}</h2><p class="sub" id="mgHow">${HOWTO[k](d).goal}</p><div class="mg" id="mg"></div><p class="lvtxt" id="mgInfo" style="text-align:center;margin-top:8px"></p>`, true);
-  ({drought:holdGame, heat:parasolGame, wind:windGame, myna:mynaGame, rain:rainGame}[k] || tapGame)(k, d);
+  ({drought:holdGame, heat:parasolGame, wind:windGame, myna:mynaGame, rain:rainGame, rust:rustGame}[k] || tapGame)(k, d);
   MUSIC.start();
 }
 function finishChallenge(k, ok){
@@ -2812,6 +2892,35 @@ function parasolGame(k, d){
   MG = {timer:setInterval(()=>{ left--; upd(); if(left<=0 && !done){ done=true; finishChallenge(k, heat<100); } },1000)};
   upd(); MG.raf = requestAnimationFrame(step);
 }
+/* 銹病：連續 3 輪，每輪摘完所有病葉；限時內完成，越後面葉子換位越快 */
+function rustGame(k, d){
+  const mg = $('#mg'), sec = [24,20,16][d]+KIKI(), maxMiss = [2,1,1][d], baseIv = [1700,1300,1000][d];
+  let round = 0, miss = 0, left = sec, done = false, bad = new Set(), picked = new Set(), shuf = null;
+  const upd = ()=>{ $('#mgInfo').textContent = `第 ${round+1}/3 輪・剩 ${left} 秒・病葉 ${picked.size}/${bad.size}・摘錯 ${miss}/${maxMiss}`; };
+  function layout(){
+    const pos = [...Array(12).keys()].sort(()=>Math.random()-.5);
+    mg.querySelectorAll('.tgt').forEach((b,i)=>{ const p = pos[i]; b.style.left=(6+(p%4)*23)+'%'; b.style.top=(8+Math.floor(p/4)*30)+'%'; });
+  }
+  function setup(){
+    const nBad = [3,4,5][d] + round; bad = new Set([...Array(12).keys()].sort(()=>Math.random()-.5).slice(0,nBad)); picked = new Set();
+    mg.innerHTML = `<div class="rnd3" style="position:absolute;left:0;right:0;top:0">${[0,1,2].map(i=>`<i class="${i<round?'ok':i===round?'now':''}"></i>`).join('')}<span>第 ${round+1} 輪</span></div>`;
+    for(let i=0;i<12;i++){
+      const b = document.createElement('button'); b.className='tgt'; b.style.transition='left .25s, top .25s'; b.textContent = bad.has(i)?'🍂':'🍃';
+      b.onclick = ()=>{
+        if(done || picked.has(i)) return;
+        if(!bad.has(i)){ miss++; SND.bad(); b.style.opacity=.35; setTimeout(()=>b.style.opacity=1, 300); upd(); if(miss>maxMiss){ done=true; finishChallenge(k,false); } return; }
+        picked.add(i); SND.good(picked.size); b.style.visibility='hidden'; upd();
+        if(picked.size===bad.size){ round++; if(round>=3){ done=true; return finishChallenge(k,true); } SND.win(); clearInterval(shuf); setTimeout(()=>{ if(!done) setup(); }, 450); }
+      };
+      mg.appendChild(b);
+    }
+    layout(); upd();
+    clearInterval(shuf); shuf = setInterval(()=>{ if(!done) layout(); }, baseIv*(1 - round*.22));     // 越後面換位越快
+    if(MG) MG.mv = shuf;
+  }
+  MG = {timer:setInterval(()=>{ left--; upd(); if(left<=0 && !done){ done=true; clearInterval(shuf); finishChallenge(k,false); } },1000)};
+  setup();
+}
 /* 八哥入侵（難度版） */
 function mynaGame(k, d){
   const sec = [22,18,15][d]+KIKI(), wander = [.35,.5,.65][d];
@@ -2854,7 +2963,7 @@ function famWood(){
   run(0);
   function finish(){
     P.daily.famGames = (P.daily.famGames||0)+1;
-    const counted = P.daily.famGames<=3, gain = counted ? Math.min(60, Math.round((s[0]+s[1])/4)) : 0, beforeLv = Math.floor(F.intimacy/100);
+    const counted = P.daily.famGames<=3, gain = counted ? Math.round(Math.min(60, Math.round((s[0]+s[1])/4))*famMul()) : 0, beforeLv = Math.floor(F.intimacy/100);
     F.intimacy += gain; F.games++;
     const pts = P.daily.famGames===1 ? addPts(5) : 0, up = (s[0]+s[1])/2>=70 ? diffAfter('wood', true) : '';
     let chest='';
@@ -2916,7 +3025,7 @@ function famHockey(){
   function end(){
     done = true; ov.remove(); MUSIC.stop(); SND.win();
     P.daily.famGames = (P.daily.famGames||0)+1;
-    const counted = P.daily.famGames<=3, gain = counted ? Math.min(60, hits*2 + score.T + score.B) : 0, beforeLv = Math.floor(F.intimacy/100);
+    const counted = P.daily.famGames<=3, gain = counted ? Math.round(Math.min(60, hits*2 + score.T + score.B)*famMul()) : 0, beforeLv = Math.floor(F.intimacy/100);
     F.intimacy += gain; F.games++; F.hockBest = Math.max(F.hockBest||0, hits);
     const pts = P.daily.famGames===1 ? addPts(5) : 0, up = hits>=[12,18,24][d] ? diffAfter('hockey', true) : '';
     let chest='';
@@ -3123,7 +3232,7 @@ function openEmerald(){
     const chests = tiers.map(tier=>{
       let zi, side; do{ zi = rnd(5); side = Math.random()<.5 ? -1 : 1; }while(used.has(zi*2+(side>0?1:0)) && used.size<10); used.add(zi*2+(side>0?1:0));
       const x = side*AISLE[rnd(4)], z = zi*EM_ZL + 3 + Math.random()*16, dist = Math.abs(z-EM.pz)+Math.abs(x-EM.px);
-      const base = Math.max(16, Math.min(45, dist/6.6*1.3 + 6)), rare = RARE_TIERS.includes(tier), total = rare ? base*.55 : base;
+      const base = Math.max(16, Math.min(45, dist/6.6*1.3 + 6)), rare = RARE_TIERS.includes(tier), total = (rare ? base*.55 : base) + (roleBase(P.role)==='golden' ? 3 : 0);
       return {x, z, tier, rare, total, end: now+total*1000, name:(side<0?'A':'B')+(zi+1), alive:true};
     });
     EM.chase = {chests};
@@ -3284,7 +3393,7 @@ function pickGame(done){
   const SLOTS = [{x:.12,dp:1},{x:.88,dp:1},{x:.29,dp:.78},{x:.71,dp:.78},{x:.43,dp:.6},{x:.57,dp:.6}];
   let t0 = performance.now(), score = 0, combo = 0, ripeN = 0, good = 0, bad = 0, drop = 0, over = false, fx = [];
   const now = ()=>(performance.now()-t0)/1000;
-  const winW = t=>Math.max(WMIN, W0-(W0-WMIN)*t/SEC);
+  const winW = t=>Math.max(WMIN, W0-(W0-WMIN)*t/SEC) * (roleBase(P.role)==='shiba' ? 1.2 : 1);
   const mkTree = (slot, delay)=>{ const t = now(), gap = GAP0*(1-.35*t/SEC); return {slot, fr:Array.from({length:NODES},(_,j)=>({at:t+delay+j*gap, w:winW(t+delay+j*gap), st:'on', counted:false}))}; };
   const trees = SLOTS.map((s,i)=>mkTree(s, .6+i*1.1));
   const geo = (tr, j)=>{ const s=tr.slot, dp=s.dp, baseY=H*(.5+.42*dp), hgt=H*.7*dp, x=s.x*W, y=baseY-hgt*(.16+j*.088), side=(j%2?1:-1), sc=Math.min(W/390,1.4)*dp;
