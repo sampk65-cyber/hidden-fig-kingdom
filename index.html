@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V6.6</title>
+<title>今天在隱花王國尋寶 V6.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -196,6 +196,8 @@ nav button.on{color:var(--fig);font-weight:700}
 .visit-pill{display:table;margin:0 0 8px auto;background:var(--card);border:1.5px solid var(--gold);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:700;color:var(--ink)}
 #lvCard{position:relative}.lv-ver{position:absolute;top:10px;right:16px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em}
 .dx.gev small.gv{display:block;font-size:11px;color:var(--muted);margin-top:2px}.dx.gev small.gv i{font-style:normal;color:#fff;border-radius:6px;padding:0 5px;margin-right:2px}
+.chlog td{font-size:12px;vertical-align:top}.chlog tr.pl-row,.ladder tr.pl-row{cursor:pointer}.pl-all{display:flex;flex-wrap:wrap;gap:6px}
+.msg.n{border-left:4px solid var(--gold)}.msg.m{border-left:4px solid var(--rose)}
 .copy{text-align:center;font-size:11px;color:var(--muted);letter-spacing:.04em;margin:14px 0 6px}
 .fert-bk.on{animation:none;outline:2px solid var(--leaf)}
 @keyframes bkB{50%{transform:translateY(-4px) rotate(-6deg)}}
@@ -803,6 +805,9 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     </div>
     <div class="admpane hide" id="ap-stats">
       <h2 class="h2 wk">數據</h2>
+      <div class="card"><b>📢 對全體玩家發言</b><p class="lvtxt" style="margin:2px 0 6px">玩家下次打開遊戲會跳出這則公告（每則只跳一次）。</p>
+        <textarea id="ntText" class="field" rows="3" maxlength="200" placeholder="例如：本週六農場開放採果，歡迎來玩！"></textarea>
+        <button id="btnNotice" class="btn main">發布公告</button><div id="ntNow" class="lvtxt"></div></div>
       <div id="statBox"></div>
     </div>
   </div>
@@ -834,7 +839,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V6.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V6.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1601,7 +1606,7 @@ function stamina(){ return BASE_STAMINA + (roleBase(P.role)==='bunny' ? 1 : 0) +
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
 function startHome(){
   P.route = P.route || 'active';
-  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard(); if(!newDay) setTimeout(newPhotoToast, 1500);
+  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard(); if(!newDay) setTimeout(newPhotoToast, 1500); setTimeout(checkMessages, 2200);
   if(newDay){
     const got = addPts(2); Auth.save(); renderHud();
     openSheet(`<div class="big pop">🌅</div><h2 class="h2 wk">早安，${esc(P.name)}</h2>
@@ -1661,6 +1666,19 @@ function badgeHint(){
     <g class="bd-arrow"><path d="M${x0+3} ${by} l7 -5 v10z" fill="#F2C230"/></g>
     <g clip-path="url(#bdClip)"><g><text x="${x0+14}" y="${by+3.5}" font-size="9" font-weight="700" fill="#fff">${t}${t}</text>
       <animateTransform attributeName="transform" type="translate" from="0 0" to="${-w} 0" dur="${Math.round(w/18)}s" repeatCount="indefinite"/></g></g></g>`;
+}
+// V6.7：農場公告與私訊（等畫面上沒有其他視窗時才跳出）
+async function checkMessages(tries=0){
+  if(DEMO || !P || P.guest) return;
+  if(!$('#sheet').classList.contains('hide') || topOverlay()){ if(tries<20) setTimeout(()=>checkMessages(tries+1), 3000); return; }
+  const msgs = [];
+  try{ const n = await DB.get('config/notice'); if(n && n.id && n.text && P.noticeSeen!==n.id) msgs.push({k:'n', id:n.id, text:n.text, created:n.created}); }catch(e){}
+  try{ (await DB.list(`players/${PID}/inbox`)).filter(m=>!m.read).sort((a,b)=>a.created-b.created).forEach(m=>msgs.push({k:'m', id:m.id, text:m.text, created:m.created})); }catch(e){}
+  if(!msgs.length) return;
+  openSheet(`<div class="big pop">📮</div><h2 class="h2 wk">農場來信</h2>${msgs.map(m=>`<div class="card msg ${m.k}" style="text-align:left"><b>${m.k==='n'?'📢 農場公告':'💬 給你的私訊'}</b><span class="lvtxt">${new Date(m.created).toLocaleDateString('zh-TW')}</span><p style="margin:6px 0 0;white-space:pre-wrap">${esc(m.text)}</p></div>`).join('')}
+    <button class="btn main" onclick="closeSheet()">收到了</button>`, true);
+  const nn = msgs.find(m=>m.k==='n'); if(nn){ P.noticeSeen = nn.id; Auth.save(); }
+  msgs.filter(m=>m.k==='m').forEach(m=>DB.update(`players/${PID}/inbox/${m.id}`, {read:true}).catch(()=>{}));
 }
 function newPhotoToast(){ const z = ZONES.filter(z=>phNew(z.id)); if(z.length) toast(`🎞️ ${z.map(x=>x.n).join('、')}有新的實景照片，點溫室上發光的數字看看`, 3600); }
 function renderMap(){
@@ -1910,8 +1928,11 @@ function makeCouponRaw(){
   DB.set('players/'+PID+'/coupons/'+c.id, {t:c.t, exp:c.exp, used:false, created:c.created, name:P.name||''}).catch(()=>toast('優惠券同步失敗，請檢查網路'));
   return c;
 }
+// V6.7：寶箱紀錄（存在玩家資料，保留最近 50 筆，後台可查）
+function logChest(src, r){ if(!P || P.guest) return; P.chestLog = [...(P.chestLog||[]), {t:Date.now(), s:src, r}].slice(-50); }
 function chestOpen(c, pts, back){
   const t = COUPON_T.find(x=>x.id===c.t);
+  logChest(back ? '獎勵寶箱' : `巡園寶箱・${curZone ? curZone.n : ''}`, (t.id==='pts' ? `果友值 ${t.big}` : `${t.big}（${t.sub}）`) + (pts ? `＋果友值 ${pts}` : '')); Auth.save();
   setTimeout(()=>openSheet(`${chestSvg()}<h2 class="h2 wk">寶箱開出 ${t.big}${t.id==='free'?'！':''}</h2>
     <div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
     <div class="cright"><b>${cpNote(c)}</b>滿 NT$600 可用，7 天內有效${pts?`<br>果友值 +${pts}`:''}</div></div>
@@ -2227,11 +2248,33 @@ const Admin = {
   },
   async stats(){
     $('#statBox').innerHTML = '<p class="sub">讀取中…</p>';
+    try{ const n = await DB.get('config/notice'); $('#ntNow').textContent = n && n.text ? `目前公告（${new Date(n.created).toLocaleString('zh-TW')}）：${n.text}` : '目前沒有公告'; }catch(e){}
     const [ps, cs] = await Promise.all([DB.list('players'), DB.list('codes')]);
     const box = cs.filter(c=>c.type==='box'), share = cs.filter(c=>c.type==='share');
-    const top = ps.filter(p=>p.role).sort((a,b)=>b.points-a.points).slice(0,10);
+    const players = ps.filter(p=>p.role).sort((a,b)=>b.points-a.points), top = players.slice(0,10);
+    const logs = ps.flatMap(p=>(p.chestLog||[]).map(l=>({...l, name:p.name||'（未命名）', pid:p.id}))).sort((a,b)=>b.t-a.t).slice(0,40);
+    const tm = t=>{ const d = new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
+    Admin.ps = ps;
     $('#statBox').innerHTML = `<div class="today"><div>玩家<b>${ps.length}</b></div><div>果盒兌換<b>${box.filter(c=>c.used).length}/${box.length}</b></div><div>分享券使用<b>${share.filter(c=>c.used).length}/${share.length}</b></div></div>
-      <div class="card"><div class="lbl" style="margin-top:0">果友值前 10 名</div><table class="ladder">${top.map((p,i)=>`<tr><td>${i+1}. ${esc(p.name)}</td><td>${LEVELS[lvIndex(p.points)].icon} ${p.points} 分・${p.boxes||0} 盒</td></tr>`).join('') || '<tr><td>還沒有玩家</td></tr>'}</table></div>`;
+      <div class="card"><div class="lbl" style="margin-top:0">果友值前 10 名</div><table class="ladder">${top.map((p,i)=>`<tr class="pl-row" data-pid="${p.id}"><td>${i+1}. ${esc(p.name)}</td><td>${LEVELS[lvIndex(p.points)].icon} ${p.points} 分・${p.boxes||0} 盒 ›</td></tr>`).join('') || '<tr><td>還沒有玩家</td></tr>'}</table></div>
+      <div class="card"><div class="lbl" style="margin-top:0">🎁 最近寶箱紀錄（全部玩家）</div>${logs.length ? `<table class="ladder chlog">${logs.map(l=>`<tr class="pl-row" data-pid="${l.pid}"><td>${tm(l.t)}<br><b>${esc(l.name)}</b></td><td>${esc(l.s)}<br>${esc(l.r)}</td></tr>`).join('')}</table>` : '<p class="sub">還沒有紀錄（這個版本之後開的寶箱才會記錄）</p>'}</div>
+      <div class="card"><div class="lbl" style="margin-top:0">👥 全部玩家（點名字看寶箱、私訊）</div><div class="pl-all">${players.map(p=>`<button class="chip pl-row" data-pid="${p.id}">${LEVELS[lvIndex(p.points)].icon} ${esc(p.name)}</button>`).join('') || '<p class="sub">還沒有玩家</p>'}</div></div>`;
+    $('#statBox').querySelectorAll('.pl-row').forEach(r=>r.onclick=()=>Admin.player(r.dataset.pid));
+  },
+  async player(pid){
+    const p = (Admin.ps||[]).find(x=>x.id===pid); if(!p) return;
+    const tm = t=>new Date(t).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
+    const log = [...(p.chestLog||[])].reverse();
+    let inbox = []; try{ inbox = (await DB.list(`players/${pid}/inbox`)).sort((a,b)=>b.created-a.created).slice(0,5); }catch(e){}
+    openSheet(`<h2 class="h2" style="margin-top:0">${LEVELS[lvIndex(p.points)].icon} ${esc(p.name||'（未命名）')}</h2>
+      <p class="sub">${LEVELS[lvIndex(p.points)].n}・${p.points} 分・${p.boxes||0} 盒・寶箱追逐賽贏 ${p.chaseWins||0} 次</p>
+      <div class="card" style="text-align:left"><b>💬 對這位玩家發言</b><textarea id="pmText" class="field" rows="3" maxlength="200" placeholder="例如：謝謝你常來巡園，下次來農場送你一顆！"></textarea><button id="btnPm" class="btn main">送出私訊</button>
+        ${inbox.length ? `<div class="lvtxt">最近私訊：${inbox.map(m=>`<br>・${tm(m.created)} ${esc(m.text)}（${m.read?'已讀':'未讀'}）`).join('')}</div>` : ''}</div>
+      <div class="card" style="text-align:left"><b>🎁 寶箱紀錄（最近 ${log.length} 筆）</b>${log.length ? `<table class="ladder chlog">${log.map(l=>`<tr><td>${tm(l.t)}</td><td>${esc(l.s)}<br>${esc(l.r)}</td></tr>`).join('')}</table>` : '<p class="sub">還沒有紀錄</p>'}</div>
+      <button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
+    $('#btnPm').onclick = async()=>{ const v = $('#pmText').value.trim(); if(!v){ toast('請輸入內容'); return; }
+      try{ await DB.set(`players/${pid}/inbox/M${Date.now().toString(36)}`, {text:v, created:Date.now(), read:false}); toast('私訊已送出，玩家下次打開遊戲會看到'); Admin.player(pid); }
+      catch(e){ console.error(e); toast('送出失敗：請確認 Firestore 規則已加上 inbox'); } };
   }
 };
 $('#btnAdm').onclick = async()=>{
@@ -2254,6 +2297,8 @@ $('#btnResetDay').onclick = ()=>{ P.daily.ch={}; P.daily.knightMet=false; P.dail
 $('#btnResetDiff').onclick = ()=>{ P.diff={}; Auth.save(); renderAll(); toast('難度都重設為低'); };
 $('#btnSkip').onclick = ()=>{ const T=treeObj(); T.lastDay=shiftDate(T.lastDay,-1); CARE_TASKS.forEach(c=>T.care[c.id]=shiftDate(T.care[c.id],-1)); Auth.save(); renderAll(); toast('樹的時間往前過了 1 天'); };
 $('#btnSkipOld').onclick = ()=>{ if(P.tree){ P.tree.last=0; } P.daily.cares=0; Auth.save(); renderAll(); toast('已跳過等待時間'); };
+$('#btnNotice').onclick = async()=>{ const v = $('#ntText').value.trim(); if(!v){ toast('請輸入公告內容'); return; }
+  await DB.set('config/notice', {id:'N'+Date.now().toString(36), text:v, created:Date.now()}); $('#ntText').value=''; toast('公告已發布'); Admin.stats(); };
 $('#btnFd').onclick = async()=>{ const v=$('#fdText').value.trim(); if(!v){ toast('請輸入貼文內容'); return; } await DB.set('feed/'+'P'+Date.now().toString(36), {text:v, created:Date.now()}); $('#fdText').value=''; toast('貼文已發布'); };
 $('#btnScSave').onclick = async()=>{ const v=$('#scCode').value.trim(); if(!v){ toast('請輸入密語'); return; } await DB.set('config/social', {code:v, wk:weekKey(), updated:Date.now()}); toast('通關密語已更新'); };
 $('#btnPh').onclick = async()=>{
@@ -3700,6 +3745,7 @@ function openEmerald(){
     else if(k==='e' || k==='d'){ const pts = addPts(k==='e'?10:20,'buy'); body = `<p class="sub">${T.icon} ${k.toUpperCase()} 級寶箱：果友值 +${pts}</p>`; }
     else { const cp = grantCoupon({c:'ship', b:'c200', a:'half', z:'free'}[k]), t = COUPON_T.find(x=>x.id===cp.t);
       body = `<p class="sub">${T.icon} ${k.toUpperCase()} 級${c.rare?'珍貴':''}寶箱！</p><div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>${T.n}</b>已放進優惠券（追逐賽獎項不占每週 3 張的名額）</div></div>`; }
+    logChest(`寶箱追逐賽・${c.name}`, !ok ? '被搶走，補償果友值 +3' : (k==='e'||k==='d') ? T.n : `${T.n}（${k.toUpperCase()} 級）`);
     P.chaseWins = (P.chaseWins||0)+1; Auth.save(); renderAll(); curZone = z6;
     const p = await poolToday();
     openSheet(`${chestSvg()}<h2 class="h2 wk">${c.rare?'珍貴寶箱':'寶箱'}到手！</h2><p class="lvtxt">在 ${c.name} 區打開</p>${body}
