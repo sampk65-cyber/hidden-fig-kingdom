@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V5.2</title>
+<title>今天在隱花王國尋寶 V6.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -179,7 +179,7 @@ nav button.on{color:var(--fig);font-weight:700}
 .fert-bk svg{width:34px;height:34px}
 .film-in{position:absolute;top:-8px;left:-4px;z-index:3;border:0;background:var(--card);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);padding:5px 7px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:700;color:#2A1F2D;animation:bkB 1.8s ease-in-out infinite}
 .film-in svg{width:34px;height:27px}
-.ph-badge{cursor:pointer}
+.ph-badge{cursor:pointer}.bd-hint{cursor:pointer}.bd-arrow{animation:bdA 1s ease-in-out infinite}@keyframes bdA{50%{transform:translateX(-3px)}}
 .ph-years{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.ph-years .chip.on,.ph-tabs .chip.on{background:#5B2346;color:#fff;border-color:#5B2346}
 .ph-months{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
 .ph-mon{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;font-size:12px}
@@ -193,7 +193,10 @@ nav button.on{color:var(--fig);font-weight:700}
 .car-info{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;text-align:left}.car-info small{display:block;color:var(--muted);font-size:12px}
 .like-btn{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font-weight:700;white-space:nowrap}.like-btn.on{background:#FCE4EC;border-color:#E8287A;color:#B0195A}.ph-ring{transform-box:fill-box;transform-origin:center;animation:phG 1.3s ease-in-out infinite}
 @keyframes phG{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.45);opacity:.25}}
-.visit-pill{display:table;margin:0 0 8px auto;background:var(--card);border:1.5px solid var(--line);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:700;color:#5B2346}
+.visit-pill{display:table;margin:0 0 8px auto;background:var(--card);border:1.5px solid var(--gold);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:700;color:var(--ink)}
+#lvCard{position:relative}.lv-ver{position:absolute;top:10px;right:16px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.dx.gev small.gv{display:block;font-size:11px;color:var(--muted);margin-top:2px}.dx.gev small.gv i{font-style:normal;color:#fff;border-radius:6px;padding:0 5px;margin-right:2px}
+.copy{text-align:center;font-size:11px;color:var(--muted);letter-spacing:.04em;margin:14px 0 6px}
 .fert-bk.on{animation:none;outline:2px solid var(--leaf)}
 @keyframes bkB{50%{transform:translateY(-4px) rotate(-6deg)}}
 .fert-layer{position:absolute;inset:0;z-index:2;touch-action:none;overflow:hidden;border-radius:14px}
@@ -582,10 +585,11 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div>今日寶箱<b id="tdChest">0/3</b></div>
       <div>連續登入<b id="tdStreak">1 天</b></div>
     </div>
-    <p class="sub tip">點溫室巡園尋寶，每棵樹每天找一次；沒體力就幫忙照顧溫室。</p>
+    <p class="sub tip">點溫室巡園尋寶，每棵樹每天找一次；能量用完了，就幫忙照顧溫室補充能量。</p>
     <div class="card story" id="storyBox"></div>
     <div class="card" id="feedBox"></div>
     <div class="card" id="famBox"></div>
+    <p class="copy">Copyright © 2026 Sam pksun. All rights reserved.</p>
   </div>
 
   <!-- 運動 -->
@@ -596,8 +600,8 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <div id="treeBox"></div>
    </div>
    <div id="routeActive">
-    <h2 class="h2 wk">今天走一走，換體力</h2>
-    <p class="sub" id="moveSub">每走 1000 步換 1 點體力，最多加 10 點。</p>
+    <h2 class="h2 wk">走路鍛鍊體力，換能量</h2>
+    <p class="sub" id="moveSub">每走 1000 步換 1 點能量，最多加 10 點。</p>
     <div id="ringBox"></div>
     <button id="btnPed" class="btn main">開始計步</button>
     <div class="goals" style="margin-top:14px" id="goalBox"></div>
@@ -660,7 +664,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <button id="btnResetDay" class="btn ghost" style="margin:0 0 10px">重置今天的挑戰、黑騎士、小任務</button>
       <button id="btnResetDiff" class="btn ghost" style="margin:0 0 10px">所有遊戲難度重設為「低」</button>
       <p class="sub" style="margin:4px 0 8px">上線前把程式開頭的 TEST_TOOLS 改成 false 就會隱藏。</p>
-      <button id="btnFill" class="btn ghost" style="margin:0">補滿今天的體力</button>
+      <button id="btnFill" class="btn ghost" style="margin:0">補滿今天的能量</button>
       <button id="btnNewDay" class="btn ghost">模擬隔天登入</button>
     </div>
     <div class="card">
@@ -827,9 +831,10 @@ const FIREBASE_CONFIG = {
   messagingSenderId: "848960130762",
   appId: "1:848960130762:web:09af10cd6490f260fd2e33"
 };
-// ② 測試工具（補滿體力、模擬隔天）。正式上線改成 false
+// ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
+const APP_VERSION = 'V6.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -965,7 +970,7 @@ const ROLE_BASE = {
   awu:{n:'阿無',            perk:'知識卡答對多 3 點果友值'},
   robot:{n:'苔蘚古機器人',  perk:'每天第一棵樹必出寶箱'},
   hero:{n:'英雄',           perk:'守護寶物，黑騎士搶不走'},
-  apo:{n:'ㄚ波',            perk:'體力用完時，每天還能多找 1 棵樹'},
+  apo:{n:'ㄚ波',            perk:'能量用完時，每天還能多找 1 棵樹'},
   knight:{n:'黑騎士',       perk:'寶箱機率 +3%，自己人不會被搶'},
   cat:{n:'小呱',            perk:'晚上 6 點到早上 6 點，寶箱機率 +6%'},
   teddy:{n:'碰氣',          perk:'稀有收藏更容易發現'},
@@ -976,7 +981,7 @@ const ROLE_BASE = {
   poodle:{n:'小雪',         perk:'黏人精：家人挑戰賽親密值多 20%'},
   golden:{n:'golden',       perk:'尋回高手：寶箱追逐賽每個寶箱多 3 秒'},
   shiba:{n:'柴柴',          perk:'眼明手快：摘果挑戰賽熟果停留多 20%'},
-  bunny:{n:'邦尼',          perk:'抱抱充電：每天多 1 點體力，可以多巡一棵樹'}
+  bunny:{n:'邦尼',          perk:'抱抱充電：每天多 1 點能量，可以多巡一棵樹'}
 };
 // 16 個角色，各不重複
 const ROLES = ['awu_f:awu:f','alien_m:alien:m','robot_m:robot:m','hero:hero:','apo:apo:','knight_m:knight:m','cat:cat:','teddy:teddy:','dog:dog:','kiki:kiki:','turtle:turtle:','hen:hen:','poodle:poodle:','golden:golden:','shiba:shiba:','bunny:bunny:']
@@ -1002,7 +1007,7 @@ const TOOLS = [
   {id:'lens',  n:'放大鏡', icon:'🔍', eff:t=>`寶箱機率 +${[0,4,8,12,18][t]}%`},
   {id:'shears',n:'採果剪', icon:'✂️', eff:t=>`開出好券的機會 +${[0,3,6,9,12][t]}%`},
   {id:'basket',n:'採果籃', icon:'🧺', eff:t=>`巡園果友值 ×${[1,1.2,1.4,1.6,2][t]}`},
-  {id:'shoes', n:'運動鞋', icon:'👟', eff:t=>`每 ${[1000,900,800,700,600][t]} 步換 1 體力`}
+  {id:'shoes', n:'運動鞋', icon:'👟', eff:t=>`每 ${[1000,900,800,700,600][t]} 步換 1 能量`}
 ];
 
 // 優惠券：權重依等級（9折, 85折, 8折, 免運, 免單）
@@ -1600,7 +1605,7 @@ function startHome(){
   if(newDay){
     const got = addPts(2); Auth.save(); renderHud();
     openSheet(`<div class="big pop">🌅</div><h2 class="h2 wk">早安，${esc(P.name)}</h2>
-      <p class="sub">${P.guest?'訪客模式不會累積果友值。':`簽到 +${got} 果友值，連續登入第 ${P.streak} 天。`}<br>今天有 ${stamina()} 點體力，去走走可以再多換一些。<br>⚔️ 黑騎士今天佔領了<b>${kzName()}溫室</b>。守護者，用無花果和好話感化他，就能搶回寶箱！</p>
+      <p class="sub">${P.guest?'訪客模式不會累積果友值。':`簽到 +${got} 果友值，連續登入第 ${P.streak} 天。`}<br>今天有 ${stamina()} 點能量，出門走走鍛鍊體力，可以再多換一些。<br>⚔️ 黑騎士今天佔領了<b>${kzName()}溫室</b>。守護者，用無花果和好話感化他，就能搶回寶箱！</p>
       <button class="btn main" onclick="closeSheet()">開始尋寶</button>`, true);
   }
 }
@@ -1645,6 +1650,18 @@ function zBadge(z, x, y, col, txt){
   const core = `${nw?`<circle class="ph-ring" cx="${x}" cy="${y}" r="13" fill="#F2C230"/>`:''}<circle cx="${x}" cy="${y}" r="11" fill="${col}" ${has?'stroke="#F2C230" stroke-width="2.5"':''}/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="8" fill="#fff">${txt}</text>`;
   return has ? `<g class="ph-badge" data-pz="${z.id}" role="button" aria-label="${z.n}真實場景照片${nw?'（有新照片）':''}"><circle cx="${x}" cy="${y}" r="18" fill="transparent"/>${core}${nw?`<text x="${x}" y="${y-16}" text-anchor="middle" font-size="9">✨</text>`:''}</g>` : core;
 }
+// V5.9：翡翠溫室徽章旁的跑馬燈提示（看過一次照片後就收起）
+function badgeHint(){
+  if(P.badgeHintDone) return '';
+  const z = ZONES.find(x=>x.emerald), has = (PHOTO_N[z.id]||0)>0, bx = z.x+56, by = z.y-10;
+  const t = (has ? '點數字看實景照片・數字是今天找寶箱的次數・' : '數字是今天在這座溫室找寶箱的次數・');
+  const w = [...t].reduce((a,c)=>a + (c.charCodeAt(0)>255 ? 9 : 5), 0), x0 = bx+16, pw = 344-x0;
+  return `<g class="bd-hint" role="button" aria-label="${t}"><clipPath id="bdClip"><rect x="${x0+12}" y="${by-9}" width="${pw-16}" height="18"/></clipPath>
+    <rect x="${x0}" y="${by-11}" width="${pw}" height="22" rx="11" fill="#2A1F2D" opacity=".88"/>
+    <g class="bd-arrow"><path d="M${x0+3} ${by} l7 -5 v10z" fill="#F2C230"/></g>
+    <g clip-path="url(#bdClip)"><g><text x="${x0+14}" y="${by+3.5}" font-size="9" font-weight="700" fill="#fff">${t}${t}</text>
+      <animateTransform attributeName="transform" type="translate" from="0 0" to="${-w} 0" dur="${Math.round(w/18)}s" repeatCount="indefinite"/></g></g></g>`;
+}
 function newPhotoToast(){ const z = ZONES.filter(z=>phNew(z.id)); if(z.length) toast(`🎞️ ${z.map(x=>x.n).join('、')}有新的實景照片，點溫室上發光的數字看看`, 3600); }
 function renderMap(){
   const pathD = 'M180 560 C150 520 70 510 92 470 C112 432 280 440 270 402 C258 362 90 372 96 322 C102 282 270 296 264 246 C258 204 96 214 104 170 C110 130 178 140 180 74';
@@ -1678,6 +1695,7 @@ function renderMap(){
     <path id="mapPath" d="${pathD}" fill="none" stroke="none"/>
     <text x="180" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">金葉小徑・從大門出發</text>
     ${nodes}
+    ${badgeHint()}
     ${knightMark()}
     ${chMark()}
     <text x="300" y="44" font-size="30" text-anchor="middle">${chapter().icon}</text>
@@ -1688,6 +1706,7 @@ function renderMap(){
     n.onclick=()=>walkTo(n.dataset.z);
     n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();walkTo(n.dataset.z);}};
   });
+  const bh = $('#mapSvg').querySelector('.bd-hint'); if(bh) bh.onclick = e=>{ e.stopPropagation(); const z = ZONES.find(x=>x.emerald); if((PHOTO_N[z.id]||0)>0) openPhotos(z.id); else { P.badgeHintDone = true; Auth.save(); renderMap(); toast('溫室上的數字＝今天在這座溫室找寶箱的次數'); } };
   $('#mapSvg').querySelectorAll('.ph-badge').forEach(n=>n.onclick=e=>{ e.stopPropagation(); openPhotos(n.dataset.pz); });
   placeMe();
 }
@@ -1745,7 +1764,7 @@ function openZone(zid){
   const fx = {dry:helpOpen(zid,'water'), bud:helpOpen(zid,'bud'), weed:helpOpen(zid,'weed'), feed:helpOpen(zid,'feed')};
   const done = fxDone; fxDone = null;
   openSheet(`<h2 class="h2 wk" style="margin-top:0">${curZone.emerald?'翡翠溫室・':''}${curZone.n}</h2>
-    <p class="sub">目前階段：<b style="color:${STAGE[curZone.stage].c}">${curZone.stage}</b>，寶箱機會 ×${STAGE[curZone.stage].mult}。剩餘體力 ⚡${stamina()}</p>
+    <p class="sub">目前階段：<b style="color:${STAGE[curZone.stage].c}">${curZone.stage}</b>，寶箱機會 ×${STAGE[curZone.stage].mult}。剩餘能量 ⚡${stamina()}</p>
     ${helpHtml(zid)}
     <div class="trees-wrap${done?' fx-'+done:''}" id="treesWrap">${PHOTO_N[zid]>0?`<button class="film-in" id="btnZPh" aria-label="${curZone.n}真實場景照片">${FILM_SVG}<span>真實場景</span></button>`:''}${fx.feed?`<button class="fert-bk" id="fertBk" aria-label="施肥桶">${BUCKET_SVG}<span id="fertN">施肥</span></button><div class="fert-layer hide" id="fertLayer"></div>`:''}
     <div class="trees">${Array.from({length:TREES_N},(_,i)=>`<button class="tree ${tapped.includes(i)?'tapped':''} ${fx.dry?'dry':''}" data-i="${i}" aria-label="第 ${i+1} 棵樹">${treeSvg(curZone.stage,i,fx)}${res[i]?`<span class="res">${res[i]}</span>`:''}</button>`).join('')}</div></div>
@@ -1757,7 +1776,7 @@ function openZone(zid){
 }
 /* ---------- 今日劇情：依時段推進，五步完成送劇情寶箱 ---------- */
 const CHAPTERS = [
-  {from:5,  to:9,  icon:'🌅', t:'清晨・晨露巡園', p:'阿無揉揉眼睛醒來，溫室裡的果子掛滿露水。先報到，再出門走一走，體力會多一些。'},
+  {from:5,  to:9,  icon:'🌅', t:'清晨・晨露巡園', p:'阿無揉揉眼睛醒來，溫室裡的果子掛滿露水。先報到，再出門走一走鍛鍊體力，能量會多一些。'},
   {from:9,  to:12, icon:'☀️', t:'上午・採收時間', p:'碰氣在一期跳來跳去，說今天的果子特別甜。產季的溫室，寶箱比較多。'},
   {from:12, to:17, icon:'🛸', t:'午後・外星訪客', p:'一艘飛碟停在翡翠溫室屋頂。外星人探出頭說：聽說這裡的無花果，好吃到銀河都知道。'},
   {from:17, to:19, icon:'🌇', t:'傍晚・黑騎士出沒', p:'天色暗了，黑騎士在金葉小徑上徘徊，想搶走大家的寶箱。英雄和ㄚ波飛出去巡邏。'},
@@ -1813,7 +1832,7 @@ function renderLevel(){
   const lv = lvIndex(P.points||0), L = LEVELS[lv], N = LEVELS[lv+1];
   const pct = N ? Math.min(100,(P.points-L.min)/(N.min-L.min)*100) : 100;
   const gr = GUARD_RANKS[guardRank()].n;
-  $('#lvCard').innerHTML = `<div class="lv-row"><div class="lv-ic">${L.icon}</div><div style="flex:1;min-width:0">
+  $('#lvCard').innerHTML = `<span class="lv-ver">${APP_VERSION}</span><div class="lv-row"><div class="lv-ic">${L.icon}</div><div style="flex:1;min-width:0">
       <div class="lv-n">${L.n}</div>
       <div class="bar bigbar"><i style="width:${pct}%"></i></div>
       <div class="lvtxt"><b class="em">${P.points}</b> 分${N?`・再 <b class="rose">${N.min-P.points}</b> 分升${N.n}`:'・最高等級'}</div></div></div>
@@ -1924,7 +1943,7 @@ function renderMove(){
   const st = effSteps(), per = stepPer();
   const earned = Math.min(STEP_STAMINA_MAX, Math.floor(st/per));
   const frac = Math.min(1, st/10000), R=80, C=2*Math.PI*R;
-  $('#moveSub').textContent = `每走 ${per} 步換 1 點體力，最多加 ${STEP_STAMINA_MAX} 點。目前已換 ${earned} 點。`;
+  $('#moveSub').textContent = `每走 ${per} 步換 1 點能量，最多加 ${STEP_STAMINA_MAX} 點。目前已換 ${earned} 點。`;
   $('#ringBox').innerHTML = `<svg class="ring" viewBox="0 0 190 190"><circle cx="95" cy="95" r="${R}" stroke="var(--line)" stroke-width="14" fill="none"/>
     <circle cx="95" cy="95" r="${R}" stroke="var(--leaf)" stroke-width="14" fill="none" stroke-linecap="round" stroke-dasharray="${C*frac} ${C}" transform="rotate(-90 95 95)"/>
     <text x="95" y="92" text-anchor="middle" font-size="34" font-weight="900" fill="var(--ink)">${st.toLocaleString()}</text>
@@ -2069,7 +2088,7 @@ function renderMe(){
   $('#testCard').classList.toggle('hide', !TEST_TOOLS);
 }
 $('#btnEdit').onclick = ()=>openCreate();
-$('#btnFill').onclick = ()=>{ P.daily.used=0; P.daily.manual=6000; Auth.save(); renderAll(); toast('體力已補滿'); };
+$('#btnFill').onclick = ()=>{ P.daily.used=0; P.daily.manual=6000; Auth.save(); renderAll(); toast('能量已補滿'); };
 $('#btnNewDay').onclick = ()=>{ P.lastDay=yesterday(); P.daily=null; startHome(); };
 
 /* =========================================================
@@ -2625,7 +2644,10 @@ const BADGES = [
   {id:'whitefly', i:WF_SVG, n:'清除粉蝨'}, {id:'heat', i:'🔥', n:'化解高溫'}, {id:'drought', i:'🏜️', n:'化解乾旱'},
   {id:'wind', i:'🌪️', n:'抵擋強風'}, {id:'rain', i:'🌧️', n:'排除豪雨'}, {id:'rust', i:'🍂', n:'清除銹病'}, {id:'myna', i:MYNA_SVG, n:'送走八哥'}
 ];
-function seen(id){ P.seen = P.seen||[]; if(!P.seen.includes(id)) P.seen.push(id); }
+function seen(id){ P.seen = P.seen||[]; if(!P.seen.includes(id)) P.seen.push(id); if(BADGES.some(b=>b.id===id)){ P.gev = P.gev||{}; P.gev[id] = gevN(id)+1; } }
+// V6.6：守護事件次數與等級：低級 3 次升中級，中級再 5 次升高級，高級之後一直累計
+function gevN(id){ const n = (P.gev||{})[id]; return n!=null ? n : ((P.seen||[]).includes(id) ? 1 : 0); }
+function gevLv(n){ return n>=8 ? {n:'高級', c:'#C99A2E', next:null} : n>=3 ? {n:'中級', c:'#3E7FC4', next:8, need:8-n, from:3, span:5} : {n:'低級', c:'#3E9A3A', next:3, need:3-n, from:0, span:3}; }
 function tryRare(base){
   P.rares = P.rares||[];
   const left = RARES.filter(r=>!P.rares.includes(r.id));
@@ -2644,9 +2666,14 @@ function renderDex(){
       <div class="dex">${RARES.map(r=>rares.includes(r.id)?`<button class="dx on" data-r="${r.id}"><b>${r.i}</b>${r.n}</button>`:`<div class="dx"><b>？</b>還沒發現</div>`).join('')}</div>
       ${claimR?'<button class="btn main" id="btnDexR">全部找到！領寶箱</button>':''}</div>
     <div class="card"><div class="lbl" style="margin-top:0">🛡️ 守護事件 ${BADGES.filter(b=>sn.includes(b.id)).length}/${BADGES.length}</div><p class="lvtxt" style="margin:2px 0 8px">天氣不同，遇到的挑戰也不同，慢慢都會碰到。</p>
-      <div class="dex">${BADGES.map(b=>`<div class="dx ${sn.includes(b.id)?'on':''}"><b>${sn.includes(b.id)?b.i:'？'}</b>${sn.includes(b.id)?b.n:'還沒遇到'}</div>`).join('')}</div></div>`;
+      <div class="dex">${BADGES.map(b=>{ if(!sn.includes(b.id)) return `<div class="dx"><b>？</b>還沒遇到</div>`; const n = gevN(b.id), L = gevLv(n);
+        return `<button class="dx on gev" data-g="${b.id}"><b>${b.i}</b>${b.n}<small class="gv"><i style="background:${L.c}">${L.n}</i> ${n} 次</small></button>`; }).join('')}</div></div>`;
   $('#dexBox').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ const q=QUIZ[+b.dataset.q]; openSheet(`<div class="big">📖</div><h2 class="h2 wk">${q.q}</h2><p class="sub"><b>${q.a}</b><br>${q.tip}</p><button class="btn main" onclick="closeSheet()">好</button>`, true); });
   $('#dexBox').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ const r=RARES.find(x=>x.id===b.dataset.r); openSheet(`<div class="big">${r.i}</div><h2 class="h2 wk">${r.n}</h2><p class="sub">${r.d}</p><button class="btn main" onclick="closeSheet()">好</button>`, true); });
+  $('#dexBox').querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{ const g = BADGES.find(x=>x.id===b.dataset.g), n = gevN(g.id), L = gevLv(n), pct = L.next ? Math.round((n-L.from)/L.span*100) : 100;
+    openSheet(`<div class="big">${g.i}</div><h2 class="h2 wk">${g.n}</h2><p class="sub">已守護 <b>${n}</b> 次・目前 <b style="color:${L.c}">${L.n}</b></p>
+      <div class="bar bigbar"><i style="width:${pct}%"></i></div><p class="lvtxt">${L.next ? `再 <b>${L.need}</b> 次升${L.n==='低級'?'中級':'高級'}` : '已是最高等級，之後每次守護都會繼續累計'}</p>
+      <p class="lvtxt">低級守護 3 次升中級；中級再守護 5 次升高級。</p><button class="btn main" onclick="closeSheet()">好</button>`, true); });
   const bc=$('#btnDexC'); if(bc) bc.onclick=()=>{ P.dexC=true; const pts=addPts(10,'buy'); const c=makeCoupon(); Auth.save(); renderAll(); curZone=curZone||ZONES[0]; chestOpen(c,pts,true); };
   const br=$('#btnDexR'); if(br) br.onclick=()=>{ P.dexR=true; const pts=addPts(10,'buy'); const c=makeCoupon(); Auth.save(); renderAll(); curZone=curZone||ZONES[0]; chestOpen(c,pts,true); };
 }
@@ -3962,7 +3989,7 @@ const PRACTICE_LIST = [
 ];
 function playMenu(){
   const tired = stamina()<=0;
-  openSheet(`<div class="big">🎮</div><h2 class="h2">${tired?`${esc(P.name)}，您是不是沒走路運動，體力值消失了，好無聊🤭呀！`:`${esc(P.name)}，想放鬆一下嗎？`}</h2>
+  openSheet(`<div class="big">🎮</div><h2 class="h2">${tired?`${esc(P.name)}，您是不是沒走路鍛鍊體力，能量用完了，好無聊🤭呀！`:`${esc(P.name)}，想放鬆一下嗎？`}</h2>
     <p class="sub">好的，您想玩什麼遊戲？（練習模式，不會增加任何數值）</p>
     <div class="play-list">${PRACTICE_LIST.map(g=>`<button data-g="${g.k}"><b>${g.i}</b>${g.n}</button>`).join('')}</div>
     <button class="btn ghost" onclick="closeSheet()">先不要</button>`, true);
@@ -3983,9 +4010,9 @@ function practiceEnd(k, ok, detail){
   $('#pAgain').onclick = ()=>practice(k); $('#pMenu').onclick = playMenu;
 }
 
-/* ---------- 溫室幫忙：澆水／打芽／除草／施肥，跟我的樹同樣節奏；越少出現的工作換越多體力；各溫室開放日隨機錯開 ---------- */
+/* ---------- 溫室幫忙：澆水／打芽／除草／施肥，跟我的樹同樣節奏；越少出現的工作換越多能量；各溫室開放日隨機錯開 ---------- */
 const HELP_TASKS = CARE_TASKS.map(c=>({...c, gain:{water:1, bud:2, weed:3, feed:4}[c.id]}));
-// V5.2：每位玩家、每座溫室、每種工作有固定的隨機起始日，工作輪流在不同溫室開放；錯過的不累積，不會一次領到大量體力
+// V5.2：每位玩家、每座溫室、每種工作有固定的隨機起始日，工作輪流在不同溫室開放；錯過的不累積，不會一次領到大量能量
 function helpLeft(zid, c){
   const D = Math.floor(Date.parse(today())/864e5);
   const p = Math.floor(seedRand('h'+(P.rtok||P.created||'')+zid+c.id)()*c.every);
@@ -4009,14 +4036,14 @@ function fertMode(zid){
 }
 function helpHtml(zid){
   const H = (P.help = P.help || {})[zid] || {};
-  return `<div class="help"><div class="lbl" style="margin:0 0 6px">🤝 幫忙照顧，換體力</div><div class="ctasks">${HELP_TASKS.map(c=>{ const done = H[c.id]===today(), left = helpLeft(zid, c), ok = !done && left===0;
+  return `<div class="help"><div class="lbl" style="margin:0 0 6px">🤝 幫忙照顧溫室，換能量</div><div class="ctasks">${HELP_TASKS.map(c=>{ const done = H[c.id]===today(), left = helpLeft(zid, c), ok = !done && left===0;
     return `<button class="ctask ${ok?'due':''}" data-h="${c.id}" ${ok?'':'disabled'}><b>${c.i}</b><span>${c.n}</span><small>${ok?`⚡+${c.gain}`:done?(c.every===1?'明天':`${c.every} 天後`):`${left} 天後`}</small></button>`; }).join('')}</div></div>`;
 }
 function doHelp(zid, id){
   const c = HELP_TASKS.find(x=>x.id===id), H = (P.help = P.help || {})[zid] = (P.help[zid] || {});
   if(H[id]===today() || helpLeft(zid, c)>0) return;
   H[id] = today(); P.daily.careSt = (P.daily.careSt||0) + c.gain; P.helpN = (P.helpN||0)+1; fxDone = id;
-  SND.good(c.gain*2); Auth.save(); renderAll(); toast(`${c.i} 幫忙${c.n}完成！體力 +${c.gain}`); openZone(zid);
+  SND.good(c.gain*2); Auth.save(); renderAll(); toast(`${c.i} 幫忙${c.n}完成！能量 +${c.gain}`); openZone(zid);
 }
 /* ---------- 王國造訪人次：每次開啟遊戲累積一次 ---------- */
 async function countVisit(){
@@ -4028,7 +4055,7 @@ async function countVisit(){
       const s = await DB.get('stats/visits'); n = (s&&s.n)||0; }
     sessionStorage.setItem('hfk_visit','1');
   }catch(e){ return; }
-  const el = $('#visitPill'); if(el && n){ el.textContent = `👣 王國累計造訪 ${n.toLocaleString()} 人次`; el.classList.remove('hide'); }
+  const el = $('#visitPill'); if(el && n){ el.textContent = `👣 王國人氣指數・累計造訪 ${n.toLocaleString()} 人次`; el.classList.remove('hide'); }
 }
 
 /* ---------- 溫室真實場景照片（後台上傳、玩家在地圖點 🎞️ 查看） ---------- */
@@ -4044,7 +4071,7 @@ function phNorm(p){ return {...p, ym: p.ym || ymOf(p.created||Date.now()), likes
 // V5.8：玩家看最新月份（自動輪播、可按讚），另有「最多讚」排行
 async function openPhotos(zid){
   const z = ZONES.find(x=>x.id===zid);
-  if(P && phNew(zid)){ P.phSeen = {...(P.phSeen||{}), [zid]: phKey(zid)}; Auth.save(); if(typeof renderMap==='function') renderMap(); }
+  if(P && (phNew(zid) || !P.badgeHintDone)){ P.phSeen = {...(P.phSeen||{}), [zid]: phKey(zid)}; P.badgeHintDone = true; Auth.save(); if(typeof renderMap==='function') renderMap(); }
   openSheet(`<h2 class="h2" style="margin-top:0">🎞️ ${z.n}・真實場景</h2><div id="phView"><p class="sub">讀取照片中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
   let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).map(phNorm).sort((a,b)=>b.created-a.created); }catch(e){}
   const box = $('#phView'); if(!box) return;
