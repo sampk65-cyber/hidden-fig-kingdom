@@ -179,6 +179,8 @@ nav button.on{color:var(--fig);font-weight:700}
 .fert-bk svg{width:34px;height:34px}
 .film-in{position:absolute;top:-8px;left:-4px;z-index:3;border:0;background:var(--card);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);padding:5px 7px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:700;color:#2A1F2D;animation:bkB 1.8s ease-in-out infinite}
 .film-in svg{width:34px;height:27px}
+.ph-badge{cursor:pointer}.ph-ring{transform-box:fill-box;transform-origin:center;animation:phG 1.3s ease-in-out infinite}
+@keyframes phG{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.45);opacity:.25}}
 .visit-pill{display:table;margin:0 0 8px auto;background:var(--card);border:1.5px solid var(--line);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:700;color:#5B2346}
 .fert-bk.on{animation:none;outline:2px solid var(--leaf)}
 @keyframes bkB{50%{transform:translateY(-4px) rotate(-6deg)}}
@@ -1576,7 +1578,7 @@ function stamina(){ return BASE_STAMINA + (roleBase(P.role)==='bunny' ? 1 : 0) +
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
 function startHome(){
   P.route = P.route || 'active';
-  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard();
+  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard(); if(!newDay) setTimeout(newPhotoToast, 1500);
   if(newDay){
     const got = addPts(2); Auth.save(); renderHud();
     openSheet(`<div class="big pop">🌅</div><h2 class="h2 wk">早安，${esc(P.name)}</h2>
@@ -1617,6 +1619,15 @@ document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
 });
 
 /* ---------- 王國地圖 ---------- */
+// V5.7：溫室右上的數字徽章＝實景入口；有照片時金框，有新照片時發光
+function phKey(zid){ return `${PHOTO_N[zid]||0}-${PHOTO_N['t_'+zid]||0}`; }
+function phNew(zid){ return (PHOTO_N[zid]||0)>0 && ((P.phSeen||{})[zid]||'') !== phKey(zid); }
+function zBadge(z, x, y, col, txt){
+  const has = (PHOTO_N[z.id]||0)>0, nw = has && phNew(z.id);
+  const core = `${nw?`<circle class="ph-ring" cx="${x}" cy="${y}" r="13" fill="#F2C230"/>`:''}<circle cx="${x}" cy="${y}" r="11" fill="${col}" ${has?'stroke="#F2C230" stroke-width="2.5"':''}/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="8" fill="#fff">${txt}</text>`;
+  return has ? `<g class="ph-badge" data-pz="${z.id}" role="button" aria-label="${z.n}真實場景照片${nw?'（有新照片）':''}"><circle cx="${x}" cy="${y}" r="18" fill="transparent"/>${core}${nw?`<text x="${x}" y="${y-16}" text-anchor="middle" font-size="9">✨</text>`:''}</g>` : core;
+}
+function newPhotoToast(){ const z = ZONES.filter(z=>phNew(z.id)); if(z.length) toast(`🎞️ ${z.map(x=>x.n).join('、')}有新的實景照片，點溫室上發光的數字看看`, 3600); }
 function renderMap(){
   const pathD = 'M180 560 C150 520 70 510 92 470 C112 432 280 440 270 402 C258 362 90 372 96 322 C102 282 270 296 264 246 C258 204 96 214 104 170 C110 130 178 140 180 74';
   let leaves=''; [[30,90],[330,150],[24,250],[338,330],[28,410],[332,500],[60,540]].forEach(([x,y],i)=>{
@@ -1631,7 +1642,7 @@ function renderMap(){
       <path d="M${z.x-62} ${z.y+4} Q${z.x} ${z.y-30} ${z.x+62} ${z.y+4}" stroke="#7FE0BF" stroke-width="2" fill="none"/>
       <rect x="${z.x-46}" y="${z.y+38}" width="92" height="24" rx="12" fill="#fff"/>
       <text x="${z.x}" y="${z.y+55}" text-anchor="middle" font-size="13" font-weight="700" fill="#14735A">翡翠溫室・五期</text>
-      <circle cx="${z.x+56}" cy="${z.y-10}" r="11" fill="${st.c}"/><text x="${z.x+56}" y="${z.y-7}" text-anchor="middle" font-size="8" fill="#fff">${tapped}/10</text></g>`;
+      ${zBadge(z, z.x+56, z.y-10, st.c, `${tapped}/10`)}</g>`;
     return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${z.n}溫室，${z.stage}">
       <ellipse cx="${z.x}" cy="${z.y+18}" rx="40" ry="7" fill="#0002"/>
       <path d="M${z.x-36} ${z.y+16} L${z.x-36} ${z.y-2} Q${z.x} ${z.y-34} ${z.x+36} ${z.y-2} L${z.x+36} ${z.y+16}Z" fill="#F5FAF2" stroke="#8FB087" stroke-width="2"/>
@@ -1639,7 +1650,7 @@ function renderMap(){
       <rect x="${z.x-34}" y="${z.y+24}" width="68" height="22" rx="11" fill="#fff"/>
       <text x="${z.x-8}" y="${z.y+39}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1F2D">${z.n}</text>
       <text x="${z.x+18}" y="${z.y+39}" text-anchor="middle" font-size="10" fill="${st.c}" font-weight="700">${z.stage}</text>
-      <circle cx="${z.x+34}" cy="${z.y-8}" r="11" fill="${st.c}"/><text x="${z.x+34}" y="${z.y-5}" text-anchor="middle" font-size="8" fill="#fff">${tapped}/${TREES_N}</text></g>`;
+      ${zBadge(z, z.x+34, z.y-8, st.c, `${tapped}/${TREES_N}`)}</g>`;
   }).join('');
   $('#mapSvg').innerHTML = `<svg viewBox="0 0 360 580" aria-label="隱花王國地圖">
     <rect width="360" height="580" fill="var(--map)"/>${leaves}
@@ -1651,7 +1662,6 @@ function renderMap(){
     ${nodes}
     ${knightMark()}
     ${chMark()}
-    ${filmMarks()}
     <text x="300" y="44" font-size="30" text-anchor="middle">${chapter().icon}</text>
     <g id="mapMe"><g class="me-bob"><g class="me-flip"><g transform="translate(-25 -60) scale(.42)">${avatar(P.role,P.mat,P.color).replace(/^<svg[^>]*>|<\/svg>$/g,'')}</g></g></g></g>
   </svg>`;
@@ -1660,7 +1670,7 @@ function renderMap(){
     n.onclick=()=>walkTo(n.dataset.z);
     n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();walkTo(n.dataset.z);}};
   });
-  $('#mapSvg').querySelectorAll('.film-node').forEach(n=>n.onclick=e=>{ e.stopPropagation(); openPhotos(n.dataset.fz); });
+  $('#mapSvg').querySelectorAll('.ph-badge').forEach(n=>n.onclick=e=>{ e.stopPropagation(); openPhotos(n.dataset.pz); });
   placeMe();
 }
 // 主角在金葉小徑上：平常呆呆地晃，點溫室就搖搖擺擺走過去
@@ -2215,7 +2225,7 @@ $('#btnPh').onclick = async()=>{
       const url = await st.getDownloadURL(st.ref(st.S, path));
       await DB.set(`zonephotos/${zid}/items/${id}`, {url, path, cap, size:blob.size, created:Date.now()});
     }
-    const c = await DB.get('config/photos') || {}; c[zid] = (c[zid]||0)+1; await DB.set('config/photos', c);
+    const c = await DB.get('config/photos') || {}; c[zid] = (c[zid]||0)+1; c['t_'+zid] = Date.now(); await DB.set('config/photos', c);
     toast('照片已上傳'); $('#phFile').value=''; $('#phCap').value=''; Admin.photo();
   }catch(e){ console.error(e); toast(e.st ? '上傳到 Storage 失敗：請確認已升級 Blaze、已啟用 Storage 並發布 Storage 規則' : '上傳失敗，請換一張照片再試', 5000); }
   $('#btnPh').disabled = false; $('#btnPh').textContent = '上傳';
@@ -3675,7 +3685,6 @@ function openEmerald(){
     for(let i=0;i<5;i++) [['A',-1.15],['B',1.15]].forEach(([n,x])=>items.push({x, z:i*EM_ZL+1.2, k:'sign', n:n+(i+1)}));
     const tapped = (P.daily.tapped && P.daily.tapped[z6.id]) || [];
     SPARKS.forEach(s=>{ if(!tapped.includes(s.idx)) items.push({x:s.x, z:s.z, k:'spark', s}); });
-    if(PHOTO_N[z6.id]>0) for(let i=0;i<5;i++) items.push({x:1.6, z:i*EM_ZL+6, k:'film'});   // V5.6：走道旁的底片看板，點了看真實場景
     if(EM.chase) EM.chase.chests.forEach(c=>{ if(c.alive) items.push({x:c.x, z:c.z, k:'chest', c}); }); EM.chestHit = []; EM.filmHit = [];
     items.sort((a,b)=>b.z-a.z); EM.spark = [];
     for(const it of items){
@@ -4002,6 +4011,7 @@ function filmMarks(){
 }
 async function openPhotos(zid){
   const z = ZONES.find(x=>x.id===zid);
+  if(P && phNew(zid)){ P.phSeen = {...(P.phSeen||{}), [zid]: phKey(zid)}; Auth.save(); if(typeof renderMap==='function') renderMap(); }
   openSheet(`<h2 class="h2" style="margin-top:0">🎞️ ${z.n}・真實場景</h2><div id="phView"><p class="sub">讀取照片中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
   let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).sort((a,b)=>b.created-a.created); }catch(e){}
   $('#phView').innerHTML = items.length ? items.map(p=>`<figure class="ph"><img src="${p.url||p.data}" alt="${esc(p.cap||z.n+'溫室照片')}" loading="lazy"><figcaption>${esc(p.cap||'')}<span>${new Date(p.created).toLocaleDateString('zh-TW')}</span></figcaption></figure>`).join('') : '<p class="sub">這座溫室還沒有照片。</p>';
@@ -4055,7 +4065,7 @@ new MutationObserver(ms=>{ if(ms.some(m=>[...m.addedNodes].some(n=>/Ov$/.test(n.
 /* ---------- V5.5：溫室照片數量，回到畫面時自動更新 ---------- */
 async function refreshPhotos(){
   if(DEMO || !fb || Date.now() - (refreshPhotos.t||0) < 60000) return; refreshPhotos.t = Date.now();
-  try{ const n = await DB.get('config/photos') || {}; if(JSON.stringify(n)!==JSON.stringify(PHOTO_N)){ PHOTO_N = n; if(P && $('#home').classList.contains('on')) renderMap(); } }catch(e){}
+  try{ const n = await DB.get('config/photos') || {}; if(JSON.stringify(n)!==JSON.stringify(PHOTO_N)){ PHOTO_N = n; if(P && $('#home').classList.contains('on')){ renderMap(); newPhotoToast(); } } }catch(e){}
 }
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible') refreshPhotos(); });
 
