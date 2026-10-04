@@ -457,6 +457,15 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
 .play-list button b{font-size:26px;font-weight:400}
 
 .mn-hud{position:absolute;left:8px;right:8px;top:6px;font-size:12px;color:#2A1F2D;background:#ffffffcc;border-radius:10px;padding:3px 8px;pointer-events:none}
+
+.help{background:color-mix(in srgb,var(--leaf) 7%,transparent);border-radius:16px;padding:10px;margin:6px 0 10px}.help .ctasks{margin-top:0}
+.trees{grid-template-columns:repeat(4,1fr)}
+
+/* ===== V6.5：真實場景照片 ===== */
+.film-node{cursor:pointer}
+figure.ph{margin:0 0 12px}figure.ph img{width:100%;border-radius:14px;display:block}
+figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-b);margin-top:4px}figure.ph figcaption span{color:var(--muted);white-space:nowrap}
+.ph-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.ph-it img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}.ph-it small{display:block;font-size:12px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -540,7 +549,7 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
       <div>今日寶箱<b id="tdChest">0/3</b></div>
       <div>連續登入<b id="tdStreak">1 天</b></div>
     </div>
-    <p class="sub tip">點溫室巡園尋寶，每棵樹每天找一次。</p>
+    <p class="sub tip">點溫室巡園尋寶，每棵樹每天找一次；沒體力就幫忙照顧溫室。<br><span id="visitN"></span></p>
     <div class="card story" id="storyBox"></div>
     <div class="card" id="feedBox"></div>
     <div class="card" id="famBox"></div>
@@ -658,6 +667,7 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
       <button class="chip" data-a="weather">天氣</button>
       <button class="chip" data-a="feed">貼文</button>
       <button class="chip" data-a="pool">寶箱獎池</button>
+      <button class="chip" data-a="photo">照片</button>
       <button class="chip" data-a="stats">數據</button>
       <button class="chip" id="btnAdmOut">登出</button>
     </div>
@@ -718,6 +728,17 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
         <p class="lvtxt">規則：33°C 以上高溫、30°C 以上且沒下雨為乾旱、風速 10m/s 以上強風、雨量 20mm 以上豪雨。越熱果況越好，雨和風讓果況變差。</p>
         <button id="btnWx" class="btn main">發布</button>
       </div>
+    </div>
+    <div class="admpane hide" id="ap-photo">
+      <h2 class="h2">溫室真實場景照片</h2>
+      <p class="sub">上傳後，玩家在地圖溫室角落點 🎞️ 就能看到。照片會自動壓縮。</p>
+      <div class="card">
+        <label class="lbl" for="phZone" style="margin-top:0">放在哪座溫室</label><select id="phZone" class="field"></select>
+        <label class="lbl" for="phFile">照片</label><input id="phFile" class="field" type="file" accept="image/*">
+        <label class="lbl" for="phCap">說明（選填，30 字內）</label><input id="phCap" class="field" maxlength="30" placeholder="例如：三期今天開始採收">
+        <button id="btnPh" class="btn main">上傳</button>
+      </div>
+      <div class="card"><b>這座溫室的照片</b><div id="phList" class="ph-grid"></div></div>
     </div>
     <div class="admpane hide" id="ap-pool">
       <h2 class="h2 wk">寶箱追逐賽・每日獎池</h2>
@@ -812,6 +833,10 @@ const DB = {
     }
     await b.commit();
   },
+  async del(path){
+    if(DEMO){ const d = DB._l(); delete d[path]; DB._s(d); return; }
+    await fb.fs.deleteDoc(DB._ref(path));
+  },
   async list(coll, field, val){
     if(DEMO){
       const d=DB._l(), pre=coll+'/';
@@ -871,7 +896,7 @@ const FIG_ICON = [
 LEVELS.forEach((l,i)=>l.icon = FIG_ICON[i]);
 const DAILY_CAP = 80;      // 每日非消費果友值上限
 const CHEST_CAP = 3;       // 每日寶箱上限（控制優惠預算）
-const BASE_STAMINA = 5, STEP_STAMINA_MAX = 10;
+const BASE_STAMINA = 5, STEP_STAMINA_MAX = 10, TREES_N = 12;
 
 // 六區溫室：栽培階段每週自動輪替（剪枝→座果→採收）；後台可覆寫當週；採收期寶箱較多
 const ZONES = [
@@ -1544,7 +1569,7 @@ async function checkPoolNews(){
   }catch(e){}
 }
 let poolChecked = false;
-function renderAll(){ if(!poolChecked && P){ poolChecked = true; setTimeout(checkPoolNews, 1200); } renderSound(); renderHud(); renderLevel(); renderFamily(); renderGuard(); renderFeed(); renderWeather(); renderStory(); renderMap(); renderRoute(); renderTestTools(); renderMove(); renderDex(); renderBag(); renderMe(); }
+function renderAll(){ if(!poolChecked && P){ poolChecked = true; setTimeout(checkPoolNews, 1200); setTimeout(countVisit, 800); } renderSound(); renderHud(); renderLevel(); renderFamily(); renderGuard(); renderFeed(); renderWeather(); renderStory(); renderMap(); renderRoute(); renderTestTools(); renderMove(); renderDex(); renderBag(); renderMe(); }
 function renderHud(){
   const lv = lvIndex(P.points||0), L = LEVELS[lv], N = LEVELS[lv+1];
   $('#hudAv').innerHTML = avatar(P.role, P.mat, P.color);
@@ -1579,7 +1604,7 @@ function renderMap(){
       <path d="M${z.x-62} ${z.y+4} Q${z.x} ${z.y-30} ${z.x+62} ${z.y+4}" stroke="#7FE0BF" stroke-width="2" fill="none"/>
       <rect x="${z.x-46}" y="${z.y+38}" width="92" height="24" rx="12" fill="#fff"/>
       <text x="${z.x}" y="${z.y+55}" text-anchor="middle" font-size="13" font-weight="700" fill="#14735A">翡翠溫室・五期</text>
-      <circle cx="${z.x+56}" cy="${z.y-10}" r="9" fill="${st.c}"/><text x="${z.x+56}" y="${z.y-6}" text-anchor="middle" font-size="9" fill="#fff">${tapped}/8</text></g>`;
+      <circle cx="${z.x+56}" cy="${z.y-10}" r="11" fill="${st.c}"/><text x="${z.x+56}" y="${z.y-7}" text-anchor="middle" font-size="8" fill="#fff">${tapped}/10</text></g>`;
     return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${z.n}溫室，${z.stage}">
       <ellipse cx="${z.x}" cy="${z.y+18}" rx="40" ry="7" fill="#0002"/>
       <path d="M${z.x-36} ${z.y+16} L${z.x-36} ${z.y-2} Q${z.x} ${z.y-34} ${z.x+36} ${z.y-2} L${z.x+36} ${z.y+16}Z" fill="#F5FAF2" stroke="#8FB087" stroke-width="2"/>
@@ -1587,7 +1612,7 @@ function renderMap(){
       <rect x="${z.x-34}" y="${z.y+24}" width="68" height="22" rx="11" fill="#fff"/>
       <text x="${z.x-8}" y="${z.y+39}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1F2D">${z.n}</text>
       <text x="${z.x+18}" y="${z.y+39}" text-anchor="middle" font-size="10" fill="${st.c}" font-weight="700">${z.stage}</text>
-      <circle cx="${z.x+34}" cy="${z.y-8}" r="9" fill="${st.c}"/><text x="${z.x+34}" y="${z.y-4}" text-anchor="middle" font-size="9" fill="#fff">${tapped}/8</text></g>`;
+      <circle cx="${z.x+34}" cy="${z.y-8}" r="11" fill="${st.c}"/><text x="${z.x+34}" y="${z.y-5}" text-anchor="middle" font-size="8" fill="#fff">${tapped}/${TREES_N}</text></g>`;
   }).join('');
   $('#mapSvg').innerHTML = `<svg viewBox="0 0 360 580" aria-label="隱花王國地圖">
     <rect width="360" height="580" fill="var(--map)"/>${leaves}
@@ -1599,6 +1624,7 @@ function renderMap(){
     ${nodes}
     ${knightMark()}
     ${chMark()}
+    ${filmMarks()}
     <text x="300" y="44" font-size="30" text-anchor="middle">${chapter().icon}</text>
     <g id="mapMe"><g class="me-bob"><g class="me-flip"><g transform="translate(-25 -60) scale(.42)">${avatar(P.role,P.mat,P.color).replace(/^<svg[^>]*>|<\/svg>$/g,'')}</g></g></g></g>
   </svg>`;
@@ -1607,6 +1633,7 @@ function renderMap(){
     n.onclick=()=>walkTo(n.dataset.z);
     n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();walkTo(n.dataset.z);}};
   });
+  $('#mapSvg').querySelectorAll('.film-node').forEach(n=>n.onclick=e=>{ e.stopPropagation(); openPhotos(n.dataset.fz); });
   placeMe();
 }
 // 主角在金葉小徑上：平常呆呆地晃，點溫室就搖搖擺擺走過去
@@ -1657,9 +1684,13 @@ function openZone(zid){
   const res = P.daily['res_'+zid] || {};
   openSheet(`<h2 class="h2 wk" style="margin-top:0">${curZone.emerald?'翡翠溫室・':''}${curZone.n}</h2>
     <p class="sub">目前階段：<b style="color:${STAGE[curZone.stage].c}">${curZone.stage}</b>，寶箱機會 ×${STAGE[curZone.stage].mult}。剩餘體力 ⚡${stamina()}</p>
-    <div class="trees">${Array.from({length:8},(_,i)=>`<button class="tree ${tapped.includes(i)?'tapped':''}" data-i="${i}" aria-label="第 ${i+1} 棵樹">${treeSvg(curZone.stage,i)}${res[i]?`<span class="res">${res[i]}</span>`:''}</button>`).join('')}</div>
+    ${PHOTO_N[zid]>0?`<button class="chip" id="btnZPh" style="margin-bottom:8px">🎞️ 真實場景（${PHOTO_N[zid]}）</button>`:''}
+    ${helpHtml(zid)}
+    <div class="trees">${Array.from({length:TREES_N},(_,i)=>`<button class="tree ${tapped.includes(i)?'tapped':''}" data-i="${i}" aria-label="第 ${i+1} 棵樹">${treeSvg(curZone.stage,i)}${res[i]?`<span class="res">${res[i]}</span>`:''}</button>`).join('')}</div>
     <button class="btn ghost" onclick="closeSheet()">回地圖</button>`);
   $('#sheetBox').querySelectorAll('.tree').forEach(b=>b.onclick=()=>tapTree(+b.dataset.i));
+  $('#sheetBox').querySelectorAll('[data-h]').forEach(b=>b.onclick=()=>doHelp(zid, b.dataset.h));
+  const zp = $('#btnZPh'); if(zp) zp.onclick = ()=>openPhotos(zid);
 }
 /* ---------- 今日劇情：依時段推進，五步完成送劇情寶箱 ---------- */
 const CHAPTERS = [
@@ -2030,6 +2061,7 @@ const Admin = {
     if(k==='stats') Admin.stats();
     if(k==='weather') Admin.weather();
     if(k==='pool') Admin.pool();
+    if(k==='photo') Admin.photo();
   },
   async gen(){
     const product = $('#qProd').value.trim(), price = +$('#qPrice').value, zone = $('#qZone').value, harvest = $('#qHarvest').value, qty = Math.floor(+$('#qQty').value), layout = $('#qLayout').value;
@@ -2081,6 +2113,13 @@ const Admin = {
     const z = {wk:weekKey()}; document.querySelectorAll('#zoneList select').forEach(s=>z[s.dataset.z]=s.value);
     await DB.set('config/zones', z); toast('本週溫室階段已更新；下週會自動輪替');
   },
+  async photo(){
+    const sel = $('#phZone'); if(!sel.options.length){ sel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${z.n}${z.emerald?'（翡翠溫室）':''}</option>`).join(''); sel.onchange = ()=>Admin.photo(); }
+    const zid = sel.value; let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).sort((a,b)=>b.created-a.created); }catch(e){}
+    $('#phList').innerHTML = items.length ? items.map(p=>`<div class="ph-it"><img src="${p.data}" alt=""><small>${esc(p.cap||'')}</small><button class="chip" data-del="${p.id}">刪除</button></div>`).join('') : '<p class="sub">還沒有照片</p>';
+    $('#phList').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ if(!confirm('確定刪除這張照片？')) return;
+      await DB.del(`zonephotos/${zid}/items/${b.dataset.del}`); const c = await DB.get('config/photos') || {}; c[zid] = Math.max(0,(c[zid]||1)-1); await DB.set('config/photos', c); toast('已刪除'); Admin.photo(); });
+  },
   async pool(){
     const c = await poolCfg(); $('#pE').value=c.e; $('#pD').value=c.d; $('#pC').value=c.c; $('#pB').value=c.b; $('#pA').value=c.a; $('#pZ').value=c.zEvery;
     $('#poolNow').innerHTML = poolTable(await poolToday());
@@ -2122,6 +2161,17 @@ $('#btnSkip').onclick = ()=>{ const T=treeObj(); T.lastDay=shiftDate(T.lastDay,-
 $('#btnSkipOld').onclick = ()=>{ if(P.tree){ P.tree.last=0; } P.daily.cares=0; Auth.save(); renderAll(); toast('已跳過等待時間'); };
 $('#btnFd').onclick = async()=>{ const v=$('#fdText').value.trim(); if(!v){ toast('請輸入貼文內容'); return; } await DB.set('feed/'+'P'+Date.now().toString(36), {text:v, created:Date.now()}); $('#fdText').value=''; toast('貼文已發布'); };
 $('#btnScSave').onclick = async()=>{ const v=$('#scCode').value.trim(); if(!v){ toast('請輸入密語'); return; } await DB.set('config/social', {code:v, wk:weekKey(), updated:Date.now()}); toast('通關密語已更新'); };
+$('#btnPh').onclick = async()=>{
+  const f = $('#phFile').files[0], zid = $('#phZone').value; if(!f){ toast('先選一張照片'); return; }
+  $('#btnPh').disabled = true; $('#btnPh').textContent = '壓縮上傳中…';
+  try{
+    let data = await compressImage(f, 1280, .75); if(data.length > 850000) data = await compressImage(f, 960, .6); if(data.length > 850000) data = await compressImage(f, 720, .5);
+    await DB.set(`zonephotos/${zid}/items/${rid(10)}`, {data, cap:($('#phCap').value||'').trim(), created:Date.now()});
+    const c = await DB.get('config/photos') || {}; c[zid] = (c[zid]||0)+1; await DB.set('config/photos', c);
+    toast('照片已上傳'); $('#phFile').value=''; $('#phCap').value=''; Admin.photo();
+  }catch(e){ console.error(e); toast('上傳失敗，請換一張較小的照片'); }
+  $('#btnPh').disabled = false; $('#btnPh').textContent = '上傳';
+};
 $('#btnPool').onclick = async()=>{ const c={rev:Date.now(), e:+$('#pE').value||0, d:+$('#pD').value||0, c:+$('#pC').value||0, b:+$('#pB').value||0, a:+$('#pA').value||0, zEvery:Math.max(1,+$('#pZ').value||3)}; await DB.set('config/pool', c); toast('獎池設定已儲存'); Admin.pool(); };
 $('#btnPoolReset').onclick = async()=>{ await DB.set('pool/'+today(), await poolInit()); const c = await poolCfg(); await DB.set('config/pool', {...c, rev:Date.now()}); toast('今天的獎池已重設，玩家會收到新投放提醒'); Admin.pool(); };
 $('#btnWx').onclick = async()=>{
@@ -3832,6 +3882,52 @@ function practiceEnd(k, ok, detail){
   $('#pAgain').onclick = ()=>practice(k); $('#pMenu').onclick = playMenu;
 }
 
+/* ---------- 溫室幫忙：澆水／打芽／除草／施肥，跟我的樹同樣節奏；越少出現的工作換越多體力 ---------- */
+const HELP_TASKS = CARE_TASKS.map(c=>({...c, gain:{water:1, bud:2, weed:3, feed:4}[c.id]}));
+function helpHtml(zid){
+  const H = (P.help = P.help || {})[zid] || {};
+  return `<div class="help"><div class="lbl" style="margin:0 0 6px">🤝 幫忙照顧，換體力</div><div class="ctasks">${HELP_TASKS.map(c=>{ const last = H[c.id], n = last ? dayN(last) : 99, ok = n >= c.every;
+    return `<button class="ctask ${ok?'due':''}" data-h="${c.id}" ${ok?'':'disabled'}><b>${c.i}</b><span>${c.n}</span><small>${ok?`⚡+${c.gain}`:`${c.every-n} 天後`}</small></button>`; }).join('')}</div></div>`;
+}
+function doHelp(zid, id){
+  const c = HELP_TASKS.find(x=>x.id===id), H = (P.help = P.help || {})[zid] = (P.help[zid] || {});
+  if(H[id] && dayN(H[id]) < c.every) return;
+  H[id] = today(); P.daily.careSt = (P.daily.careSt||0) + c.gain; P.helpN = (P.helpN||0)+1;
+  SND.good(c.gain*2); Auth.save(); renderAll(); toast(`${c.i} 幫忙${c.n}完成！體力 +${c.gain}`); openZone(zid);
+}
+/* ---------- 王國造訪人次：每次開啟遊戲累積一次 ---------- */
+async function countVisit(){
+  let n = 0;
+  try{
+    const done = sessionStorage.getItem('hfk_visit');
+    if(DEMO){ n = (+localStorage.getItem('hfk_visits')||0) + (done?0:1); localStorage.setItem('hfk_visits', n); }
+    else { if(!done) await fb.fs.setDoc(DB._ref('stats/visits'), {n: fb.fs.increment(1)}, {merge:true}); const s = await DB.get('stats/visits'); n = (s&&s.n)||0; }
+    sessionStorage.setItem('hfk_visit','1');
+  }catch(e){ return; }
+  const el = $('#visitN'); if(el && n) el.textContent = `👣 王國累計造訪 ${n.toLocaleString()} 人次`;
+}
+
+/* ---------- 溫室真實場景照片（後台上傳、玩家在地圖點 🎞️ 查看） ---------- */
+let PHOTO_N = {};
+function filmMarks(){
+  return ZONES.filter(z=>PHOTO_N[z.id]>0).map(z=>{ const x = z.emerald ? z.x-74 : z.x-58, y = z.emerald ? z.y-48 : z.y-30;
+    return `<g class="film-node" data-fz="${z.id}" role="button" aria-label="${z.n}真實場景照片"><rect x="${x-15}" y="${y-12}" width="30" height="24" rx="6" fill="#2A1F2D" opacity=".85"/>
+      <rect x="${x-11}" y="${y-8}" width="22" height="16" rx="2" fill="#E8C33A"/><path d="M${x-11} ${y-5} h22 M${x-11} ${y+5} h22" stroke="#2A1F2D" stroke-width="1.6" stroke-dasharray="2 2"/>
+      <text x="${x}" y="${y+24}" text-anchor="middle" font-size="9" font-weight="700" fill="#2A1F2D">真實場景</text></g>`; }).join('');
+}
+async function openPhotos(zid){
+  const z = ZONES.find(x=>x.id===zid);
+  openSheet(`<h2 class="h2" style="margin-top:0">🎞️ ${z.n}・真實場景</h2><div id="phView"><p class="sub">讀取照片中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
+  let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).sort((a,b)=>b.created-a.created); }catch(e){}
+  $('#phView').innerHTML = items.length ? items.map(p=>`<figure class="ph"><img src="${p.data}" alt="${esc(p.cap||z.n+'溫室照片')}" loading="lazy"><figcaption>${esc(p.cap||'')}<span>${new Date(p.created).toLocaleDateString('zh-TW')}</span></figcaption></figure>`).join('') : '<p class="sub">這座溫室還沒有照片。</p>';
+}
+function compressImage(file, maxSide, q){
+  return new Promise((res, rej)=>{ const img = new Image(), url = URL.createObjectURL(file);
+    img.onload = ()=>{ const s = Math.min(1, maxSide/Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width*s); c.height = Math.round(img.height*s);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', q)); };
+    img.onerror = rej; img.src = url; });
+}
+
 /* ---------- 啟動 ---------- */
 async function boot(){
   const q = new URLSearchParams(location.search);
@@ -3840,6 +3936,7 @@ async function boot(){
   try{ await DB.init(); await Login.ready(); }catch(e){ console.error(e); return info('⚠️','連線失敗','請檢查網路後重新整理。'); }
   autoStages();
   try{ const z = await DB.get('config/zones'); if(z && z.wk===weekKey()) ZONES.forEach(x=>{ if(z[x.id]) x.stage = z[x.id]; }); }catch(e){}
+  try{ PHOTO_N = await DB.get('config/photos') || {}; }catch(e){}
   await loadWeather();
   const c = q.get('c'), r = q.get('r');
   if(q.get('fam')){ try{ localStorage.setItem('hfk_fam_invite', q.get('fam')); }catch(e){} }
