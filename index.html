@@ -693,12 +693,12 @@ body.admin #app{max-width:760px}
 
 // ① 填入 Firebase 專案設定（Firebase 主控台 → 專案設定 → 一般 → 你的應用程式）
 const FIREBASE_CONFIG = {
-  apiKey: "",
-  authDomain: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyBxrRdl0K5QeQjbsydnUzATidZugn5sklg",
+  authDomain: "hidden-fig-kingdom.firebaseapp.com",
+  projectId: "hidden-fig-kingdom",
+  storageBucket: "hidden-fig-kingdom.firebasestorage.app",
+  messagingSenderId: "848960130762",
+  appId: "1:848960130762:web:09af10cd6490f260fd2e33"
 };
 // ② 測試工具（補滿體力、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = true;
@@ -781,7 +781,9 @@ function qrSvg(text){
   for(let r=0;r<n;r++) for(let c=0;c<n;c++) if(q.isDark(r,c)) d += `M${c+m} ${r+m}h1v1h-1z`;
   return `<svg viewBox="0 0 ${sz} ${sz}" shape-rendering="crispEdges" role="img" aria-label="QR Code"><rect width="${sz}" height="${sz}" fill="#fff"/><path d="${d}" fill="#000"/></svg>`;
 }
-const BASE_URL = ()=>location.origin + location.pathname;
+// QR 和分享連結一律用正式網址（避免在 Vercel 預覽網址印出別人打不開的 QR）
+const SITE_URL = 'https://hidden-fig-kingdom.vercel.app/';
+const BASE_URL = ()=>(DEMO ? location.origin + location.pathname : SITE_URL);
 function fmtDate(s){ if(!s) return ''; const p=String(s).split('-'); return p.length===3 ? `${+p[1]} 月 ${+p[2]} 日` : s; }
 
 /* ---------- 遊戲設定（農場可調） ---------- */
