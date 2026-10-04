@@ -179,6 +179,7 @@ nav button.on{color:var(--fig);font-weight:700}
 .fert-bk svg{width:34px;height:34px}
 .film-in{position:absolute;top:-8px;left:-4px;z-index:3;border:0;background:var(--card);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);padding:5px 7px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:700;color:#2A1F2D;animation:bkB 1.8s ease-in-out infinite}
 .film-in svg{width:34px;height:27px}
+.visit-pill{display:table;margin:0 0 8px auto;background:var(--card);border:1.5px solid var(--line);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:700;color:#5B2346}
 .fert-bk.on{animation:none;outline:2px solid var(--leaf)}
 @keyframes bkB{50%{transform:translateY(-4px) rotate(-6deg)}}
 .fert-layer{position:absolute;inset:0;z-index:2;touch-action:none;overflow:hidden;border-radius:14px}
@@ -560,13 +561,14 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <div class="card lvcard" id="lvCard"></div>
     <div id="wxBox"></div>
     <div class="card hide" id="poolNews"></div>
+    <div class="visit-pill hide" id="visitPill"></div>
     <div class="mapwrap" id="mapSvg"></div>
     <div class="today">
       <div>今日果友值<b id="tdPts">0/80</b></div>
       <div>今日寶箱<b id="tdChest">0/3</b></div>
       <div>連續登入<b id="tdStreak">1 天</b></div>
     </div>
-    <p class="sub tip">點溫室巡園尋寶，每棵樹每天找一次；沒體力就幫忙照顧溫室。<br><span id="visitN"></span></p>
+    <p class="sub tip">點溫室巡園尋寶，每棵樹每天找一次；沒體力就幫忙照顧溫室。</p>
     <div class="card story" id="storyBox"></div>
     <div class="card" id="feedBox"></div>
     <div class="card" id="famBox"></div>
@@ -3983,10 +3985,11 @@ async function countVisit(){
   try{
     const done = sessionStorage.getItem('hfk_visit');
     if(DEMO){ n = (+localStorage.getItem('hfk_visits')||0) + (done?0:1); localStorage.setItem('hfk_visits', n); }
-    else { if(!done) await fb.fs.setDoc(DB._ref('stats/visits'), {n: fb.fs.increment(1)}, {merge:true}); const s = await DB.get('stats/visits'); n = (s&&s.n)||0; }
+    else { if(!done){ try{ await fb.fs.setDoc(DB._ref('stats/visits'), {n: fb.fs.increment(1)}, {merge:true}); }catch(e){} }   // 人多時偶爾漏記，不影響顯示
+      const s = await DB.get('stats/visits'); n = (s&&s.n)||0; }
     sessionStorage.setItem('hfk_visit','1');
   }catch(e){ return; }
-  const el = $('#visitN'); if(el && n) el.textContent = `👣 王國累計造訪 ${n.toLocaleString()} 人次`;
+  const el = $('#visitPill'); if(el && n){ el.textContent = `👣 王國累計造訪 ${n.toLocaleString()} 人次`; el.classList.remove('hide'); }
 }
 
 /* ---------- 溫室真實場景照片（後台上傳、玩家在地圖點 🎞️ 查看） ---------- */
