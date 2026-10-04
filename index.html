@@ -181,6 +181,23 @@ nav button.on{color:var(--fig);font-weight:700}
 .pop{animation:pop .45s ease-out}
 @media (prefers-reduced-motion:reduce){.pop{animation:none}#toast{transition:none}}
 
+/* ===== V5.9：黑騎士揮棒 ===== */
+.kbat{position:absolute;top:70px;width:22px;height:60px;margin-left:-11px;z-index:4;transform-origin:50% 95%;pointer-events:none}
+.kbat svg{width:100%;height:100%}
+.kbat.r{animation:swingR .35s ease-out forwards}.kbat.l{animation:swingL .35s ease-out forwards}
+@keyframes swingR{from{transform:translateX(18px) rotate(-100deg)}to{transform:translateX(18px) rotate(60deg)}}
+@keyframes swingL{from{transform:translateX(-18px) rotate(100deg)}to{transform:translateX(-18px) rotate(-60deg)}}
+/* ===== V5.8：碎木教學 ===== */
+.wo-tut{position:absolute;inset:0;background:#2A1F2D99;display:flex;align-items:center;justify-content:center;z-index:3;padding:16px}
+.tut-card{background:#fff;border-radius:20px;padding:16px;max-width:360px;width:100%;text-align:center}
+.tut-card h3{margin:4px 0 6px;color:#5B2346}.tut-card p{font-size:14px;color:#3A2F3D;margin:0 0 6px}
+.tut-step{font-size:12px;color:#8C847C}.tut-svg{width:100%;max-width:240px;height:auto;display:block;margin:4px auto;touch-action:none}
+.tut-btns{display:flex;gap:10px;justify-content:center;margin-top:6px}.tut-btns button{flex:1;border:2px solid #E2D8C8;background:#FBF8F2;border-radius:14px;padding:12px;font-size:16px;font-weight:700}
+.tut-fb{min-height:20px;font-size:13px;margin-top:6px;color:#6E6470}.tut-fb.ok{color:#3E9A3A;font-weight:700}.tut-fb.bad{color:#B5321E;font-weight:700}
+.tut-skip{border:0;background:none;color:#8C847C;font-size:12px;margin-top:8px;text-decoration:underline}
+/* ===== V5.6：我的頁面 ===== */
+.rt-now{display:flex;flex-direction:column;gap:2px;background:color-mix(in srgb,var(--fig) 8%,transparent);border-radius:12px;padding:10px 12px;margin:6px 0 10px}
+.rt-now b{font-size:18px;color:var(--fig)}.rt-now span{font-size:12px;color:var(--muted)}
 /* ===== V5.3：券 QR ===== */
 .coupon[data-cp]{cursor:pointer}.cpqr{color:var(--fig);font-weight:700;font-size:12px}
 /* ===== V5.2：3 米無花果樹、照顧節奏 ===== */
@@ -468,8 +485,6 @@ body.admin #app{max-width:760px}
     <div class="card lvcard" id="lvCard"></div>
     <div id="wxBox"></div>
     <div class="card story" id="storyBox"></div>
-    <div class="card" id="famBox"></div>
-    <div class="card" id="feedBox"></div>
     <div class="mapwrap" id="mapSvg"></div>
     <div class="today">
       <div>今日果友值<b id="tdPts">0/80</b></div>
@@ -477,6 +492,8 @@ body.admin #app{max-width:760px}
       <div>連續登入<b id="tdStreak">1 天</b></div>
     </div>
     <p class="sub">點地圖上的溫室進去巡園尋寶。每棵樹每天可以找一次；巡園途中會隨機遇到各種農場挑戰，每天不重複。</p>
+    <div class="card" id="feedBox"></div>
+    <div class="card" id="famBox"></div>
   </div>
 
   <!-- 運動 -->
@@ -492,7 +509,7 @@ body.admin #app{max-width:760px}
     <div id="ringBox"></div>
     <button id="btnPed" class="btn main">開始計步</button>
     <div class="goals" style="margin-top:14px" id="goalBox"></div>
-    <div class="card">
+    <div class="card hide" id="manualCard">
       <div class="lbl" style="margin-top:0">手機不能計步？</div>
       <p class="sub" style="margin:4px 0 0">把健康 App 的今日步數填進來，手動最多採計 6000 步。</p>
       <div style="display:flex;gap:8px;margin-top:8px">
@@ -530,24 +547,19 @@ body.admin #app{max-width:760px}
         <button id="btnEdit" class="chip" style="margin-top:8px">換裝</button>
       </div>
     </div>
+    <div class="card routecard">
+      <div class="lbl" style="margin-top:0">現在的玩法</div>
+      <div class="rt-now" id="meRouteNow"></div>
+      <div class="seg" id="meRoute" style="margin-bottom:0"></div>
+    </div>
     <div class="card">
       <div class="lbl" style="margin-top:0">果友等級</div>
       <table class="ladder" id="ladder"></table>
     </div>
     <div class="card" id="guardBox"></div>
     <div class="card">
-      <div class="lbl" style="margin-top:0">我的會員卡</div>
-      <p class="sub" style="margin:4px 0 8px">請截圖保存。換手機時用相機掃這張，就能找回角色、果友值和優惠券。請不要給別人。</p>
-      <div id="memberQR" class="mqr"></div>
-      <p class="lvtxt" id="memberNo" style="text-align:center"></p>
-    </div>
-    <div class="card">
       <div class="lbl" style="margin-top:0">🎵 遊戲音樂與音效</div>
       <div class="seg" id="sndRow" style="margin-bottom:0"></div>
-    </div>
-    <div class="card">
-      <div class="lbl" style="margin-top:0">玩法</div>
-      <div class="seg" id="meRoute" style="margin-bottom:0"></div>
     </div>
     <div class="card" id="testCard">
       <div class="lbl" style="margin-top:0">測試工具</div>
@@ -561,6 +573,12 @@ body.admin #app{max-width:760px}
       <p class="sub" style="margin:4px 0 8px">上線前把程式開頭的 TEST_TOOLS 改成 false 就會隱藏。</p>
       <button id="btnFill" class="btn ghost" style="margin:0">補滿今天的體力</button>
       <button id="btnNewDay" class="btn ghost">模擬隔天登入</button>
+    </div>
+    <div class="card">
+      <div class="lbl" style="margin-top:0">我的會員卡</div>
+      <p class="sub" style="margin:4px 0 8px">請截圖保存。換手機時用相機掃這張，就能找回角色、果友值和優惠券。請不要給別人。</p>
+      <div id="memberQR" class="mqr"></div>
+      <p class="lvtxt" id="memberNo" style="text-align:center"></p>
     </div>
   </div>
 
@@ -1740,24 +1758,41 @@ function renderMove(){
   });
   $('#btnPed').textContent = ped.on ? '停止計步' : '開始計步';
 }
-const ped = {on:false, lp:9.8, last:0, gotEvent:false};
+// 計步（重力感應版）：用加速度大小的起伏偵測每一步，門檻會跟著手機晃動的幅度自動調整，靈敏優先
+const ped = {on:false, gotEvent:false, g:0, s:0, up:false, peak:0, amp:2, lastStep:0, wake:null, lastDraw:0};
 function onMotion(e){
   const a = e.accelerationIncludingGravity; if(!a || a.x==null) return;
   ped.gotEvent = true;
-  const m = Math.hypot(a.x,a.y,a.z); ped.lp = ped.lp*.9 + m*.1;
-  const t = Date.now();
-  if(m-ped.lp > 1.8 && t-ped.last > 320){ ped.last=t; P.daily.steps++; if(P.daily.steps%20===0){ Auth.save(); renderHud(); renderMove(); } }
+  const m = Math.hypot(a.x, a.y, a.z), t = performance.now();
+  ped.g = ped.g ? ped.g*.92 + m*.08 : m;                 // 跟著重力慢慢走的基準線
+  ped.s = ped.s*.4 + (m-ped.g)*.6;                        // 輕微平滑，保留靈敏度
+  const TH = Math.max(.45, ped.amp*.3);                   // 自動門檻：晃得大門檻就高一點，輕輕走也算得到
+  if(!ped.up && ped.s > TH){ ped.up = true; ped.peak = ped.s; }
+  else if(ped.up){ ped.peak = Math.max(ped.peak, ped.s);
+    if(ped.s < TH*.2){ ped.up = false;
+      if(t - ped.lastStep > 240){                         // 一秒最多約 4 步
+        ped.lastStep = t; ped.amp = ped.amp*.8 + Math.min(ped.peak, 12)*.2;
+        P.daily.steps++;
+        if(t - ped.lastDraw > 300){ ped.lastDraw = t; renderHud(); renderMove(); }
+        if(P.daily.steps % 30 === 0) Auth.save();
+      } } }
 }
+function resetStreak(){ ped.up = false; ped.amp = 2; }
+async function keepAwake(on){
+  try{ if(on && 'wakeLock' in navigator){ ped.wake = await navigator.wakeLock.request('screen'); }
+       else if(!on && ped.wake){ ped.wake.release(); ped.wake = null; } }catch(e){}
+}
+document.addEventListener('visibilitychange', ()=>{ if(ped.on && document.visibilityState==='visible') keepAwake(true); });
 $('#btnPed').onclick = async ()=>{
-  if(ped.on){ ped.on=false; window.removeEventListener('devicemotion', onMotion); Auth.save(); renderAll(); return; }
+  if(ped.on){ ped.on=false; window.removeEventListener('devicemotion', onMotion); keepAwake(false); resetStreak(); Auth.save(); renderAll(); return; }
   try{
     if(typeof DeviceMotionEvent!=='undefined' && typeof DeviceMotionEvent.requestPermission==='function'){
       const r = await DeviceMotionEvent.requestPermission(); if(r!=='granted'){ toast('沒有取得動作權限，可改用下方手動填步數'); return; }
     }
   }catch(e){}
-  ped.on=true; ped.gotEvent=false; window.addEventListener('devicemotion', onMotion); renderMove();
-  toast('手機放口袋或拿在手上走路就會計步', 2600);
-  setTimeout(()=>{ if(ped.on && !ped.gotEvent){ toast('這個環境讀不到動作感應器，請用下方手動填步數', 3500); } }, 3000);
+  ped.on=true; ped.gotEvent=false; resetStreak(); window.addEventListener('devicemotion', onMotion); keepAwake(true); renderMove();
+  toast('拿在手上或放口袋走路就會計步；計步時螢幕要保持亮著', 3200);
+  setTimeout(()=>{ if(ped.on && !ped.gotEvent){ $('#manualCard').classList.remove('hide'); toast('這支手機讀不到動作感應器，請改用手動填步數', 3500); } }, 3000);
 };
 $('#btnManual').onclick = ()=>{
   const v = parseInt($('#manualSteps').value,10);
@@ -2111,6 +2146,7 @@ function renderRoute(){
   if(relax) ra.parentNode.insertBefore(rr, ra); else ra.parentNode.insertBefore(ra, rr);      // 兩條路線都看得到我的樹，主路線排前面
   $('#navMove').innerHTML = relax ? '<b>🪴</b>我的樹' : '<b>👟</b>運動・樹';
   renderTree(); renderWeek();
+  $('#meRouteNow').innerHTML = P.route==='relax' ? '<b>🍃 慢活路線</b><span>照顧我的樹、看留言板，慢慢累積；巡園次數靠照顧樹取得</span>' : '<b>🏃 運動路線</b><span>走路換巡園次數，步數越多寶箱越多；連續走滿 7 天送健康徽章</span>';
   $('#meRoute').innerHTML = Object.entries(ROUTES).map(([k,r])=>`<button class="chip ${P.route===k?'sel':''}" data-rt="${k}">${r.n}</button>`).join('');
   $('#meRoute').querySelectorAll('[data-rt]').forEach(b=>b.onclick=()=>{ P.route=b.dataset.rt; Auth.save(); renderAll(); toast('已切換為'+ROUTES[P.route].n); });
 }
@@ -2194,7 +2230,7 @@ function knightBattle(zid){
     };
     // 像丟寶貝球：在場地下方往上滑，把無花果丟向左右移動的黑騎士（滑的方向決定落點，短短一滑也丟得出去）
     const arena = $('#sheetBox .arena'); arena.classList.add('throw');
-    arena.insertAdjacentHTML('beforeend', `<div class="kfig" id="kFig">${FIG_ICON[2]}</div><div class="khint">↑ 手指往上滑丟無花果${dmg>1?'（英雄、ㄚ波威力加倍）':''}</div>`);
+    arena.insertAdjacentHTML('beforeend', `<div class="kfig" id="kFig">${FIG_ICON[2]}</div><div class="khint">↑ 手指往上滑丟無花果（沒丟準會被他打回來！）</div>`);
     const kn = $('#knAv'), fig = $('#kFig'), kspd = [1.1,1.6,2.2][diffOf('knight')], dmgT = dmg>1 ? 5 : 3;
     let fl = null, sw = null; const t0k = performance.now();
     const AW = ()=>arena.clientWidth, AH = ()=>arena.clientHeight, KY = 78;
@@ -2211,10 +2247,17 @@ function knightBattle(zid){
     arena.onpointerup = arena.onpointercancel = e=>{ if(!sw) return; const [x,y]=pos(e); if(e.type==='pointerup'){ sw.x=x; sw.y=y; } launch(); };
     const loop = ()=>{ if(over || !document.getElementById('knAv')) return; const tt=(performance.now()-t0k)/1000, w=AW();
       const kx = w/2 + Math.sin(tt*kspd)*(w*.3) + Math.sin(tt*kspd*2.3)*w*.07; kn.style.left = kx+'px';
-      if(fl && !fl.done){ const p = Math.min(1, (performance.now()-fl.t0)/fl.dur), x = fl.x0+(fl.tx-fl.x0)*p, y = fl.y0+(KY-fl.y0)*p - Math.sin(Math.PI*p)*40;
+      if(fl && !fl.done && !fl.bat){ const p = Math.min(1, (performance.now()-fl.t0)/fl.dur), x = fl.x0+(fl.tx-fl.x0)*p, y = fl.y0+(KY-fl.y0)*p - Math.sin(Math.PI*p)*40;
         fig.style.transform = `translate(${x-22}px, ${y-22}px) scale(${1-.45*p}) rotate(${p*360}deg)`;
         if(p>=1){ if(Math.abs(fl.tx-kx) < 48){ danmaku('命中！黑騎士接住了無花果','kind'); restFig(); hit(dmgT); }
-          else { SND.bad(); fig.style.opacity = .3; fl.done = true; setTimeout(()=>{ if(!over) restFig(); }, 260); } } }
+          else { const dir = fl.tx < kx ? -1 : 1; fl = {bat:true, x0:x, y0:y, dir, t0:performance.now()};      // 沒丟準：黑騎士揮棒打回去
+            const bat = document.createElement('div'); bat.className = 'kbat ' + (dir<0?'l':'r'); bat.style.left = kx+'px'; bat.innerHTML = '<svg viewBox="0 0 20 60"><rect x="7" y="34" width="6" height="24" rx="3" fill="#5B3A22"/><path d="M6 36 L4 4 Q10 -2 16 4 L14 36Z" fill="#C9A06A" stroke="#8C6A3E"/></svg>';
+            arena.appendChild(bat); setTimeout(()=>bat.remove(), 500); SND.pop();
+            danmaku(['黑騎士：全壘打！哈哈','黑騎士：打回去啦～','黑騎士：這球太好打了！'][rnd(3)], 'bad'); $('#knSay').textContent = '鏘！全壘打！';
+            hp = Math.min(HP, hp+1); upd(); } } }
+        else if(fl && fl.bat){ const q = Math.min(1, (performance.now()-fl.t0)/450);
+          fig.style.transform = `translate(${fl.x0-22 + fl.dir*q*AW()*.8}px, ${fl.y0-22 - q*120 + q*q*40}px) scale(${.55-.25*q}) rotate(${q*720*fl.dir}deg)`; fig.style.opacity = 1-q*.6;
+          if(q>=1) restFig(); }
       requestAnimationFrame(loop); };
     requestAnimationFrame(loop);
     $('#kCtl').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>say(b.dataset.q));
@@ -2260,7 +2303,7 @@ function famInvite(){
 }
 function famSetup(mode){
   if(mode==='wood'){ const F=P.fam; openSheet(`<h2 class="h2 wk" style="margin-top:0">碎木接力</h2><label class="lbl" for="fn1">第一棒</label><input id="fn1" class="field" maxlength="8" value="${esc(F.names[0])}"><label class="lbl" for="fn2">第二棒</label><input id="fn2" class="field" maxlength="8" value="${esc(F.names[1])}">
-    <div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">${PICK_TASK && TASKS[0].rules}</p><p class="sub" style="margin:6px 0 0">兩個人輪流各玩一次，比過關指數；兩人分數加起來算親密值。</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf('wood')]}</b></p></div>
+    <div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">${PICK_TASK && TASKS[0].rules}</p><p class="sub" style="margin:6px 0 0">兩個人輪流各玩一次，比誰推的木屑車比較多；兩人車數加起來算親密值。</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf('wood')]}</b></p></div>
     <button class="btn main" id="fGo">第一棒正式開始</button>`, true); $('#fGo').onclick=()=>{ F.names=[$('#fn1').value.trim()||'我',$('#fn2').value.trim()||'家人']; closeSheet(); famWood(); }; return; }
   if(mode==='hockey'){ const F=P.fam; openSheet(`<h2 class="h2 wk" style="margin-top:0">無花果氣墊球</h2><label class="lbl" for="fn1">上方玩家</label><input id="fn1" class="field" maxlength="8" value="${esc(F.names[0])}"><label class="lbl" for="fn2">下方玩家</label><input id="fn2" class="field" maxlength="8" value="${esc(F.names[1])}">
     <div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">手機平放在兩人中間，各自用手指按住自己那半邊的圓盤移動，把無花果球打回去，守住自己這端的紅色球門。先進 5 球或 60 秒結束。來回擊球越多次，親密值越高！</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf('hockey')]}</b>（越高球越快、球門越大）</p></div>
@@ -2610,7 +2653,7 @@ async function openComments(id){
    ========================================================= */
 const TASK_SLOTS = [[6,10],[10,14],[14,18],[18,23]];
 const TASKS = [
-  {id:'wood', n:'碎木工作', i:'🪵', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'① 天上會掉工具，點住鋸子或電剪拿到手上（鐵錘、吹風機會扣分）。② 點樹枝上的紅色圈圈把分叉剪開。③ 把剪好的一小段往下拖進碎木機。有分叉或太長會被彈回來。3 枝都打完就過關。', play:woodGame}
+  {id:'wood', n:'碎木工作', i:'🪵', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
   // 之後的新小遊戲加在這裡，就會自動輪流出現
 ];
 function taskSlot(){ const h = new Date().getHours(); return TASK_SLOTS.findIndex(([a,b])=>h>=a && h<b); }
@@ -2673,97 +2716,179 @@ const WOOD_SHAPES = [
   {n:[[30,265],[125,245],[225,225],[330,205],[175,140]], s:[[0,1],[1,2],[2,3],[1,4]]},
   {n:[[55,330],[150,260],[100,150],[235,235],[300,140],[320,315]], s:[[0,1],[1,2],[1,3],[3,4],[3,5]]}
 ];
+const CART_SVG = '<path d="M-16 -6 L14 -6 L10 6 L-12 6Z" fill="#3E9A3A" stroke="#2E6A2E"/><circle cx="-2" cy="11" r="5" fill="#333"/><circle cx="-2" cy="11" r="2" fill="#999"/><path d="M14 -6 L22 -14 M-12 6 L-16 14" stroke="#7A5A3E" stroke-width="2.4" stroke-linecap="round"/>';
 function woodGame(done, who){
+  // V5.6：工具只能用一次；分叉用鋸子、剪短用電剪；小段要夠短、方向對才放得進碎木機；木屑要用獨輪車搬到右邊堆肥區
+  const wd = diffOf('wood');
   const ov = document.createElement('div'); ov.id = 'woodOv';
-  ov.innerHTML = `<div class="wo-hud">${who?`<span>👤 <b>${esc(who)}</b></span>`:''}<span>⏱ <b id="woT">60</b> 秒</span><span>過關指數 <b id="woS">0</b></span><span>第 <b id="woR">1</b>/3 枝</span></div>
-    <div class="wo-tool" id="woTool">手上沒有工具：點住掉下來的 <b>鋸子</b> 或 <b>電剪</b></div>
+  ov.innerHTML = `<div class="wo-hud">${who?`<span>👤 <b>${esc(who)}</b></span>`:''}<span>⏱ <b id="woT">0</b> 秒</span><span>🛒 <b id="woS">0</b> 車</span><span>第 <b id="woR">1</b>/3 輪</span></div>
+    <div class="wo-tool" id="woTool"></div>
     <svg id="woSvg" viewBox="0 0 360 560" preserveAspectRatio="xMidYMid meet">
       <rect x="0" y="0" width="360" height="560" fill="#EAF2DF"/>
-      <path d="M100 420 L260 420 L232 462 L128 462Z" fill="#8C949C"/><rect x="118" y="460" width="124" height="74" rx="10" fill="#5B6770"/>
-      <rect x="132" y="476" width="96" height="10" rx="5" fill="#3E474E"/><text x="180" y="518" text-anchor="middle" font-size="14" font-weight="700" fill="#fff">碎木機</text>
-      <text x="180" y="410" text-anchor="middle" font-size="11" fill="#6E6470">↓ 把剪好的小段滑進來 ↓</text>
-      <g id="woChips"></g><g id="woBranch"></g><g id="woTools"></g></svg>
+      <rect x="258" y="430" width="96" height="112" rx="14" fill="#8C6A4E" opacity=".18" stroke="#8C6A4E" stroke-dasharray="5 4"/>
+      <text x="306" y="454" text-anchor="middle" font-size="12" font-weight="700" fill="#6E5240">堆肥區</text><text x="306" y="470" text-anchor="middle" font-size="10" fill="#6E5240">木屑推到這裡 →</text>
+      <path d="M26 420 L170 420 L148 462 L48 462Z" fill="#8C949C"/><rect x="44" y="460" width="110" height="74" rx="10" fill="#5B6770"/>
+      <rect x="58" y="476" width="82" height="10" rx="5" fill="#3E474E"/><text x="99" y="518" text-anchor="middle" font-size="13" font-weight="700" fill="#fff">碎木機</text>
+      <path d="M154 500 L188 512 L188 524 L154 520Z" fill="#6E7880"/>
+      <text x="98" y="410" text-anchor="middle" font-size="10.5" fill="#6E6470">↓ 剪短、轉直後滑進來 ↓</text>
+      <g id="woPile"></g><g id="woChips"></g><g id="woBranch"></g><g id="woCart"></g><g id="woTools"></g></svg>
     <div class="wo-msg" id="woMsg"></div><button class="wo-x" id="woX">離開</button>`;
   document.body.appendChild(ov);
-  const svg = $('#woSvg'), gB = $('#woBranch'), gT = $('#woTools');
-  const order = [0,1,2].sort(()=>Math.random()-.5);
-  const wd = diffOf('wood'); let round = 0, br, cut, off, fed, tool = null, uses = 0, score = 0, left = [75,60,50][wd], over = false, tools = [], drag = null, last = 0, raf, cutsDone = 0, wrong = 0, bounce = 0;
+  const svg = $('#woSvg'), gB = $('#woBranch'), gT = $('#woTools'), gP = $('#woPile'), gC = $('#woCart');
+  const LMAX = 60, PILE_MAX = 6, CART_GOAL = [6,8,10][wd];
+  const LAYOUT = [{s:.62, dx:4, dy:-22}, {s:.62, dx:120, dy:92}];
+  let round = 0, segs, nodes, cut, off, rot, fed, tool = null, score = 0, left = [95,80,66][wd], over = false, tools = [], carts = [], cart = null, drag = null, last = 0, lastCart = 0, raf;
+  let cutsDone = 0, wrong = 0, bounce = 0, pile = 0, hauled = 0, fedN = 0, cartN = 0, started = false;
   const pt = e=>{ const p = svg.createSVGPoint(); p.x = e.clientX; p.y = e.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
-  const msg = (t, bad)=>{ const m = $('#woMsg'); m.textContent = t; m.className = 'wo-msg on '+(bad?'bad':''); clearTimeout(msg.h); msg.h = setTimeout(()=>m.className='wo-msg', 1500); };
-  const hud = ()=>{ $('#woT').textContent = left; $('#woS').textContent = Math.max(0, Math.round(score/1.3)); $('#woR').textContent = Math.min(3, round+1);
-    $('#woTool').innerHTML = tool ? `手上：<b>${tool.n}</b>（還能剪 ${uses} 刀）・點紅圈剪開分叉` : '手上沒有工具：點住掉下來的 <b>鋸子</b> 或 <b>電剪</b>'; };
-  function newBranch(){
-    const S = WOOD_SHAPES[order[round]];
-    br = {n:S.n.map(([x,y])=>[x+(Math.random()*16-8), y+(Math.random()*16-8)]), s:S.s};
-    cut = new Set(); fed = new Set(); off = br.s.map(()=>({x:0,y:0})); draw();
+  const msg = (t, bad)=>{ const m = $('#woMsg'); m.textContent = t; m.className = 'wo-msg on '+(bad?'bad':''); clearTimeout(msg.h); msg.h = setTimeout(()=>m.className='wo-msg', 1600); };
+  const hud = ()=>{ $('#woT').textContent = left; $('#woS').textContent = cartN; $('#woR').textContent = Math.min(3, round+1);
+    $('#woTool').innerHTML = tool ? `手上：<b>${tool.n}</b>（只能用 1 次）・${tool.id==='saw'?'點<b style="color:#E8452C">紅圈</b>鋸開分叉':'點<b style="color:#2F7FC4">藍圈</b>剪短'}`
+      : `點住掉下來的工具：<b>鋸子</b>鋸分叉、<b>電剪</b>剪短${pile>=PILE_MAX-1?'・<b style="color:#E8452C">出料口快堵了！</b>':''}`; };
+  // 兩枝木頭一起來；太長的段先切成小節（藍圈＝電剪），分叉點（紅圈＝鋸子）
+  function newRound(){
+    nodes = []; segs = []; cut = new Set(); fed = new Set();
+    const order = [0,1,2].sort(()=>Math.random()-.5).slice(0,2);
+    order.forEach((si,bi)=>{ const S = WOOD_SHAPES[si], L = LAYOUT[bi], base = nodes.length;
+      S.n.forEach(([x,y])=>nodes.push([x*L.s+L.dx+(Math.random()*8-4), y*L.s+L.dy+(Math.random()*8-4)]));
+      S.s.forEach(([a,b])=>{ a+=base; b+=base; const [x1,y1]=nodes[a], [x2,y2]=nodes[b], len=Math.hypot(x2-x1,y2-y1), k=Math.max(1, Math.ceil(len/LMAX));
+        let prev = a; for(let j=1;j<k;j++){ nodes.push([x1+(x2-x1)*j/k, y1+(y2-y1)*j/k]); const m = nodes.length-1; segs.push([prev,m]); prev = m; } segs.push([prev,b]); }); });
+    off = segs.map(()=>({x:0,y:0})); rot = segs.map(()=>0); draw(); hud();
   }
-  const deg = n=>br.s.filter(s=>s[0]===n||s[1]===n).length;
+  const deg = n=>segs.filter(s=>s[0]===n||s[1]===n).length;
+  const kind = n=>deg(n)>=3 ? 'saw' : 'pruner';
   function comps(){
-    const live = br.s.map((s,i)=>i).filter(i=>!fed.has(i)), par = {}; live.forEach(i=>par[i]=i);
+    const live = segs.map((s,i)=>i).filter(i=>!fed.has(i)), par = {}; live.forEach(i=>par[i]=i);
     const f = i=>par[i]===i?i:(par[i]=f(par[i]));
-    br.n.forEach((_,n)=>{ if(cut.has(n)) return; const touch = live.filter(i=>br.s[i].includes(n)); for(let k=1;k<touch.length;k++) par[f(touch[k])] = f(touch[0]); });
+    nodes.forEach((_,n)=>{ if(cut.has(n)) return; const touch = live.filter(i=>segs[i].includes(n)); for(let k=1;k<touch.length;k++) par[f(touch[k])] = f(touch[0]); });
     const g = {}; live.forEach(i=>{ (g[f(i)] = g[f(i)]||[]).push(i); }); return Object.values(g);
   }
-  function center(c){ let x=0,y=0; c.forEach(i=>{ const [a,b]=br.s[i]; x+=(br.n[a][0]+br.n[b][0])/2+off[i].x; y+=(br.n[a][1]+br.n[b][1])/2+off[i].y; }); return {x:x/c.length, y:y/c.length}; }
+  const center0 = c=>{ let x=0,y=0; c.forEach(i=>{ const [a,b]=segs[i]; x+=(nodes[a][0]+nodes[b][0])/2; y+=(nodes[a][1]+nodes[b][1])/2; }); return {x:x/c.length, y:y/c.length}; };
+  const center = c=>{ const o = center0(c); return {x:o.x+off[c[0]].x, y:o.y+off[c[0]].y}; };
   function draw(){
-    gB.innerHTML = comps().map((c,k)=>{
-      const o = off[c[0]], nodes = new Set(); c.forEach(i=>br.s[i].forEach(n=>nodes.add(n)));
-      const lines = c.map(i=>{ const [a,b]=br.s[i]; return `<line x1="${br.n[a][0]}" y1="${br.n[a][1]}" x2="${br.n[b][0]}" y2="${br.n[b][1]}" stroke="#7A5A3E" stroke-width="15" stroke-linecap="round"/><line x1="${br.n[a][0]}" y1="${br.n[a][1]}" x2="${br.n[b][0]}" y2="${br.n[b][1]}" stroke="#A47A55" stroke-width="5" stroke-linecap="round"/>`; }).join('');
-      const pts = [...nodes].filter(n=>!cut.has(n) && deg(n)>=2 && c.filter(i=>br.s[i].includes(n)).length>=2)
-        .map(n=>`<circle class="cutpt" data-n="${n}" cx="${br.n[n][0]}" cy="${br.n[n][1]}" r="13" fill="#ffffffaa" stroke="#E8452C" stroke-width="2.5" stroke-dasharray="4 3"/>`).join('');
-      return `<g class="piece" data-k="${k}" data-segs="${c.join(',')}" transform="translate(${o.x} ${o.y})">${lines}${pts}</g>`;
+    gB.innerHTML = comps().map(c=>{
+      const o = off[c[0]], r = rot[c[0]], c0 = center0(c), ns = new Set(); c.forEach(i=>segs[i].forEach(n=>ns.add(n)));
+      const okV = c.length===1 && angleOK(c);
+      const lines = c.map(i=>{ const [a,b]=segs[i]; return `<line x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}" stroke="${okV?'#3E9A3A':'#7A5A3E'}" stroke-width="20" stroke-linecap="round"/><line x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}" stroke="${okV?'#7BC46E':'#A47A55'}" stroke-width="6" stroke-linecap="round"/><line x1="${nodes[a][0]}" y1="${nodes[a][1]}" x2="${nodes[b][0]}" y2="${nodes[b][1]}" stroke="#000" stroke-opacity="0" stroke-width="40" stroke-linecap="round"/>`; }).join('');
+      const pts = [...ns].filter(n=>!cut.has(n) && c.filter(i=>segs[i].includes(n)).length>=2).map(n=>{ const sw = kind(n)==='saw';
+        return `<circle class="cutpt" data-n="${n}" cx="${nodes[n][0]}" cy="${nodes[n][1]}" r="${sw?15:13}" fill="#ffffffcc" stroke="${sw?'#E8452C':'#2F7FC4'}" stroke-width="3" stroke-dasharray="4 3"/>`; }).join('');
+      return `<g class="piece" data-segs="${c.join(',')}" transform="translate(${o.x} ${o.y}) rotate(${r} ${c0.x} ${c0.y})">${lines}${pts}</g>`;
     }).join('');
   }
+  function drawPile(){
+    gP.innerHTML = Array.from({length:pile},(_,k)=>`<ellipse cx="${206+(k%3)*12-12}" cy="${528-Math.floor(k/3)*9}" rx="9" ry="5" fill="${k%2?'#A47A55':'#8C6A4E'}"/>`).join('')
+      + (pile>=PILE_MAX ? `<text x="206" y="490" text-anchor="middle" font-size="11" font-weight="900" fill="#E8452C">堵住了！</text>` : '');
+  }
   function doCut(n){
-    if(!tool){ msg('先點住掉下來的鋸子或電剪', true); return; }
-    cut.add(n); uses--; cutsDone++; SND.tick(); if(uses<=0){ tool = null; msg('工具用完了，再接一把'); }
-    comps().forEach(c=>{ if(!c.some(i=>br.s[i].includes(n))) return; const ce = center(c); let dx = ce.x-br.n[n][0], dy = ce.y-br.n[n][1]; const d = Math.hypot(dx,dy)||1; c.forEach(i=>{ off[i].x += dx/d*12; off[i].y += dy/d*12; }); });
+    if(!tool){ msg('先點住掉下來的工具', true); return; }
+    const need = kind(n);
+    if(tool.id!==need){ msg(need==='saw' ? '分叉太粗，要用鋸子才鋸得開' : '這裡用電剪剪短就好', true); SND.bad(); return; }
+    cut.add(n); cutsDone++; tool = null; SND.tick();                       // 工具只能用一次
+    comps().forEach(c=>{ if(!c.some(i=>segs[i].includes(n))) return; const ce = center0(c); let dx = ce.x-nodes[n][0], dy = ce.y-nodes[n][1]; const d = Math.hypot(dx,dy)||1;
+      c.forEach(i=>{ off[i].x += dx/d*9; off[i].y += dy/d*9; }); });
     if(navigator.vibrate) navigator.vibrate(20); draw(); hud();
   }
+  const angleOK = c=>{ const [a,b]=segs[c[0]]; let ang = Math.atan2(nodes[b][1]-nodes[a][1], nodes[b][0]-nodes[a][0])*180/Math.PI + rot[c[0]]; ang = ((ang%180)+180)%180; return Math.abs(ang-90) <= 30; };
   function feed(c){
-    if(c.length>1){
-      const fork = c.some(i=>br.s[i].some(n=>c.filter(j=>br.s[j].includes(n)).length>=3));
-      score -= 2; bounce++; SND.bad(); msg(fork ? '有分叉，放不進機器！先剪開' : '太長了，再剪一刀', true); return false;
-    }
-    c.forEach(i=>fed.add(i)); score += 10; SND.good(fed.size);
-    const chips = $('#woChips'); for(let k=0;k<8;k++){ const e = document.createElementNS('http://www.w3.org/2000/svg','rect'); e.setAttribute('x', 150+Math.random()*60); e.setAttribute('y', 470); e.setAttribute('width', 5); e.setAttribute('height', 3); e.setAttribute('fill', '#A47A55'); e.setAttribute('class','chip2'); e.style.setProperty('--dx', (Math.random()*80-40)+'px'); chips.appendChild(e); setTimeout(()=>e.remove(), 700); }
-    msg('喀啦喀啦～打成碎木了！'); draw(); hud();
-    if(fed.size===br.s.length){ round++; if(round>=3){ score += Math.min(20, left); return end(true); } setTimeout(()=>{ if(!over){ newBranch(); hud(); msg('下一枝來了！'); } }, 500); }
+    if(pile>=PILE_MAX){ score -= 2; bounce++; SND.bad(); msg('出料口被木屑堵住了！先用獨輪車把木屑搬走', true); return false; }
+    if(c.length>1){ const fork = c.some(i=>segs[i].some(n=>deg(n)>=3 && !cut.has(n)));
+      score -= 2; bounce++; SND.bad(); msg(fork ? '還有分叉，先用鋸子鋸開' : '太長了，用電剪再剪短一點', true); return false; }
+    if(!angleOK(c)){ score -= 1; bounce++; SND.bad(); msg('方向不對！點一下木段，轉到變綠色再滑進去', true); return false; }
+    c.forEach(i=>fed.add(i)); score += 10; fedN++; pile++; SND.good(fedN%8);
+    const chips = $('#woChips'); for(let k=0;k<8;k++){ const e = document.createElementNS('http://www.w3.org/2000/svg','rect'); e.setAttribute('x', 160+Math.random()*20); e.setAttribute('y', 508); e.setAttribute('width', 5); e.setAttribute('height', 3); e.setAttribute('fill', '#A47A55'); e.setAttribute('class','chip2'); e.style.setProperty('--dx', (20+Math.random()*30)+'px'); chips.appendChild(e); setTimeout(()=>e.remove(), 700); }
+    msg(pile>=PILE_MAX ? '出料口堵住了！快接獨輪車搬木屑' : '喀啦喀啦～打成碎木了！', pile>=PILE_MAX); drawPile(); draw(); hud();
+    if(fed.size===segs.length){ round++; if(round>=3){ score += Math.min(25, left); return end(true); } setTimeout(()=>{ if(!over){ newRound(); msg('下一批木頭來了！'); SND.win(); } }, 500); }
     return true;
   }
+  function drawCart(){ gC.innerHTML = cart ? `<g id="cartG" transform="translate(${cart.x} ${cart.y})">${CART_SVG}${cart.load?`<ellipse cx="0" cy="-10" rx="14" ry="6" fill="#8C6A4E"/><ellipse cx="-5" cy="-13" rx="6" ry="3.5" fill="#A47A55"/>`:''}<text y="30" text-anchor="middle" font-size="10" font-weight="700" fill="#2A1F2D">${cart.load?'拖到堆肥區':'拖到木屑堆'}</text></g>` : ''; }
   svg.addEventListener('pointerdown', e=>{
     if(over) return; const p = pt(e);
     const tg = e.target.closest('.wtool');
     if(tg){ const t = tools.find(x=>x.el===tg); if(t){ tools = tools.filter(x=>x!==t); t.el.remove();
-      if(t.type.ok){ tool = t.type; uses = [5,4,3][wd]; SND.good(); msg(`接到${t.type.n}！點紅圈剪開`); } else { score -= 5; wrong++; SND.bad(); msg(`${t.type.n}不能剪樹枝！`, true); } hud(); } return; }
+      if(t.type.cart){ if(cart){ msg('一次只能推一台獨輪車'); } else { cart = {x:t.x, y:Math.min(380,Math.max(60,t.y)), load:false}; drawCart(); SND.good(); msg('接到獨輪車！拖到出料口的木屑堆裝木屑'); } }
+      else if(t.type.ok){ tool = t.type; SND.good(); msg(`接到${t.type.n}！${t.type.id==='saw'?'點紅圈鋸分叉':'點藍圈剪短'}`); }
+      else { score -= 5; wrong++; SND.bad(); msg(`${t.type.n}不能修剪樹枝！`, true); } hud(); } return; }
+    if(e.target.closest('#cartG')){ drag = {cart:true, sx:p.x, sy:p.y, ox:cart.x, oy:cart.y}; svg.setPointerCapture(e.pointerId); return; }
     const cp = e.target.closest('.cutpt'); if(cp){ doCut(+cp.dataset.n); return; }
     const pc = e.target.closest('.piece');
-    if(pc){ const segs = pc.dataset.segs.split(',').map(Number); drag = {segs, el:pc, sx:p.x, sy:p.y, o0:segs.map(i=>({...off[i]}))}; svg.setPointerCapture(e.pointerId); }
+    if(pc){ const ss = pc.dataset.segs.split(',').map(Number); drag = {segs:ss, el:pc, sx:p.x, sy:p.y, o0:ss.map(i=>({...off[i]})), moved:false}; svg.setPointerCapture(e.pointerId); }
   });
   svg.addEventListener('pointermove', e=>{ if(!drag) return; const p = pt(e), dx = p.x-drag.sx, dy = p.y-drag.sy;
-    drag.segs.forEach((i,k)=>{ off[i].x = drag.o0[k].x+dx; off[i].y = drag.o0[k].y+dy; }); drag.el.setAttribute('transform', `translate(${off[drag.segs[0]].x} ${off[drag.segs[0]].y})`); });
-  const up = ()=>{ if(!drag) return; const d = drag; drag = null; const ce = center(d.segs);
-    if(ce.y>380 && Math.abs(ce.x-180)<95){ if(!feed(d.segs)){ d.segs.forEach((i,k)=>off[i]={...d.o0[k]}); draw(); } } };
+    if(drag.cart){ cart.x = drag.ox+dx; cart.y = drag.oy+dy; drawCart();
+      if(!cart.load && Math.hypot(cart.x-206, cart.y-520)<34){ if(pile>=2){ pile -= 2; cart.load = 2; drawPile(); drawCart(); SND.good(); msg('裝滿一車！推到右邊堆肥區'); } else if(!cart.warn){ cart.warn = true; msg('木屑還不夠一車，再打碎 1 段木頭'); } }
+      return; }
+    if(Math.hypot(dx,dy)>6) drag.moved = true;
+    const c0 = center0(drag.segs);
+    drag.segs.forEach((i,k)=>{ off[i].x = drag.o0[k].x+dx; off[i].y = drag.o0[k].y+dy; }); drag.el.setAttribute('transform', `translate(${off[drag.segs[0]].x} ${off[drag.segs[0]].y}) rotate(${rot[drag.segs[0]]} ${c0.x} ${c0.y})`); });
+  const up = ()=>{ if(!drag) return; const d = drag; drag = null;
+    if(d.cart){ if(cart.load && cart.x>258 && cart.y>420){ cartN++; score += 12; hauled += cart.load; SND.win(); msg(`第 ${cartN} 車送到堆肥區！`); cart = null; drawCart(); hud(); } return; }
+    if(!d.moved){ if(d.segs.length===1){ rot[d.segs[0]] = (rot[d.segs[0]]+60)%180; SND.tick(); draw(); } else msg('先剪成一小段，才能轉方向'); return; }
+    const ce = center(d.segs);
+    if(ce.y>360 && ce.x>0 && ce.x<210){ if(!feed(d.segs)){ d.segs.forEach((i,k)=>off[i]={...d.o0[k]}); draw(); } } };
   svg.addEventListener('pointerup', up); svg.addEventListener('pointercancel', up);
-  function spawn(){ const ok = Math.random()<[.7,.55,.45][wd], pool = WOOD_TOOLS.filter(t=>t.ok===ok), type = pool[rnd(pool.length)];
+  function spawn(isCart){
+    let type;
+    if(isCart) type = {id:'cart', n:'獨輪車', cart:true, svg:CART_SVG};
+    else { const ok = Math.random()<[.8,.68,.56][wd];
+      if(ok){ const need = new Set(); nodes.forEach((_,n)=>{ if(!cut.has(n) && deg(n)>=2) need.add(kind(n)); });   // 依照現在需要的工具掉落
+        const ids = need.size ? [...need] : ['saw','pruner']; const id = ids[rnd(ids.length)]; type = WOOD_TOOLS.find(t=>t.id===id); }
+      else { const pool = WOOD_TOOLS.filter(t=>!t.ok); type = pool[rnd(pool.length)]; } }
     const el = document.createElementNS('http://www.w3.org/2000/svg','g'); el.setAttribute('class','wtool');
-    el.innerHTML = `<circle r="25" fill="#fff" stroke="${'#C9C4BE'}" stroke-width="2"/><g>${type.svg}</g><text y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#2A1F2D">${type.n}</text>`;
-    gT.appendChild(el); tools.push({el, type, x:30+Math.random()*300, y:-40, vy:[1.1,1.4,1.8][wd]+Math.random()*.7}); }
+    el.innerHTML = `<circle r="25" fill="${isCart?'#FFF4D6':'#fff'}" stroke="${isCart?'#E8C33A':'#C9C4BE'}" stroke-width="2"/><g>${type.svg}</g><text y="38" text-anchor="middle" font-size="11" font-weight="700" fill="#2A1F2D">${type.n}</text>`;
+    gT.appendChild(el); tools.push({el, type, x:30+Math.random()*300, y:-40, vy: isCart ? [2.2,2.6,3][wd] : [.9,1.15,1.4][wd]+Math.random()*.5}); }
   function frame(ts){
     if(over) return;
-    if(ts-last>1300){ last = ts; spawn(); }
+    if(!started){ last = ts; lastCart = ts; raf = requestAnimationFrame(frame); return; }
+    if(ts-last>[950,1050,1150][wd]){ last = ts; spawn(false); }
+    if(ts-lastCart>[2600,3000,3400][wd]){ lastCart = ts; spawn(true); }               // 獨輪車掉得很快
     tools.forEach(t=>{ t.y += t.vy; t.el.setAttribute('transform', `translate(${t.x} ${t.y})`); });
     tools = tools.filter(t=>{ if(t.y>600){ t.el.remove(); return false; } return true; });
     raf = requestAnimationFrame(frame);
   }
-  const tm = setInterval(()=>{ left--; hud(); if(left<=0) end(false); }, 1000);
+  const tm = setInterval(()=>{ if(!started) return; left--; hud(); if(left<=0) end(false); }, 1000);
   $('#woX').onclick = ()=>end(false, true);
   function end(clear, quit){
     if(over) return; over = true; clearInterval(tm); cancelAnimationFrame(raf); ov.remove(); MUSIC.stop(); if(!quit) clear ? SND.win() : SND.lose();
-    if(quit && score<=0){ return; }
-    done({score: score/1.3, detail: `打成碎木 ${[...Array(round)].length} 枝${clear?'，全部完成！':''}・剪了 ${cutsDone} 刀・拿錯工具 ${wrong} 次・塞不進機器 ${bounce} 次`});
+    if(quit && cartN<=0){ return; }
+    done({score: Math.min(100, Math.round(cartN/CART_GOAL*100)), carts:cartN, detail: `推了 ${cartN} 車木屑到堆肥區（目標 ${CART_GOAL} 車）・打碎 ${fedN} 段${clear?'・木頭全部處理完！':''}・拿錯工具 ${wrong} 次`});
   }
-  MUSIC.start(); newBranch(); hud(); msg('先接住正確的工具，剪開分叉，再把小段滑進碎木機'); raf = requestAnimationFrame(frame);
+  // ---- 開始前的教育訓練（第一次一定要看，之後可以跳過）
+  function tutorial(next){
+    const box = document.createElement('div'); box.className = 'wo-tut'; ov.appendChild(box);
+    const seenTut = (()=>{ try{ return localStorage.getItem('hfk_wood_tut')==='1'; }catch(e){ return false; } })();
+    const branch = (col)=>`<svg viewBox="0 0 200 110" class="tut-svg"><path d="M20 90 L100 55 L180 80 M100 55 L130 12" stroke="#7A5A3E" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <path d="M20 90 L100 55 L180 80 M100 55 L130 12" stroke="#A47A55" stroke-width="4" stroke-linecap="round" fill="none"/>
+      ${col==='saw'?'<circle cx="100" cy="55" r="13" fill="#ffffffaa" stroke="#E8452C" stroke-width="3" stroke-dasharray="4 3"/>':'<circle cx="140" cy="67" r="11" fill="#ffffffaa" stroke="#2F7FC4" stroke-width="3" stroke-dasharray="4 3"/>'}</svg>`;
+    const steps = [
+      {h:'① 紅圈是分叉', p:'要用哪一種工具？', svg:branch('saw'), ans:'saw'},
+      {h:'② 藍圈要剪短', p:'要用哪一種工具？', svg:branch('pruner'), ans:'pruner'},
+      {h:'③ 轉直再丟進去', p:'點木段轉方向，變綠色就往下滑。', rot:true},
+      {h:'④ 兩段裝一車', p:'接住獨輪車 → 拖到出料口裝木屑 → 推到右邊堆肥區。<b>車越多越厲害！</b>', end:true}
+    ];
+    let i = 0;
+    const show = ()=>{
+      const s = steps[i];
+      box.innerHTML = `<div class="tut-card"><div class="tut-step">教學 ${i+1}/4</div><h3>${s.h}</h3><p>${s.p}</p>${s.svg||''}
+        ${s.ans?`<div class="tut-btns"><button data-t="saw">🪚 鋸子</button><button data-t="pruner">✂️ 電剪</button></div><div class="tut-fb" id="tutFb"></div>`:''}
+        ${s.rot?`<svg viewBox="0 0 200 150" class="tut-svg" id="tutRot"><rect x="70" y="118" width="60" height="26" rx="6" fill="#5B6770"/><text x="100" y="136" text-anchor="middle" font-size="11" fill="#fff">碎木機</text>
+          <g id="tutPiece" style="transition:transform .25s"><line x1="100" y1="30" x2="100" y2="90" stroke="#7A5A3E" stroke-width="13" stroke-linecap="round"/></g></svg><div class="tut-fb" id="tutFb">點木段轉方向</div>`:''}
+        ${s.end?`<button class="btn main" id="tutGo">我懂了，開始！</button>`:''}
+        ${seenTut && !s.end?`<button class="tut-skip" id="tutSkip">跳過教學</button>`:''}</div>`;
+      const sk = $('#tutSkip'); if(sk) sk.onclick = finish;
+      if(s.ans) box.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{ if(b.dataset.t===s.ans){ SND.good(); $('#tutFb').textContent='答對了！'; $('#tutFb').className='tut-fb ok'; setTimeout(()=>{ i++; show(); }, 600); } else { SND.bad(); $('#tutFb').textContent = s.ans==='saw' ? '電剪剪不斷分叉喔，要用鋸子' : '只是剪短，用電剪就好'; $('#tutFb').className='tut-fb bad'; } });
+      if(s.rot){ let r = 60, sy = null; const pc = $('#tutPiece'), fb = $('#tutFb'), sv = $('#tutRot');
+        const paint = ()=>{ pc.style.transform = `rotate(${r}deg)`; pc.style.transformOrigin = '100px 60px'; const okA = r%180===0; pc.querySelector('line').setAttribute('stroke', okA?'#3E9A3A':'#7A5A3E'); fb.textContent = okA ? '變直了！手指往下滑丟進碎木機' : '再點一下轉方向'; };
+        paint();
+        sv.onpointerdown = e=>{ sy = e.clientY; };
+        sv.onpointerup = e=>{ const dy = e.clientY-(sy??e.clientY); sy = null;
+          if(dy > 25){ if(r%180===0){ SND.win(); pc.style.transform += ' translateY(60px)'; fb.textContent='丟進去了！'; fb.className='tut-fb ok'; setTimeout(()=>{ i++; show(); }, 700); } else { SND.bad(); fb.textContent='還沒轉直，先點一下'; } }
+          else { r = (r+60)%180; SND.tick(); paint(); } }; }
+      if(s.end) $('#tutGo').onclick = finish;
+    };
+    const finish = ()=>{ try{ localStorage.setItem('hfk_wood_tut','1'); }catch(e){} box.remove(); next(); };
+    show();
+  }
+  newRound(); drawPile(); raf = requestAnimationFrame(frame);
+  tutorial(()=>{ started = true; MUSIC.start(); hud(); msg('鋸子鋸紅圈、電剪剪藍圈，轉直變綠就滑進碎木機'); });
 }
 
 /* =========================================================
@@ -2777,9 +2902,9 @@ const HOWTO = {
   whitefly:d=>({t:'銀葉粉蝨躲在葉背吸汁液，牠們會在葉子間飛來飛去，看準了就點掉。', goal:`${[14,12,10][d]} 秒內點掉 ${[5,7,9][d]} 隻`}),
   rain:    d=>({t:'豪雨把垃圾沖進排水溝：酒瓶、玻璃罐、鋁罐、鐵罐頭、寶特瓶、塑膠袋、樹枝、落葉順著水流下來，越後面水流越快。水溝裡還有小魚，點到魚會扣分！把它們拖到下方正確的分類桶（也可以先點垃圾、再點桶子）。垃圾卡住排水口或丟錯桶，水位都會上升。', goal:`水滿出來之前分類好 ${[8,10,12][d]} 件垃圾`}),
   rust:    d=>({t:'連續 3 輪，每一輪都要把有黃褐色斑點的病葉 🍂 全部摘掉，健康的葉子 🍃 不要摘。葉子會一直換位置，越後面換得越快。', goal:`${[24,20,16][d]} 秒內完成 3 輪，摘錯最多 ${[2,1,1][d]} 次`}),
-  drought: d=>({t:'要連續澆 3 次水：按住「滴灌」讓水位上升，停在綠色區就放開。綠色區一次比一次窄、位置也會變。澆太多會爛根。', goal:`連續 3 次都停在綠色區（寬度 ${[[30,22,14],[24,16,10],[18,12,8]][d].join('% → ')}%）`}),
+  drought: d=>({t:`要連續澆 3 次水：按住「滴灌」讓水位上升，停在綠色區就放開。綠色區一次比一次窄，水位也越升越快${d>0?"，綠色區還會上下飄動":""}。澆太多會爛根。`, goal:`連續 3 次都停在綠色區（寬度 ${[[26,18,13],[22,15,10],[18,12,9]][d].join('% → ')}%）`}),
   heat:    d=>({t:'正中午的陽光一直射下來。手指按住畫面左右滑，陽傘會跟著移動，擋住射向無花果樹的陽光，別讓果子曬傷。', goal:`撐過 ${[12,15,18][d]} 秒，曬傷值不到 100`}),
-  wind:    d=>({t:'強風把枝條吹得左右擺。每條吊繩上有一個橘色夾子，等枝條擺到和吊繩一樣垂直（枝條變綠色）時，點那一排，夾子就會把枝條夾在吊繩上。歪的時候點會夾空。', goal:`${[25,22,20][d]} 秒內把 ${[3,4,5][d]} 根枝條都夾直${d>0?'（夾空扣 1 秒）':''}`}),
+  wind:    d=>({t:`強風把枝條吹得左右擺。每條吊繩上有一個橘色夾子，等枝條擺到和吊繩一樣垂直（枝條變綠色）時，點那一排，夾子就會把枝條夾在吊繩上。歪的時候點會夾空。${d>0?"還會有陣風把夾好的夾子吹掉，要再夾一次。":""}`, goal:`${[26,24,22][d]} 秒內把 ${[4,5,5][d]} 根枝條都夾直${d>0?'（夾空扣 1 秒）':''}`}),
   myna:    d=>({t:'八哥從破洞飛進溫室偷吃熟果。不要傷害牠：點牠旁邊嚇牠，把牠一路趕到「破洞」飛出去。', goal:`${[22,18,15][d]} 秒內趕出去`})
 };
 function stopMG(){ MUSIC.stop(); if(MG){ clearInterval(MG.timer); clearInterval(MG.mv); if(MG.raf) cancelAnimationFrame(MG.raf); } MG = null; }
@@ -2838,14 +2963,16 @@ function tapGame(k, d){
 }
 /* ---------- 乾旱：連續澆 3 次，綠色區一次比一次窄 ---------- */
 function holdGame(k, d){
-  const widths = [[30,22,14],[24,16,10],[18,12,8]][d], sp = [1.6,2,2.5][d];
+  const widths = [[26,18,13],[22,15,10],[18,12,9]][d], sp0 = [1.0,1.2,1.4][d], drift = [0,4,6][d];
   let round = 0, v = 0, iv = null, done = false, lo = 0, hi = 0;
   function setup(){
-    const w = widths[round], c = 52 + Math.random()*28; lo = Math.round(Math.max(18, c-w/2)); hi = Math.min(96, lo+w); v = 0; done = false;
+    const w = widths[round], c = 52 + Math.random()*28, sp = sp0*(1+round*.15); lo = Math.round(Math.max(18, c-w/2)); hi = Math.min(96, lo+w); v = 0; done = false; const lo0 = lo, t0 = performance.now();
     $('#mg').innerHTML = `<div class="rnd3">${[0,1,2].map(i=>`<i class="${i<round?'ok':i===round?'now':''}"></i>`).join('')}<span>第 ${round+1}/3 次澆水・綠色區 ${w}%</span></div>
       <div class="gauge"><div class="gz" style="bottom:${lo}%;height:${hi-lo}%"></div><div class="gf" id="gf"></div></div><button class="btn main holdb" id="holdB">按住滴灌 💧</button>`;
     const b = $('#holdB'), gf = $('#gf');
-    const start = e=>{ e.preventDefault(); if(done||iv) return; iv = setInterval(()=>{ v = Math.min(100, v+sp); gf.style.height = v+'%'; $('#mgInfo').textContent = `水位 ${Math.round(v)}%`; if(v>=98) stop(); }, 40); };
+    const start = e=>{ e.preventDefault(); if(done||iv) return; iv = setInterval(()=>{ v = Math.min(100, v+sp*(1+v/250)); gf.style.height = v+'%';
+        if(drift){ lo = Math.round(Math.max(15, Math.min(96-w, lo0 + Math.sin((performance.now()-t0)/600)*drift))); hi = lo+w; const gz=$('#mg .gz'); if(gz){ gz.style.bottom=lo+'%'; } }
+        $('#mgInfo').textContent = `水位 ${Math.round(v)}%`; if(v>=98) stop(); }, 40); };
     const stop = ()=>{ if(!iv||done) return; clearInterval(iv); iv = null; done = true;
       if(v>=lo && v<=hi){ round++; SND.good(round*2); if(round>=3) return finishChallenge(k, true); $('#mgInfo').textContent = '剛剛好！下一次綠色區更窄喔'; setTimeout(setup, 650); }
       else finishChallenge(k, false); };
@@ -2956,21 +3083,21 @@ function mynaGame(k, d){
 function famWood(){
   const F = P.fam, s = [];
   const run = i=>woodGame(res=>{
-    s[i] = Math.round(res.score);
-    if(i===0){ openSheet(`<div class="big">🪵</div><h2 class="h2 wk">${esc(F.names[0])} 拿到 ${s[0]} 分</h2><p class="sub">換 ${esc(F.names[1])} 上場！手機交給對方吧。</p><button class="btn main" id="wNext">${esc(F.names[1])} 正式開始</button>`, true); $('#wNext').onclick = ()=>{ closeSheet(); run(1); }; }
+    s[i] = res.carts||0;
+    if(i===0){ openSheet(`<div class="big">🪵</div><h2 class="h2 wk">${esc(F.names[0])} 推了 ${s[0]} 車</h2><p class="sub">換 ${esc(F.names[1])} 上場！手機交給對方吧。</p><button class="btn main" id="wNext">${esc(F.names[1])} 正式開始</button>`, true); $('#wNext').onclick = ()=>{ closeSheet(); run(1); }; }
     else finish();
   }, F.names[i]);
   run(0);
   function finish(){
     P.daily.famGames = (P.daily.famGames||0)+1;
-    const counted = P.daily.famGames<=3, gain = counted ? Math.round(Math.min(60, Math.round((s[0]+s[1])/4))*famMul()) : 0, beforeLv = Math.floor(F.intimacy/100);
+    const counted = P.daily.famGames<=3, gain = counted ? Math.round(Math.min(60, (s[0]+s[1])*4)*famMul()) : 0, beforeLv = Math.floor(F.intimacy/100);
     F.intimacy += gain; F.games++;
-    const pts = P.daily.famGames===1 ? addPts(5) : 0, up = (s[0]+s[1])/2>=70 ? diffAfter('wood', true) : '';
+    const pts = P.daily.famGames===1 ? addPts(5) : 0, up = (s[0]+s[1])/2>=[6,8,10][diffOf('wood')]*.7 ? diffAfter('wood', true) : '';
     let chest='';
     if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=COUPON_T.find(x=>x.id===c.t); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
     Auth.save(); renderAll();
     const win = s[0]===s[1] ? '平手！' : `${esc(s[0]>s[1]?F.names[0]:F.names[1])} 贏了！`;
-    openSheet(`<div class="big pop">🪵</div><h2 class="h2 wk">${win}</h2><p class="sub">${esc(F.names[0])} ${s[0]} 分・${esc(F.names[1])} ${s[1]} 分<br>${counted?`一起整理枝條，親密值 +${gain}`:'今天前 3 場才計親密值'}${pts?`，果友值 +${pts}`:''}${up?`<br>🔺 ${up}`:''}</p>${chest}
+    openSheet(`<div class="big pop">🪵</div><h2 class="h2 wk">${win}</h2><p class="sub">${esc(F.names[0])} ${s[0]} 車・${esc(F.names[1])} ${s[1]} 車（推越多車越厲害）<br>${counted?`一起整理枝條，親密值 +${gain}`:'今天前 3 場才計親密值'}${pts?`，果友值 +${pts}`:''}${up?`<br>🔺 ${up}`:''}</p>${chest}
       <div class="card" style="text-align:left"><b>📖 農場小知識</b><p class="sub" style="margin:4px 0 0">修剪下來的枝條打成碎木，鋪回土裡保濕、養菌，是循環農法的一環。</p></div>
       <button class="btn main" id="wAgain2">再比一輪</button><button class="btn ghost" onclick="closeSheet()">結束</button>`, true);
     $('#wAgain2').onclick = ()=>{ closeSheet(); famWood(); };
@@ -3044,8 +3171,9 @@ function famHockey(){
 /* 強風：每條吊繩一個夾子，枝條擺直（變綠）時點那一排就夾住 */
 function windGame(k, d){
   const mg=$('#mg'); mg.style.height='320px'; const W=mg.clientWidth, H=320;
-  const nB=[3,4,5][d], tol=[9,7,5.5][d]*Math.PI/180, sec=[25,22,20][d]+KIKI(), amp=[.34,.46,.58][d], base=H-16, len=H*.62, clipY=base-len*.55;
-  const br = Array.from({length:nB}, (_,i)=>({x:W*(i+1)/(nB+1), ph:Math.random()*6, fq:1+Math.random()*.8, th:0, locked:false, shake:0}));
+  const nB=[4,5,5][d], tol=[8,6.5,5.5][d]*Math.PI/180, sec=[26,24,22][d]+KIKI(), amp=[.38,.46,.54][d], gustIv=[0,10,7][d], base=H-16, len=H*.62, clipY=base-len*.55;
+  const br = Array.from({length:nB}, (_,i)=>({x:W*(i+1)/(nB+1), ph:Math.random()*6, fq:1.1+Math.random()*.7, th:0, locked:false, shake:0}));
+  let lastGust = performance.now();
   mg.innerHTML = `<svg class="gh" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#E3EED6"/><path d="M0 6 L${W} 6" stroke="#8B949C" stroke-width="3"/>
     ${br.map(b=>`<path d="M${b.x} 6 L${b.x} ${base}" stroke="#B9B2A6" stroke-width="2"/>`).join('')}
     <rect x="0" y="${base}" width="${W}" height="${H-base}" fill="#8C6A4E"/><g id="wbr"></g></svg>`;
@@ -3063,6 +3191,7 @@ function windGame(k, d){
   const step = now=>{
     const t=(now-t0)/1000;
     br.forEach((b,i)=>{ if(!b.locked) b.th = amp*Math.sin(b.fq*t+b.ph) + (d>0 ? .16*Math.sin(t*.7+i) : 0); });
+    if(gustIv && !done && now-lastGust > gustIv*1000){ lastGust = now; const L = br.filter(b=>b.locked); if(L.length>1 && L.length<nB){ const b = L[rnd(L.length)]; b.locked = false; b.ph = Math.random()*6; SND.bad(); msgT = now; $('#mgInfo').textContent = '💨 一陣強風把夾子吹掉了！再夾一次'; } }
     gB.innerHTML = br.map(b=>{ const [tx,ty]=tipOf(b), ok=!b.locked && Math.abs(b.th)<tol, sh = now-b.shake<300 ? Math.sin(now/20)*5 : 0;
       const cx = b.locked ? b.x+3 : b.x-14+sh;
       return `<line x1="${b.x+3}" y1="${base}" x2="${tx+3}" y2="${ty}" stroke="${b.locked?'#6B8E4E':ok?'#3E9A3A':'#8C6A4E'}" stroke-width="${ok?9:7}" stroke-linecap="round"/>
