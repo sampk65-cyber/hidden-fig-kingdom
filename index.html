@@ -179,7 +179,19 @@ nav button.on{color:var(--fig);font-weight:700}
 .fert-bk svg{width:34px;height:34px}
 .film-in{position:absolute;top:-8px;left:-4px;z-index:3;border:0;background:var(--card);border-radius:14px;box-shadow:0 2px 8px rgba(0,0,0,.2);padding:5px 7px 3px;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:11px;font-weight:700;color:#2A1F2D;animation:bkB 1.8s ease-in-out infinite}
 .film-in svg{width:34px;height:27px}
-.ph-badge{cursor:pointer}.ph-ring{transform-box:fill-box;transform-origin:center;animation:phG 1.3s ease-in-out infinite}
+.ph-badge{cursor:pointer}
+.ph-years{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}.ph-years .chip.on,.ph-tabs .chip.on{background:#5B2346;color:#fff;border-color:#5B2346}
+.ph-months{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:8px}
+.ph-mon{border:1.5px solid var(--line);background:var(--card);border-radius:12px;padding:6px 4px;display:flex;flex-direction:column;align-items:center;font-size:12px}
+.ph-mon small{color:var(--muted);font-size:11px}.ph-mon.has small{color:#14735A;font-weight:700}.ph-mon.on{border-color:#5B2346;background:color-mix(in srgb,#5B2346 10%,transparent)}
+.ph-tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.car{position:relative;overflow:hidden;border-radius:14px;background:#0001;touch-action:pan-y;user-select:none}
+.car-track{display:flex;transition:transform .45s ease}.car-track figure{flex:0 0 100%;margin:0;position:relative}
+.car img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block;pointer-events:none}
+.car .rank{position:absolute;top:8px;left:8px;background:#E8C33A;color:#2A1F2D;font-weight:900;border-radius:99px;padding:2px 10px;font-size:12px}
+.car-dots{display:flex;justify-content:center;gap:5px;margin:8px 0}.car-dots i{width:7px;height:7px;border-radius:4px;background:var(--line);cursor:pointer;transition:width .2s}.car-dots i.on{background:#5B2346;width:16px}
+.car-info{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;text-align:left}.car-info small{display:block;color:var(--muted);font-size:12px}
+.like-btn{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font-weight:700;white-space:nowrap}.like-btn.on{background:#FCE4EC;border-color:#E8287A;color:#B0195A}.ph-ring{transform-box:fill-box;transform-origin:center;animation:phG 1.3s ease-in-out infinite}
 @keyframes phG{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.45);opacity:.25}}
 .visit-pill{display:table;margin:0 0 8px auto;background:var(--card);border:1.5px solid var(--line);border-radius:99px;padding:4px 12px;font-size:12px;font-weight:700;color:#5B2346}
 .fert-bk.on{animation:none;outline:2px solid var(--leaf)}
@@ -752,14 +764,20 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     </div>
     <div class="admpane hide" id="ap-photo">
       <h2 class="h2">溫室真實場景照片</h2>
-      <p class="sub">上傳後，玩家在地圖溫室角落點 🎞️ 就能看到。照片存在 Firebase Storage，長邊自動縮到 2560 像素。</p>
+      <p class="sub">依溫室／年／月整理。玩家看到的是最新月份（自動輪播、可按讚），另有「最多讚」排行。照片存在 Firebase Storage，長邊自動縮到 2560 像素。</p>
       <div class="card">
         <label class="lbl" for="phZone" style="margin-top:0">放在哪座溫室</label><select id="phZone" class="field"></select>
-        <label class="lbl" for="phFile">照片</label><input id="phFile" class="field" type="file" accept="image/*">
-        <label class="lbl" for="phCap">說明（選填，30 字內）</label><input id="phCap" class="field" maxlength="30" placeholder="例如：三期今天開始採收">
+        <label class="lbl" for="phYm">拍攝月份</label><input id="phYm" class="field" type="month">
+        <label class="lbl" for="phFile">照片（可一次選多張）</label><input id="phFile" class="field" type="file" accept="image/*" multiple>
+        <label class="lbl" for="phCap">說明（選填，30 字內，多張共用）</label><input id="phCap" class="field" maxlength="30" placeholder="例如：三期今天開始採收">
         <button id="btnPh" class="btn main">上傳</button>
       </div>
-      <div class="card"><b>這座溫室的照片</b><div id="phList" class="ph-grid"></div></div>
+      <div class="card"><b>照片資料夾</b>
+        <div id="phYears" class="ph-years"></div>
+        <div id="phMonths" class="ph-months"></div>
+        <div id="phMonthT" class="lbl"></div>
+        <div id="phList" class="ph-grid"></div>
+      </div>
     </div>
     <div class="admpane hide" id="ap-pool">
       <h2 class="h2 wk">寶箱追逐賽・每日獎池</h2>
@@ -848,14 +866,14 @@ const DB = {
       for(const o of ops){
         if(o.op==='set'){ d[o.path] = JSON.parse(JSON.stringify(o.data)); continue; }
         if(!d[o.path]) throw new Error('找不到資料');
-        for(const [k,v] of Object.entries(o.data)) d[o.path][k] = (v && v.$union) ? [...new Set([...(d[o.path][k]||[]), ...v.$union])] : JSON.parse(JSON.stringify(v));
+        for(const [k,v] of Object.entries(o.data)) d[o.path][k] = (v && v.$union) ? [...new Set([...(d[o.path][k]||[]), ...v.$union])] : (v && v.$inc!=null) ? (d[o.path][k]||0)+v.$inc : JSON.parse(JSON.stringify(v));
       }
       DB._s(d); return;
     }
     const b = fb.fs.writeBatch(fb.F);
     for(const o of ops){
       const data = {};
-      for(const [k,v] of Object.entries(o.data)) data[k] = (v && v.$union) ? fb.fs.arrayUnion(...v.$union) : v;
+      for(const [k,v] of Object.entries(o.data)) data[k] = (v && v.$union) ? fb.fs.arrayUnion(...v.$union) : (v && v.$inc!=null) ? fb.fs.increment(v.$inc) : v;
       o.op==='set' ? b.set(DB._ref(o.path), data) : b.update(DB._ref(o.path), data);
     }
     await b.commit();
@@ -2159,9 +2177,20 @@ const Admin = {
     await DB.set('config/zones', z); toast('本週溫室階段已更新；下週會自動輪替');
   },
   async photo(){
-    const sel = $('#phZone'); if(!sel.options.length){ sel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${z.n}${z.emerald?'（翡翠溫室）':''}</option>`).join(''); sel.onchange = ()=>Admin.photo(); }
-    const zid = sel.value; let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).sort((a,b)=>b.created-a.created); }catch(e){}
-    $('#phList').innerHTML = items.length ? items.map(p=>`<div class="ph-it"><img src="${p.url||p.data}" alt=""><small>${esc(p.cap||'')}</small><button class="chip" data-del="${p.id}">刪除</button></div>`).join('') : '<p class="sub">還沒有照片</p>';
+    const sel = $('#phZone'); if(!sel.options.length){ sel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${z.n}${z.emerald?'（翡翠溫室）':''}</option>`).join(''); sel.onchange = ()=>{ Admin.phM = null; Admin.photo(); }; }
+    if(!$('#phYm').value) $('#phYm').value = ymOf(Date.now());
+    const zid = sel.value; let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).map(phNorm).sort((a,b)=>b.created-a.created); }catch(e){}
+    const nowY = new Date().getFullYear(), years = [...new Set([nowY, ...items.map(p=>+p.ym.slice(0,4))])].sort((a,b)=>b-a);
+    if(!Admin.phY || !years.includes(Admin.phY)) Admin.phY = items.length ? +items[0].ym.slice(0,4) : nowY;
+    const inY = items.filter(p=>+p.ym.slice(0,4)===Admin.phY), cnt = m=>inY.filter(p=>+p.ym.slice(5)===m).length;
+    if(!Admin.phM) Admin.phM = inY.length ? +inY[0].ym.slice(5) : new Date().getMonth()+1;
+    $('#phYears').innerHTML = years.map(y=>`<button class="chip ${y===Admin.phY?'on':''}" data-y="${y}">📁 ${y} 年（${items.filter(p=>+p.ym.slice(0,4)===y).length}）</button>`).join('');
+    $('#phMonths').innerHTML = Array.from({length:12},(_,i)=>i+1).map(m=>`<button class="ph-mon ${m===Admin.phM?'on':''} ${cnt(m)?'has':''}" data-m="${m}"><b>${cnt(m)?'📂':'📁'} ${m}月</b><small>${cnt(m)} 張</small></button>`).join('');
+    $('#phYears').querySelectorAll('[data-y]').forEach(b=>b.onclick=()=>{ Admin.phY=+b.dataset.y; Admin.phM=null; Admin.photo(); });
+    $('#phMonths').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ Admin.phM=+b.dataset.m; Admin.photo(); });
+    const list = inY.filter(p=>+p.ym.slice(5)===Admin.phM);
+    $('#phMonthT').textContent = `${Admin.phY} 年 ${Admin.phM} 月・${list.length} 張`;
+    $('#phList').innerHTML = list.length ? list.map(p=>`<div class="ph-it"><img src="${p.url||p.data}" alt="" loading="lazy"><small>${esc(p.cap||'')}</small><small>❤️ ${p.likes||0}・${new Date(p.created).toLocaleDateString('zh-TW')}</small><button class="chip" data-del="${p.id}">刪除</button></div>`).join('') : '<p class="sub">這個月還沒有照片</p>';
     $('#phList').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ if(!confirm('確定刪除這張照片？')) return;
       const it = items.find(x=>x.id===b.dataset.del);
       if(it && it.path && !DEMO){ try{ const st = await DB.storage(); await st.deleteObject(st.ref(st.S, it.path)); }catch(e){ console.warn(e); } }
@@ -2209,26 +2238,27 @@ $('#btnSkipOld').onclick = ()=>{ if(P.tree){ P.tree.last=0; } P.daily.cares=0; A
 $('#btnFd').onclick = async()=>{ const v=$('#fdText').value.trim(); if(!v){ toast('請輸入貼文內容'); return; } await DB.set('feed/'+'P'+Date.now().toString(36), {text:v, created:Date.now()}); $('#fdText').value=''; toast('貼文已發布'); };
 $('#btnScSave').onclick = async()=>{ const v=$('#scCode').value.trim(); if(!v){ toast('請輸入密語'); return; } await DB.set('config/social', {code:v, wk:weekKey(), updated:Date.now()}); toast('通關密語已更新'); };
 $('#btnPh').onclick = async()=>{
-  const f = $('#phFile').files[0], zid = $('#phZone').value; if(!f){ toast('先選一張照片'); return; }
-  $('#btnPh').disabled = true; $('#btnPh').textContent = '壓縮上傳中…';
+  const files = [...$('#phFile').files], zid = $('#phZone').value, ym = $('#phYm').value || ymOf(Date.now()); if(!files.length){ toast('先選照片'); return; }
+  const cap = ($('#phCap').value||'').trim(), btn = $('#btnPh'); btn.disabled = true; let ok = 0;
   try{
-    const id = rid(10), cap = ($('#phCap').value||'').trim();
-    if(DEMO){
-      let data = await compressImage(f, 1280, .75); if(data.length > 850000) data = await compressImage(f, 960, .6); if(data.length > 850000) data = await compressImage(f, 720, .5);
-      await DB.set(`zonephotos/${zid}/items/${id}`, {data, cap, created:Date.now()});
-    } else {
-      // 大圖：長邊 2560、畫質 .88，存到 Storage，Firestore 只記網址
-      const blob = await compressBlob(f, 2560, .88), st = await DB.storage(), path = `zonephotos/${zid}/${id}.jpg`;
-      $('#btnPh').textContent = `上傳中…（${(blob.size/1048576).toFixed(1)} MB）`;
-      try{ await st.uploadBytes(st.ref(st.S, path), blob, {contentType:'image/jpeg', cacheControl:'public,max-age=31536000'}); }
-      catch(e){ e.st = 1; throw e; }
-      const url = await st.getDownloadURL(st.ref(st.S, path));
-      await DB.set(`zonephotos/${zid}/items/${id}`, {url, path, cap, size:blob.size, created:Date.now()});
+    for(const [i,f] of files.entries()){
+      btn.textContent = `壓縮上傳中…（${i+1}/${files.length}）`; const id = rid(10);
+      if(DEMO){
+        let data = await compressImage(f, 1280, .75); if(data.length > 850000) data = await compressImage(f, 960, .6); if(data.length > 850000) data = await compressImage(f, 720, .5);
+        await DB.set(`zonephotos/${zid}/items/${id}`, {data, cap, ym, likes:0, created:Date.now()});
+      } else {
+        const blob = await compressBlob(f, 2560, .88), st = await DB.storage(), path = `zonephotos/${zid}/${id}.jpg`;
+        btn.textContent = `上傳中…（${i+1}/${files.length}・${(blob.size/1048576).toFixed(1)} MB）`;
+        try{ await st.uploadBytes(st.ref(st.S, path), blob, {contentType:'image/jpeg', cacheControl:'public,max-age=31536000'}); }catch(e){ e.st = 1; throw e; }
+        const url = await st.getDownloadURL(st.ref(st.S, path));
+        await DB.set(`zonephotos/${zid}/items/${id}`, {url, path, cap, ym, likes:0, size:blob.size, created:Date.now()});
+      }
+      ok++;
     }
-    const c = await DB.get('config/photos') || {}; c[zid] = (c[zid]||0)+1; c['t_'+zid] = Date.now(); await DB.set('config/photos', c);
-    toast('照片已上傳'); $('#phFile').value=''; $('#phCap').value=''; Admin.photo();
-  }catch(e){ console.error(e); toast(e.st ? '上傳到 Storage 失敗：請確認已升級 Blaze、已啟用 Storage 並發布 Storage 規則' : '上傳失敗，請換一張照片再試', 5000); }
-  $('#btnPh').disabled = false; $('#btnPh').textContent = '上傳';
+  }catch(e){ console.error(e); toast(e.st ? '上傳到 Storage 失敗：請確認 Storage 規則已發布' : '上傳失敗，請換一張照片再試', 5000); }
+  if(ok){ const c = await DB.get('config/photos') || {}; c[zid] = (c[zid]||0)+ok; c['t_'+zid] = Date.now(); await DB.set('config/photos', c);
+    toast(`已上傳 ${ok} 張到 ${ym.replace('-',' 年 ')} 月`); $('#phFile').value=''; $('#phCap').value=''; Admin.phY = +ym.slice(0,4); Admin.phM = +ym.slice(5); Admin.photo(); }
+  btn.disabled = false; btn.textContent = '上傳';
 };
 $('#btnPool').onclick = async()=>{ const c={rev:Date.now(), e:+$('#pE').value||0, d:+$('#pD').value||0, c:+$('#pC').value||0, b:+$('#pB').value||0, a:+$('#pA').value||0, zEvery:Math.max(1,+$('#pZ').value||3)}; await DB.set('config/pool', c); toast('獎池設定已儲存'); Admin.pool(); };
 $('#btnPoolReset').onclick = async()=>{ await DB.set('pool/'+today(), await poolInit()); const c = await poolCfg(); await DB.set('config/pool', {...c, rev:Date.now()}); toast('今天的獎池已重設，玩家會收到新投放提醒'); Admin.pool(); };
@@ -4009,12 +4039,56 @@ function filmMarks(){
       <rect x="${x-11}" y="${y-8}" width="22" height="16" rx="2" fill="#E8C33A"/><path d="M${x-11} ${y-5} h22 M${x-11} ${y+5} h22" stroke="#2A1F2D" stroke-width="1.6" stroke-dasharray="2 2"/>
       <text x="${x}" y="${y+24}" text-anchor="middle" font-size="9" font-weight="700" fill="#2A1F2D">真實場景</text></g>`; }).join('');
 }
+function ymOf(t){ const d = new Date(t); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function phNorm(p){ return {...p, ym: p.ym || ymOf(p.created||Date.now()), likes: p.likes||0}; }
+// V5.8：玩家看最新月份（自動輪播、可按讚），另有「最多讚」排行
 async function openPhotos(zid){
   const z = ZONES.find(x=>x.id===zid);
   if(P && phNew(zid)){ P.phSeen = {...(P.phSeen||{}), [zid]: phKey(zid)}; Auth.save(); if(typeof renderMap==='function') renderMap(); }
   openSheet(`<h2 class="h2" style="margin-top:0">🎞️ ${z.n}・真實場景</h2><div id="phView"><p class="sub">讀取照片中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
-  let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).sort((a,b)=>b.created-a.created); }catch(e){}
-  $('#phView').innerHTML = items.length ? items.map(p=>`<figure class="ph"><img src="${p.url||p.data}" alt="${esc(p.cap||z.n+'溫室照片')}" loading="lazy"><figcaption>${esc(p.cap||'')}<span>${new Date(p.created).toLocaleDateString('zh-TW')}</span></figcaption></figure>`).join('') : '<p class="sub">這座溫室還沒有照片。</p>';
+  let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).map(phNorm).sort((a,b)=>b.created-a.created); }catch(e){}
+  const box = $('#phView'); if(!box) return;
+  if(!items.length){ box.innerHTML = '<p class="sub">這座溫室還沒有照片。</p>'; return; }
+  const ym = items[0].ym, latest = items.filter(p=>p.ym===ym), [Y, M] = ym.split('-').map(Number);
+  const top = [...items].filter(p=>p.likes>0).sort((a,b)=>b.likes-a.likes || b.created-a.created).slice(0,10);
+  let mode = 'new';
+  const draw = ()=>{
+    const list = mode==='new' ? latest : top;
+    box.innerHTML = `<div class="ph-tabs"><button class="chip ${mode==='new'?'on':''}" data-md="new">📅 ${Y} 年 ${M} 月（${latest.length}）</button><button class="chip ${mode==='top'?'on':''}" data-md="top">🏆 最多讚</button></div>
+      ${list.length ? `<div id="phCar"></div>` : '<p class="sub">還沒有人按讚，先去最新照片按一個吧！</p>'}`;
+    box.querySelectorAll('[data-md]').forEach(b=>b.onclick=()=>{ mode=b.dataset.md; draw(); });
+    if(list.length) carousel($('#phCar'), list, zid, mode==='top');
+  };
+  draw();
+}
+function carousel(el, list, zid, ranked){
+  let i = 0, timer = null, sx = null;
+  const liked = p=>(P && (P.phLiked||[]).includes(zid+'/'+p.id));
+  el.innerHTML = `<div class="car"><div class="car-track">${list.map((p,k)=>`<figure>${ranked?`<span class="rank">第 ${k+1} 名</span>`:''}<img data-src="${p.url||p.data}" alt="${esc(p.cap||'溫室照片')}"></figure>`).join('')}</div></div>
+    <div class="car-dots">${list.map((_,k)=>`<i data-k="${k}"></i>`).join('')}</div>
+    <div class="car-info"><div><b id="carCap"></b><small id="carDate"></small></div><button class="like-btn" id="carLike"></button></div>`;
+  const track = el.querySelector('.car-track'), imgs = [...el.querySelectorAll('img')], dots = [...el.querySelectorAll('.car-dots i')];
+  const show = k=>{
+    i = (k+list.length)%list.length; track.style.transform = `translateX(${-i*100}%)`;
+    [i, (i+1)%list.length].forEach(n=>{ if(!imgs[n].src) imgs[n].src = imgs[n].dataset.src; });
+    dots.forEach((d,n)=>d.classList.toggle('on', n===i));
+    const p = list[i]; $('#carCap').textContent = p.cap || ''; $('#carDate').textContent = new Date(p.created).toLocaleDateString('zh-TW');
+    const b = $('#carLike'); b.classList.toggle('on', liked(p)); b.textContent = `${liked(p)?'❤️':'🤍'} ${p.likes}`;
+  };
+  const play = ()=>{ clearInterval(timer); if(list.length>1) timer = setInterval(()=>{ if(!document.body.contains(el)) return clearInterval(timer); show(i+1); }, 3500); };
+  const car = el.querySelector('.car');
+  car.onpointerdown = e=>{ sx = e.clientX; clearInterval(timer); };
+  car.onpointerup = e=>{ if(sx==null) return; const dx = e.clientX - sx; sx = null; if(Math.abs(dx)>40) show(i + (dx<0?1:-1)); play(); };
+  car.onpointercancel = ()=>{ sx = null; play(); };
+  dots.forEach(d=>d.onclick=()=>{ show(+d.dataset.k); play(); });
+  $('#carLike').onclick = async()=>{
+    const p = list[i]; if(!P){ toast('登入後才能按讚'); return; } if(liked(p)){ toast('這張已經按過讚了'); return; }
+    try{
+      await DB.batch([{op:'set', path:`zonephotos/${zid}/items/${p.id}/likes/${Login.uid}`, data:{t:Date.now()}}, {op:'update', path:`zonephotos/${zid}/items/${p.id}`, data:{likes:{$inc:1}}}]);
+      p.likes++; P.phLiked = [...(P.phLiked||[]), zid+'/'+p.id].slice(-300); Auth.save(); SND.good(3); show(i);
+    }catch(e){ console.warn(e); P.phLiked = [...(P.phLiked||[]), zid+'/'+p.id].slice(-300); Auth.save(); show(i); toast('這張已經按過讚了'); }
+  };
+  show(0); play();
 }
 function compressBlob(file, maxSide, q){
   return new Promise((res, rej)=>{ const img = new Image(), url = URL.createObjectURL(file);
