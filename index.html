@@ -1840,7 +1840,7 @@ function openZone(zid){
 /* ---------- 今日劇情：依時段推進，五步完成送劇情寶箱 ---------- */
 const CHAPTERS = [
   {from:5,  to:9,  icon:'🌅', t:'清晨・晨露巡園', p:'阿無揉揉眼睛醒來，溫室裡的果子掛滿露水。先報到，再出門走一走鍛鍊體力，能量會多一些。'},
-  {from:9,  to:12, icon:'☀️', t:'上午・採收時間', p:'碰氣在一期跳來跳去，說今天的果子特別甜。產季的溫室，寶箱比較多。'},
+  {from:9,  to:12, icon:'☀️', t:'上午・採收時間', p:'碰氣在晨曦溫室跳來跳去，說今天的果子特別甜。產季的溫室，寶箱比較多。'},
   {from:12, to:17, icon:'🛸', t:'午後・外星訪客', p:'一艘飛碟停在翡翠溫室屋頂。外星人探出頭說：聽說這裡的無花果，好吃到銀河都知道。'},
   {from:17, to:19, icon:'🌇', t:'傍晚・黑騎士出沒', p:'天色暗了，黑騎士在金葉小徑上徘徊，想搶走大家的寶箱。英雄和ㄚ波飛出去巡邏。'},
   {from:19, to:29, icon:'🌙', t:'夜晚・小呱夜巡', p:'小呱睜大黃眼睛巡園，夜裡的寶箱特別多。睡前把今天的冒險收尾吧。'}
@@ -1874,7 +1874,7 @@ function renderStory(){
 function knightZone(){ if(!P.daily.knightZone) P.daily.knightZone = ZONES[Math.floor(seedRand('kn'+today())()*ZONES.length)].id; return P.daily.knightZone; }
 function kzName(){ return ZONES.find(z=>z.id===knightZone()).n; }
 function chZone(){ const pool = ZONES.filter(z=>!z.emerald && z.id!==knightZone()); return pool[Math.floor(seedRand('ch'+today())()*pool.length)].id; }
-function czName(){ return ZONES.find(z=>z.id===chZone()).n; }
+function czName(){ return zName(ZONES.find(z=>z.id===chZone())); }
 function chMark(){
   const k = pendingCh()[0]; if(!k) return '';
   const z = ZONES.find(x=>x.id===chZone()), x = z.x<180 ? z.x-52 : z.x+52, y = z.y-26;
@@ -2555,7 +2555,7 @@ function renderWeather(){
   const act = activeCh(), m = fruitMult();
   $('#wxBox').innerHTML = `<div class="card wxc">
     <div class="wxc-row"><b class="wxc-t">${WX.temp}°</b><div class="wxc-i"><b>今日神岡</b><small>🌧️ ${WX.rain}mm・🍃 ${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div></div>
-    <div class="chal-row">${act.map(k=>`<button class="chal sm ${chDone(k)?'ok':''}" data-ch="${k}"><span>${CH[k].i}</span><div><b>${chDone(k)?CH[k].n+'・已處理':czName()+'溫室出現'+CH[k].n+'！'}</b><small>${chDone(k)?'做得好':'點這裡處理・沒處理不扣分'}</small></div></button>`).join('')}<button class="playbtn" id="btnPlay"><b>🎮</b>我想玩遊戲</button></div>
+    <div class="chal-row">${act.map(k=>`<button class="chal sm ${chDone(k)?'ok':''}" data-ch="${k}"><span>${CH[k].i}</span><div><b>${chDone(k)?CH[k].n+'・已處理':czName()+'出現'+CH[k].n+'！'}</b><small>${chDone(k)?'做得好':'點這裡處理・沒處理不扣分'}</small></div></button>`).join('')}<button class="playbtn" id="btnPlay"><b>🎮</b>我想玩遊戲</button></div>
   </div>`;
   $('#btnPlay').onclick = playMenu;
   $('#wxBox').querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{ if(chDone(b.dataset.ch)){ toast('這個挑戰今天已經處理好了'); return; } startChallenge(b.dataset.ch); });
@@ -3154,7 +3154,7 @@ function taskIntro(force){
 }
 function openTask(ti){
   const slotTxt = (ti.patrol||ti.em) ? '' : TASK_SLOTS[ti.slot].map(h=>h+':00').join('–');
-  openSheet(`<div class="big">${ti.task.i}</div><h2 class="h2 wk">${ti.em?'翡翠溫室挑戰：':ti.patrol?'巡園時遇到挑戰：':ti.zone.n+'溫室小任務：'}${ti.task.n}</h2>
+  openSheet(`<div class="big">${ti.task.i}</div><h2 class="h2 wk">${ti.em?'翡翠溫室挑戰：':ti.patrol?'巡園時遇到挑戰：':zName(ti.zone)+'小任務：'}${ti.task.n}</h2>
     <p class="sub">${ti.task.d}</p><div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">${ti.task.rules||''}</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf(ti.task.id)]}</b>・兩星以上自動提升</p></div><p class="sub">${ti.em?'每天第一次挑戰計入過關指數，之後可以一直刷新最佳紀錄。':ti.patrol?'今天只會遇到這一次，':`這個時段（${slotTxt}）限定，`}完成後拿「過關指數」，指數越高果友值越多。${ti.done?'<br>這個時段已經完成，再玩只刷新最佳紀錄。':''}</p>
     <button class="btn main" id="tGo">正式開始</button><button class="btn ghost" id="tRk0">🏆 排行榜・我的最佳 ${((P.pass||{}).best||{})[ti.task.id]||0}</button><button class="btn ghost" onclick="closeSheet()">等一下</button>`, true);
   $('#tGo').onclick = ()=>{ closeSheet(); ti.task.play(res=>taskFinish(ti, res)); };
