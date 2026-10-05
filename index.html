@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V7.6</title>
+<title>今天在隱花王國尋寶 V7.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -861,7 +861,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V7.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V7.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4001,7 +4001,7 @@ function grantCoupon(type, extra={}){
   return c;
 }
 // 特別獎券用自己的名稱與說明，其他券照原本類型
-function cpT(c){ return c.t==='sp' ? {id:'sp', big:c.spN||'特別獎', sub:c.spD||'', c:'#D4A017'} : cpT(c); }
+function cpT(c){ return c.t==='sp' ? {id:'sp', big:c.spN||'特別獎', sub:c.spD||'', c:'#D4A017'} : (COUPON_T.find(x=>x.id===c.t) || {id:c.t, big:'優惠券', sub:'', c:'#6E6470'}); }
 
 /* ---------- 摘果挑戰賽：由下往上、一葉一果依序成熟，紅紫色才採 ---------- */
 const PICK_TASK = {id:'pick', n:'摘果挑戰賽', i:'🧺',
