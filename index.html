@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.0</title>
+<title>今天在隱花王國尋寶 V9.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -868,7 +868,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2688,7 +2688,7 @@ function danmaku(text, cls){
 function knightBattle(zid){
   const z = ZONES.find(x=>x.id===zid), base = roleBase(P.role), dmg = (base==='hero'||base==='apo') ? 2 : 1, HP = [24,30,38][diffOf('knight')], SEC = 25;
   openSheet(`<h2 class="h2 wk" style="margin-top:0">守護者 ${esc(P.name)} 出動！</h2>
-    <p class="sub">黑騎士佔領了${zName(z)}，搶走寶箱。他其實是肚子餓又沒朋友才搗蛋。<b>往上滑把無花果丟給他</b>（他會左右跑），或<b>說好話</b>感化他，${SEC} 秒內讓他的搗蛋值歸零。說好話威力最大！<br><span class="lvtxt">難度：<b>${DIFF_N[diffOf('knight')]}</b>・搗蛋值 ${HP}・過關後自動提升</span></p>
+    <p class="sub">黑騎士佔領了${zName(z)}，搶走寶箱。他其實是肚子餓又沒朋友才搗蛋。<b>往上滑把無花果丟給他</b>（他會左右跑），或<b>說好話</b>感化他，${SEC} 秒內讓他的搗蛋值歸零。說好話威力最大！<br><span class="lvtxt">難度：<b>${DIFF_N[diffOf('knight')]}</b>・搗蛋值 ${HP}・${diffNext('knight')||'已是最高難度'}</span></p>
     <div class="arena"><div class="dm" id="dm"></div><div class="kn-av" id="knAv">${avatar('knight_m','leather','#5B2346')}</div><div class="kn-say" id="knSay">哼！寶箱是我的！</div></div>
     <div class="hpbar"><i id="khp"></i></div><p class="lvtxt" id="kinfo" style="text-align:center">搗蛋值 ${HP}/${HP}</p>
     <div id="kWarn" class="kwarn hide"></div>
@@ -2939,7 +2939,7 @@ const BADGES = [
 function seen(id){ P.seen = P.seen||[]; if(!P.seen.includes(id)) P.seen.push(id); if(BADGES.some(b=>b.id===id)){ P.gev = P.gev||{}; P.gev[id] = gevN(id)+1; } }
 // V6.6：守護事件次數與等級：低級 3 次升中級，中級再 5 次升高級，高級之後一直累計
 function gevN(id){ const n = (P.gev||{})[id]; return n!=null ? n : ((P.seen||[]).includes(id) ? 1 : 0); }
-function gevLv(n){ return n>=8 ? {n:'高級', c:'#C99A2E', next:null} : n>=3 ? {n:'中級', c:'#3E7FC4', next:8, need:8-n, from:3, span:5} : {n:'低級', c:'#3E9A3A', next:3, need:3-n, from:0, span:3}; }
+function gevLv(n){ return n>=8 ? {n:'傳奇守護者', s:'傳奇', c:'#C99A2E', next:null} : n>=3 ? {n:'資深守護者', s:'資深', c:'#3E7FC4', next:8, need:8-n, from:3, span:5, to:'傳奇守護者'} : {n:'見習守護者', s:'見習', c:'#3E9A3A', next:3, need:3-n, from:0, span:3, to:'資深守護者'}; }
 function tryRare(base){
   P.rares = P.rares||[];
   const left = RARES.filter(r=>!P.rares.includes(r.id));
@@ -2959,13 +2959,13 @@ function renderDex(){
       ${claimR?'<button class="btn main" id="btnDexR">全部找到！領寶箱</button>':''}</div>
     <div class="card"><div class="lbl" style="margin-top:0">🛡️ 守護事件 ${BADGES.filter(b=>sn.includes(b.id)).length}/${BADGES.length}</div><p class="lvtxt" style="margin:2px 0 8px">天氣不同，遇到的挑戰也不同，慢慢都會碰到。</p>
       <div class="dex">${BADGES.map(b=>{ if(!sn.includes(b.id)) return `<div class="dx"><b>？</b>還沒遇到</div>`; const n = gevN(b.id), L = gevLv(n);
-        return `<button class="dx on gev" data-g="${b.id}"><b>${b.i}</b>${b.n}<small class="gv"><i style="background:${L.c}">${L.n}</i> ${n} 次</small></button>`; }).join('')}</div></div>`;
+        return `<button class="dx on gev" data-g="${b.id}"><b>${b.i}</b>${b.n}<small class="gv"><i style="background:${L.c}">${L.s}</i> ${n} 次</small></button>`; }).join('')}</div></div>`;
   $('#dexBox').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>{ const q=QUIZ[+b.dataset.q]; openSheet(`<div class="big">📖</div><h2 class="h2 wk">${q.q}</h2><p class="sub"><b>${q.a}</b><br>${q.tip}</p><button class="btn main" onclick="closeSheet()">好</button>`, true); });
   $('#dexBox').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{ const r=RARES.find(x=>x.id===b.dataset.r); openSheet(`<div class="big">${r.i}</div><h2 class="h2 wk">${r.n}</h2><p class="sub">${r.d}</p><button class="btn main" onclick="closeSheet()">好</button>`, true); });
   $('#dexBox').querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>{ const g = BADGES.find(x=>x.id===b.dataset.g), n = gevN(g.id), L = gevLv(n), pct = L.next ? Math.round((n-L.from)/L.span*100) : 100;
     openSheet(`<div class="big">${g.i}</div><h2 class="h2 wk">${g.n}</h2><p class="sub">已守護 <b>${n}</b> 次・目前 <b style="color:${L.c}">${L.n}</b></p>
-      <div class="bar bigbar"><i style="width:${pct}%"></i></div><p class="lvtxt">${L.next ? `再 <b>${L.need}</b> 次升${L.n==='低級'?'中級':'高級'}` : '已是最高等級，之後每次守護都會繼續累計'}</p>
-      <p class="lvtxt">低級守護 3 次升中級；中級再守護 5 次升高級。</p><button class="btn main" onclick="closeSheet()">好</button>`, true); });
+      <div class="bar bigbar"><i style="width:${pct}%"></i></div><p class="lvtxt">${L.next ? `再 <b>${L.need}</b> 次升為${L.to}` : '已是傳奇守護者，之後每次守護都會繼續累計'}</p>
+      <p class="lvtxt">見習守護 3 次升資深；資深再守護 5 次升傳奇。</p><button class="btn main" onclick="closeSheet()">好</button>`, true); });
   const bc=$('#btnDexC'); if(bc) bc.onclick=()=>{ P.dexC=true; const pts=addPts(10,'buy'); const c=makeCoupon(); Auth.save(); renderAll(); curZone=curZone||ZONES[0]; chestOpen(c,pts,true); };
   const br=$('#btnDexR'); if(br) br.onclick=()=>{ P.dexR=true; const pts=addPts(10,'buy'); const c=makeCoupon(); Auth.save(); renderAll(); curZone=curZone||ZONES[0]; chestOpen(c,pts,true); };
 }
@@ -3240,7 +3240,7 @@ function taskIntro(force){
 function openTask(ti){
   const slotTxt = (ti.patrol||ti.em) ? '' : TASK_SLOTS[ti.slot].map(h=>h+':00').join('–');
   openSheet(`<div class="big">${ti.task.i}</div><h2 class="h2 wk">${ti.em?'翡翠溫室挑戰：':ti.patrol?'巡園時遇到挑戰：':zName(ti.zone)+'小任務：'}${ti.task.n}</h2>
-    <p class="sub">${ti.task.d}</p><div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">${ti.task.rules||''}</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf(ti.task.id)]}</b>・兩星以上自動提升</p></div><p class="sub">${ti.em?'每天第一次挑戰計入過關指數，之後可以一直刷新最佳紀錄。':ti.patrol?'今天只會遇到這一次，':`這個時段（${slotTxt}）限定，`}完成後拿「過關指數」，指數越高果友值越多。${ti.done?'<br>這個時段已經完成，再玩只刷新最佳紀錄。':''}</p>
+    <p class="sub">${ti.task.d}</p><div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">${ti.task.rules||''}</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf(ti.task.id)]}</b>・${diffNext(ti.task.id)||'已是最高難度'}</p></div><p class="sub">${ti.em?'每天第一次挑戰計入過關指數，之後可以一直刷新最佳紀錄。':ti.patrol?'今天只會遇到這一次，':`這個時段（${slotTxt}）限定，`}完成後拿「過關指數」，指數越高果友值越多。${ti.done?'<br>這個時段已經完成，再玩只刷新最佳紀錄。':''}</p>
     <button class="btn main" id="tGo">正式開始</button><button class="btn ghost" id="tRk0">🏆 排行榜・我的最佳 ${((P.pass||{}).best||{})[ti.task.id]||0}</button><button class="btn ghost" onclick="closeSheet()">等一下</button>`, true);
   $('#tGo').onclick = ()=>{ closeSheet(); ti.task.play(res=>taskFinish(ti, res)); };
   $('#tRk0').onclick = ()=>openRank(ti.task.id, ti.task.n, ti.task.i);
@@ -3474,9 +3474,13 @@ function woodGame(done, who){
 /* =========================================================
    V4.4：每個遊戲先看說明、低中高三級自動升級、陽傘、夾枝、氣墊球
    ========================================================= */
-const DIFF_N = ['低','中','高'];
-function diffOf(id){ return (P.diff && P.diff[id]) || 0; }
-function diffAfter(id, ok){ P.diff = P.diff || {}; const d = diffOf(id); if(ok && d<2){ P.diff[id] = d+1; return `難度升級為「${DIFF_N[d+1]}」`; } return ''; }
+// V9.2：小遊戲難度分層：過關 3 次 簡單→中級，再過關 5 次 中級→高級（舊資料自動換算，已升級的不會降）
+const DIFF_N = ['簡單','中級','高級'];
+function diffWins(id){ P.dwin = P.dwin || {}; if(P.dwin[id]==null){ const old = (P.diff && P.diff[id]) || 0; P.dwin[id] = [0,3,8][old] || 0; } return P.dwin[id]; }
+function diffOf(id){ const w = diffWins(id); return w>=8 ? 2 : w>=3 ? 1 : 0; }
+function diffNext(id){ const w = diffWins(id); return w>=8 ? '' : w>=3 ? `再過關 ${8-w} 次升高級` : `再過關 ${3-w} 次升中級`; }
+function diffAfter(id, ok){ if(!ok) return ''; const d = diffOf(id); P.dwin[id] = diffWins(id)+1; const d2 = diffOf(id);
+  P.diff = P.diff || {}; P.diff[id] = d2; return d2>d ? `難度升級為「${DIFF_N[d2]}」` : ''; }
 const KIKI = ()=>roleBase(P.role)==='kiki' ? 3 : 0;
 const HOWTO = {
   whitefly:d=>({t:'銀葉粉蝨躲在葉背吸汁液，牠們會在葉子間飛來飛去，看準了就點掉。', goal:`${[14,12,10][d]} 秒內點掉 ${[5,7,9][d]} 隻`}),
@@ -3493,7 +3497,7 @@ function startChallenge(k, patrol){
   const c = CH[k], d = diffOf(k), h = HOWTO[k](d);
   openSheet(`<div class="big">${c.i}</div>${patrol?'<p class="lvtxt" style="margin:0">巡園時遇到了！</p>':''}<h2 class="h2 wk">守護者出動：${c.n}挑戰</h2><p class="sub">${h.t}</p>
     <div class="card" style="text-align:left"><b>🎯 過關條件</b><p class="sub" style="margin:4px 0 0">${h.goal}${KIKI()&&k!=='drought'?'（奇奇多 3 秒）':''}</p>
-    <p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[d]}</b>・過關後自動提升</p></div>
+    <p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[d]}</b>・${diffNext(k)||'已是最高難度'}</p></div>
     <button class="btn main" id="chGo">正式開始</button><button class="btn ghost" onclick="closeSheet()">等一下</button>`, true);
   $('#chGo').onclick = ()=>runChallenge(k);
 }
