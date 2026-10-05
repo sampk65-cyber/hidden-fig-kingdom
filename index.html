@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V8.6</title>
+<title>今天在隱花王國尋寶 V8.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -867,7 +867,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V8.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V8.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1699,14 +1699,17 @@ function zBadge(z, x, y, col, txt){
 }
 // V5.9：翡翠溫室徽章旁的跑馬燈提示（看過一次照片後就收起）
 function badgeHint(){
-  if(P.badgeHintDone) return '';
-  const z = ZONES.find(x=>x.emerald), has = (PHOTO_N[z.id]||0)>0, bx = z.x+56, by = z.y-10;
-  const t = (has ? '點數字看實景照片・數字是今天找寶箱的次數・' : '數字是今天在這座溫室找寶箱的次數・');
-  const w = [...t].reduce((a,c)=>a + (c.charCodeAt(0)>255 ? 9 : 5), 0), x0 = bx+16, pw = 344-x0;
-  return `<g class="bd-hint" role="button" aria-label="${t}"><clipPath id="bdClip"><rect x="${x0+12}" y="${by-9}" width="${pw-16}" height="18"/></clipPath>
+  // V8.7：第一次進來、或任何溫室有新照片時出現；指向有新照片的那座溫室（優先翡翠）
+  const em = ZONES.find(x=>x.emerald), nz = phNew(em.id) ? em : ZONES.find(x=>phNew(x.id));
+  if(!nz && P.badgeHintDone) return '';
+  const z = nz || em, has = (PHOTO_N[z.id]||0)>0, bx = z.emerald ? z.x+56 : z.x+34, by = z.emerald ? z.y-10 : z.y-8;
+  const t = nz ? `${zName(z)}有新的實景照片・點發光的數字看看・` : (has ? '點數字看實景照片・數字是今天找寶箱的次數・' : '數字是今天在這座溫室找寶箱的次數・');
+  const w = [...t].reduce((a,c)=>a + (c.charCodeAt(0)>255 ? 9 : 5), 0), left = bx > 230, pw = left ? Math.min(150, bx-30) : Math.min(150, 344-bx-16);
+  const x0 = left ? bx-16-pw : bx+16, ax = left ? x0+pw-3 : x0+3, arrow = left ? `M${ax} ${by} l-7 -5 v10z` : `M${ax} ${by} l7 -5 v10z`, tx = left ? x0+6 : x0+14;
+  return `<g class="bd-hint" data-hz="${z.id}" role="button" aria-label="${t}"><clipPath id="bdClip"><rect x="${left?x0+4:x0+12}" y="${by-9}" width="${pw-16}" height="18"/></clipPath>
     <rect x="${x0}" y="${by-11}" width="${pw}" height="22" rx="11" fill="#2A1F2D" opacity=".88"/>
-    <g class="bd-arrow"><path d="M${x0+3} ${by} l7 -5 v10z" fill="#F2C230"/></g>
-    <g clip-path="url(#bdClip)"><g><text x="${x0+14}" y="${by+3.5}" font-size="9" font-weight="700" fill="#fff">${t}${t}</text>
+    <g class="bd-arrow"><path d="${arrow}" fill="#F2C230"/></g>
+    <g clip-path="url(#bdClip)"><g><text x="${tx}" y="${by+3.5}" font-size="9" font-weight="700" fill="#fff">${t}${t}</text>
       <animateTransform attributeName="transform" type="translate" from="0 0" to="${-w} 0" dur="${Math.round(w/18)}s" repeatCount="indefinite"/></g></g></g>`;
 }
 // V6.7：農場公告與私訊（等畫面上沒有其他視窗時才跳出）
@@ -1766,7 +1769,7 @@ function renderMap(){
     n.onclick=()=>walkTo(n.dataset.z);
     n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();walkTo(n.dataset.z);}};
   });
-  const bh = $('#mapSvg').querySelector('.bd-hint'); if(bh) bh.onclick = e=>{ e.stopPropagation(); const z = ZONES.find(x=>x.emerald); if((PHOTO_N[z.id]||0)>0) openPhotos(z.id); else { P.badgeHintDone = true; Auth.save(); renderMap(); toast('溫室上的數字＝今天在這座溫室找寶箱的次數'); } };
+  const bh = $('#mapSvg').querySelector('.bd-hint'); if(bh) bh.onclick = e=>{ e.stopPropagation(); const z = ZONES.find(x=>x.id===bh.dataset.hz) || ZONES.find(x=>x.emerald); if((PHOTO_N[z.id]||0)>0) openPhotos(z.id); else { P.badgeHintDone = true; Auth.save(); renderMap(); toast('溫室上的數字＝今天在這座溫室找寶箱的次數'); } };
   $('#mapSvg').querySelectorAll('.ph-badge').forEach(n=>n.onclick=e=>{ e.stopPropagation(); openPhotos(n.dataset.pz); });
   placeMe();
 }
