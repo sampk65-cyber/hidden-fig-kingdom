@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V7.9</title>
+<title>今天在隱花王國尋寶 V8.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -863,7 +863,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V7.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V8.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1454,11 +1454,21 @@ const PROTECTED = ['uids','rtok','claim'];
 function playerPayload(){ const o={}; for(const [k,v] of Object.entries(P)) if(!PROTECTED.includes(k)) o[k]=v; return o; }
 const Auth = {
   save(){ if(!PID || saveTimer) return; saveTimer = setTimeout(()=>{ saveTimer=null; Auth.flush(); }, 8000); },   // 最多 8 秒存一次，省 Firebase 寫入
-  async flush(){ clearTimeout(saveTimer); saveTimer=null; if(!PID || !P) return; try{ await DB.update('players/'+PID, playerPayload()); }catch(e){ console.error(e); toast('同步失敗，請檢查網路'); } }
+  async flush(){ clearTimeout(saveTimer); saveTimer=null; if(!PID || !P) return;
+    if(!saveSafe()){ console.warn('存檔保護：偵測到資料異常，這次不寫入雲端', {points:P.points, boxes:P.boxes, base:LOADED}); return; }
+    try{ await DB.update('players/'+PID, playerPayload()); LOADED = {points:P.points, boxes:P.boxes||0}; }catch(e){ console.error(e); toast('同步失敗，請檢查網路'); } }
 };
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') Auth.flush(); });
 addEventListener('pagehide', ()=>Auth.flush());
 
+// V8.0：存檔保護。只用「合併更新」寫入（不會刪掉既有欄位），而且果友值、兌換盒數只能增加，數字異常就不寫入
+let LOADED = null;
+function saveSafe(){
+  if(!P || typeof P.points!=='number' || !isFinite(P.points) || P.points<0) return false;
+  if(P.boxes!=null && (typeof P.boxes!=='number' || !isFinite(P.boxes))) return false;
+  if(LOADED && (P.points < LOADED.points || (P.boxes||0) < LOADED.boxes)) return false;
+  return true;
+}
 function newPlayer(uid){
   return {uids:[uid], rtok:rid(16), name:'', role:null, mat:'linen', color:COLORS[3], points:0, leaves:0,
     tools:{lens:0,shears:0,basket:0,shoes:0}, streak:0, lastDay:null, daily:null, boxes:0, shares:[], lastCode:'', created:Date.now()};
@@ -1468,6 +1478,7 @@ async function loadMine(){
   const u = await DB.get('users/'+Login.uid); if(!u || !u.pid) return false;
   const p = await DB.get('players/'+u.pid); if(!p) return false;
   P = p; PID = u.pid; if(ROLE_MIGRATE[P.role]) P.role = ROLE_MIGRATE[P.role];
+  LOADED = {points:+P.points||0, boxes:+P.boxes||0};
   try{ if(P.rtok) localStorage.setItem('hfk_card', PID+'.'+P.rtok); }catch(e){}   // V5.5：本機備份會員卡，登入狀態遺失時自動找回
   return true;
 }
