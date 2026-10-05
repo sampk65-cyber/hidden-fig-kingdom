@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.4</title>
+<title>今天在隱花王國尋寶 V9.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -274,6 +274,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .chip b{color:var(--rose);margin-left:2px}
 .cd-wrap{overflow-x:auto;margin-top:4px}.cd-tb th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:4px 6px}.cd-tb td{font-size:13px;vertical-align:top;padding:6px}
 .cd-id{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:3px 8px;font:inherit;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap;color:var(--ink)}.cd-id span{color:var(--muted);font-weight:400}
+.rd-box{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);text-align:left}
 .cd-note{min-width:120px;padding:6px 8px;font-size:13px;margin:0}
 .cd-nm{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}
 .pid-tag{margin-left:4px;font-size:11px;color:var(--muted);font-weight:400}.pid-tag.dup{color:var(--rose);font-weight:700}
@@ -705,6 +706,9 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <button id="btnCardDl" class="btn main">📥 下載會員卡圖片</button>
       <button id="btnBkDl" class="btn ghost">💾 下載我的資料（選用）</button>
       <p class="lvtxt" id="bkLast" style="text-align:center"></p>
+      <div class="rd-box"><b>🎁 兌換新的果盒</b><p class="lvtxt" style="margin:2px 0 6px">直接加到這個帳號：果友值依售價增加，家庭親密值 +20。</p>
+        <div class="grid2"><input id="rdIn" class="field" maxlength="12" placeholder="輸入 QR 下方 10 碼" style="margin:0;text-transform:uppercase"><button id="btnRd" class="btn main" style="margin:0">兌換</button></div>
+        <label class="btn ghost" for="rdImg" style="margin-top:8px">📷 拍照或選 QR 圖片兌換</label><input id="rdImg" type="file" accept="image/*" capture="environment" class="hide"></div>
     </div>
   </div>
 
@@ -869,7 +873,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1532,6 +1536,7 @@ async function redeem(raw){
     clearTimeout(saveTimer);
     const before = lvIndex(P.points), sh = shareOps(PID);
     P.points += pts; P.boxes = (P.boxes||0)+1; P.lastCode = code; P.shares = [...(P.shares||[]), ...sh.ids];
+    P.fam = P.fam || {intimacy:0, games:0, best:0, names:['我','家人']}; P.fam.intimacy += 20; famSync(20);   // 兌換果盒：家庭親密值 +20
     await DB.batch([{op:'update', path:'codes/'+code, data:{...used, usedPid:PID}}, {op:'update', path:'players/'+PID, data:playerPayload()}, ...sh.ops]);
     boxStory(c, false);
     if(lvIndex(P.points)>before) P._lvUp = lvIndex(P.points);
@@ -2217,6 +2222,19 @@ function renderMe(){
 }
 $('#btnEdit').onclick = ()=>openCreate();
 $('#btnCardDl').onclick = ()=>downloadCard();
+// V9.5：登入狀態直接兌換果盒（不用另外開網址），並增加家庭親密值
+$('#btnRd').onclick = ()=>{ const v = ($('#rdIn').value||'').trim().toUpperCase().replace(/[^0-9A-Z]/g,''); if(v.length<8){ toast('請輸入 QR 下方的 10 碼'); return; } $('#rdIn').value=''; redeem(v); };
+$('#rdImg').onchange = async e=>{ const f = e.target.files[0]; e.target.value=''; if(!f) return; toast('讀取 QR 中…');
+  try{
+    if(typeof jsQR==='undefined') await new Promise((ok, no)=>{ const sc = document.createElement('script'); sc.src = 'https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js'; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+    const img = await new Promise((ok, no)=>{ const i = new Image(), u = URL.createObjectURL(f); i.onload = ()=>{ URL.revokeObjectURL(u); ok(i); }; i.onerror = no; i.src = u; });
+    const sc2 = Math.min(1, 1400/Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width*sc2); c.height = Math.round(img.height*sc2);
+    const x = c.getContext('2d'); x.drawImage(img, 0, 0, c.width, c.height); const code = jsQR(x.getImageData(0,0,c.width,c.height).data, c.width, c.height);
+    let v = null; if(code && code.data){ try{ v = new URL(code.data).searchParams.get('c'); }catch(_){ v = code.data.trim(); } }
+    if(!v) return toast('找不到果盒 QR，請拍清楚一點再試', 3500);
+    redeem(v.toUpperCase());
+  }catch(err){ console.error(err); toast('讀取失敗，請改用輸入 10 碼'); }
+};
 $('#btnBkDl').onclick = ()=>downloadBackup();
 $('#cardImg').onchange = e=>{ const f = e.target.files[0]; e.target.value=''; if(f) loginFromCardImage(f); };
 $('#bkFile').onchange = e=>{ const f = e.target.files[0]; e.target.value=''; if(f) loginFromBackup(f); };
