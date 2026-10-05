@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V8.1</title>
+<title>今天在隱花王國尋寶 V8.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -866,7 +866,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V8.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V8.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -982,13 +982,15 @@ const BASE_STAMINA = 5, STEP_STAMINA_MAX = 10, TREES_N = 12;
 
 // 六區溫室：栽培階段每週自動輪替（剪枝→座果→採收）；後台可覆寫當週；採收期寶箱較多
 const ZONES = [
-  {id:'z1', n:'一期', stage:'採收', x:92,  y:470},
-  {id:'z2', n:'二期', stage:'座果', x:270, y:402},
-  {id:'z3', n:'三期', stage:'採收', x:96,  y:322},
-  {id:'z4', n:'四南', stage:'剪枝', x:264, y:246},
-  {id:'z5', n:'四北', stage:'座果', x:104, y:170},
-  {id:'z6', n:'五期', stage:'採收', x:180, y:74, emerald:true}
+  {id:'z1', n:'一期', g:'晨曦', stage:'採收', x:92,  y:470},
+  {id:'z2', n:'二期', g:'夕霧', stage:'座果', x:270, y:402},
+  {id:'z3', n:'三期', g:'春泥', stage:'採收', x:96,  y:322},
+  {id:'z4', n:'四南', g:'虛舟', stage:'剪枝', x:264, y:246},
+  {id:'z5', n:'四北', g:'彼岸', stage:'座果', x:104, y:170},
+  {id:'z6', n:'五期', g:'翡翠', stage:'採收', x:180, y:74, emerald:true}
 ];
+// V8.2：溫室雅名＋期別，例如「晨曦溫室・一期」（資料仍以 id 對應，改名不影響既有資料）
+function zName(z){ return z ? `${z.g||''}溫室・${z.n}` : ''; }
 const STAGE_CYCLE = ['剪枝','座果','採收'];
 function autoStages(){ const wk = Math.floor((Date.now()/864e5 + 3)/7); ZONES.forEach((z,i)=>{ z.stage = STAGE_CYCLE[(wk + i) % 3]; }); }
 const STAGE = {
@@ -1691,7 +1693,7 @@ function phNew(zid){ return (PHOTO_N[zid]||0)>0 && ((P.phSeen||{})[zid]||'') !==
 function zBadge(z, x, y, col, txt){
   const has = (PHOTO_N[z.id]||0)>0, nw = has && phNew(z.id);
   const core = `${nw?`<circle class="ph-ring" cx="${x}" cy="${y}" r="13" fill="#F2C230"/>`:''}<circle cx="${x}" cy="${y}" r="11" fill="${col}" ${has?'stroke="#F2C230" stroke-width="2.5"':''}/><text x="${x}" y="${y+3}" text-anchor="middle" font-size="8" fill="#fff">${txt}</text>`;
-  return has ? `<g class="ph-badge" data-pz="${z.id}" role="button" aria-label="${z.n}真實場景照片${nw?'（有新照片）':''}"><circle cx="${x}" cy="${y}" r="18" fill="transparent"/>${core}${nw?`<text x="${x}" y="${y-16}" text-anchor="middle" font-size="9">✨</text>`:''}</g>` : core;
+  return has ? `<g class="ph-badge" data-pz="${z.id}" role="button" aria-label="${zName(z)}真實場景照片${nw?'（有新照片）':''}"><circle cx="${x}" cy="${y}" r="18" fill="transparent"/>${core}${nw?`<text x="${x}" y="${y-16}" text-anchor="middle" font-size="9">✨</text>`:''}</g>` : core;
 }
 // V5.9：翡翠溫室徽章旁的跑馬燈提示（看過一次照片後就收起）
 function badgeHint(){
@@ -1718,7 +1720,7 @@ async function checkMessages(tries=0){
   const nn = msgs.find(m=>m.k==='n'); if(nn){ P.noticeSeen = nn.id; Auth.save(); }
   msgs.filter(m=>m.k==='m').forEach(m=>DB.update(`players/${PID}/inbox/${m.id}`, {read:true}).catch(()=>{}));
 }
-function newPhotoToast(){ const z = ZONES.filter(z=>phNew(z.id)); if(z.length) toast(`🎞️ ${z.map(x=>x.n).join('、')}有新的實景照片，點溫室上發光的數字看看`, 3600); }
+function newPhotoToast(){ const z = ZONES.filter(z=>phNew(z.id)); if(z.length) toast(`🎞️ ${z.map(x=>zName(x)).join('、')}有新的實景照片，點溫室上發光的數字看看`, 3600); }
 function renderMap(){
   const pathD = 'M180 560 C150 520 70 510 92 470 C112 432 280 440 270 402 C258 362 90 372 96 322 C102 282 270 296 264 246 C258 204 96 214 104 170 C110 130 178 140 180 74';
   let leaves=''; [[30,90],[330,150],[24,250],[338,330],[28,410],[332,500],[60,540]].forEach(([x,y],i)=>{
@@ -1726,7 +1728,7 @@ function renderMap(){
   });
   const nodes = ZONES.map(z=>{
     const st = STAGE[z.stage], tapped = (P.daily.tapped[z.id]||[]).length;
-    if(z.emerald) return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${z.n}翡翠溫室，${z.stage}">
+    if(z.emerald) return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${zName(z)}，${z.stage}">
       <ellipse cx="${z.x}" cy="${z.y+34}" rx="70" ry="10" fill="#0003"/>
       <path d="M${z.x-62} ${z.y+30} L${z.x-62} ${z.y} Q${z.x} ${z.y-56} ${z.x+62} ${z.y} L${z.x+62} ${z.y+30}Z" fill="#2DB38A" stroke="#14735A" stroke-width="3"/>
       <path d="M${z.x-40} ${z.y+30} L${z.x-40} ${z.y-14} M${z.x-14} ${z.y+30} L${z.x-14} ${z.y-26} M${z.x+14} ${z.y+30} L${z.x+14} ${z.y-26} M${z.x+40} ${z.y+30} L${z.x+40} ${z.y-14}" stroke="#7FE0BF" stroke-width="2"/>
@@ -1734,13 +1736,13 @@ function renderMap(){
       <rect x="${z.x-46}" y="${z.y+38}" width="92" height="24" rx="12" fill="#fff"/>
       <text x="${z.x}" y="${z.y+55}" text-anchor="middle" font-size="13" font-weight="700" fill="#14735A">翡翠溫室・五期</text>
       ${zBadge(z, z.x+56, z.y-10, st.c, `${tapped}/10`)}</g>`;
-    return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${z.n}溫室，${z.stage}">
+    return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${zName(z)}，${z.stage}">
       <ellipse cx="${z.x}" cy="${z.y+18}" rx="40" ry="7" fill="#0002"/>
       <path d="M${z.x-36} ${z.y+16} L${z.x-36} ${z.y-2} Q${z.x} ${z.y-34} ${z.x+36} ${z.y-2} L${z.x+36} ${z.y+16}Z" fill="#F5FAF2" stroke="#8FB087" stroke-width="2"/>
       <path d="M${z.x-18} ${z.y+16} L${z.x-18} ${z.y-14} M${z.x} ${z.y+16} L${z.x} ${z.y-19} M${z.x+18} ${z.y+16} L${z.x+18} ${z.y-14}" stroke="#B9D2B0" stroke-width="1.5"/>
-      <rect x="${z.x-34}" y="${z.y+24}" width="68" height="22" rx="11" fill="#fff"/>
-      <text x="${z.x-8}" y="${z.y+39}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1F2D">${z.n}</text>
-      <text x="${z.x+18}" y="${z.y+39}" text-anchor="middle" font-size="10" fill="${st.c}" font-weight="700">${z.stage}</text>
+      <rect x="${z.x-50}" y="${z.y+24}" width="100" height="22" rx="11" fill="#fff"/>
+      <text x="${z.x-14}" y="${z.y+39}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1F2D">${z.g}・${z.n}</text>
+      <text x="${z.x+32}" y="${z.y+39}" text-anchor="middle" font-size="10" fill="${st.c}" font-weight="700">${z.stage}</text>
       ${zBadge(z, z.x+34, z.y-8, st.c, `${tapped}/${TREES_N}`)}</g>`;
   }).join('');
   $('#mapSvg').innerHTML = `<svg viewBox="0 0 360 580" aria-label="隱花王國地圖">
@@ -1788,7 +1790,7 @@ function walkTo(zid){
 function knightMark(){
   if(P.daily.knightMet) return '';
   const z = ZONES.find(x=>x.id===knightZone()), x = z.emerald ? z.x-118 : z.x-22, y = z.emerald ? z.y-24 : z.y-84;
-  return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="黑騎士佔領${z.n}溫室">
+  return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="黑騎士佔領${zName(z)}">
     <circle cx="${x+22}" cy="${y+30}" r="28" fill="#E8452C" opacity=".25"><animate attributeName="r" values="24;32;24" dur="1.4s" repeatCount="indefinite"/></circle>
     <g transform="translate(${x} ${y}) scale(.36)">${avatar('knight_m','leather','#5B2346').replace(/^<svg[^>]*>|<\/svg>$/g,'')}</g>
     <rect x="${x-14}" y="${y+56}" width="72" height="18" rx="9" fill="#E8452C"/><text x="${x+22}" y="${y+69}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">⚔️ 佔領中</text></g>`;
@@ -1819,10 +1821,10 @@ function openZone(zid){
   const res = P.daily['res_'+zid] || {};
   const fx = {dry:helpOpen(zid,'water'), bud:helpOpen(zid,'bud'), weed:helpOpen(zid,'weed'), feed:helpOpen(zid,'feed')};
   const done = fxDone; fxDone = null;
-  openSheet(`<h2 class="h2 wk" style="margin-top:0">${curZone.emerald?'翡翠溫室・':''}${curZone.n}</h2>
+  openSheet(`<h2 class="h2 wk" style="margin-top:0">${zName(curZone)}</h2>
     <p class="sub">目前階段：<b style="color:${STAGE[curZone.stage].c}">${curZone.stage}</b>，寶箱機會 ×${STAGE[curZone.stage].mult}。剩餘能量 ⚡${stamina()}</p>
     ${helpHtml(zid)}
-    <div class="trees-wrap${done?' fx-'+done:''}" id="treesWrap">${PHOTO_N[zid]>0?`<button class="film-in" id="btnZPh" aria-label="${curZone.n}真實場景照片">${FILM_SVG}<span>真實場景</span></button>`:''}${fx.feed?`<button class="fert-bk" id="fertBk" aria-label="施肥桶">${BUCKET_SVG}<span id="fertN">施肥</span></button><div class="fert-layer hide" id="fertLayer"></div>`:''}
+    <div class="trees-wrap${done?' fx-'+done:''}" id="treesWrap">${PHOTO_N[zid]>0?`<button class="film-in" id="btnZPh" aria-label="${zName(curZone)}真實場景照片">${FILM_SVG}<span>真實場景</span></button>`:''}${fx.feed?`<button class="fert-bk" id="fertBk" aria-label="施肥桶">${BUCKET_SVG}<span id="fertN">施肥</span></button><div class="fert-layer hide" id="fertLayer"></div>`:''}
     <div class="trees">${Array.from({length:TREES_N},(_,i)=>`<button class="tree ${tapped.includes(i)?'tapped':''} ${fx.dry?'dry':''}" data-i="${i}" aria-label="第 ${i+1} 棵樹">${treeSvg(curZone.stage,i,fx)}${res[i]?`<span class="res">${res[i]}</span>`:''}</button>`).join('')}</div></div>
     <button class="btn ghost" onclick="closeSheet()">回地圖</button>`);
   $('#sheetBox').querySelectorAll('.tree').forEach(b=>b.onclick=()=>tapTree(+b.dataset.i));
@@ -1871,7 +1873,7 @@ function czName(){ return ZONES.find(z=>z.id===chZone()).n; }
 function chMark(){
   const k = pendingCh()[0]; if(!k) return '';
   const z = ZONES.find(x=>x.id===chZone()), x = z.x<180 ? z.x-52 : z.x+52, y = z.y-26;
-  return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="${z.n}溫室出現${CH[k].n}">
+  return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="${zName(z)}出現${CH[k].n}">
     <circle cx="${x}" cy="${y}" r="19" fill="#F59A2A" opacity=".3"><animate attributeName="r" values="16;23;16" dur="1.5s" repeatCount="indefinite"/></circle>
     <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${CH[k].i}</text></g>`;
 }
@@ -1996,7 +1998,7 @@ function makeCouponRaw(){
 function logChest(src, r){ if(!P || P.guest) return; P.chestLog = [...(P.chestLog||[]), {t:Date.now(), s:src, r}].slice(-50); }
 function chestOpen(c, pts, back){
   const t = cpT(c);
-  logChest(back ? '獎勵寶箱' : `巡園寶箱・${curZone ? curZone.n : ''}`, (t.id==='pts' ? `果友值 ${t.big}` : `${t.big}（${t.sub}）`) + (pts ? `＋果友值 ${pts}` : '')); Auth.save();
+  logChest(back ? '獎勵寶箱' : `巡園寶箱・${curZone ? zName(curZone) : ''}`, (t.id==='pts' ? `果友值 ${t.big}` : `${t.big}（${t.sub}）`) + (pts ? `＋果友值 ${pts}` : '')); Auth.save();
   const isPts = c.t==='pts', got = (isPts ? (c.pts||6) : 0) + (pts||0);
   setTimeout(()=>openSheet(`${chestSvg()}<h2 class="h2 wk">寶箱開出 ${isPts ? `果友值 +${got}` : t.big+(t.id==='free'?'！':'')}</h2>
     ${isPts ? `<div class="pts-got"><b>🍃 +${got}</b><span>已直接加進果友值，不占優惠券名額</span></div><p class="lvtxt">${cpNote(c)}</p>`
@@ -2212,7 +2214,7 @@ function printLabels(items, key){
 const Admin = {
   async start(){
     document.body.classList.add('admin'); show('admin');
-    $('#qZone').innerHTML = ZONES.map(z=>`<option>${z.n}</option>`).join('');
+    $('#qZone').innerHTML = ZONES.map(z=>`<option value="${zName(z)}">${zName(z)}</option>`).join('');
     $('#qLayout').innerHTML = Object.entries(LAYOUTS).map(([k,l])=>`<option value="${k}">${l.n}</option>`).join('');
     $('#qHarvest').value = today();
     try{ await DB.init(); }catch(e){ $('#admHint').textContent='Firebase 連線失敗，請檢查設定與網路。'; return; }
@@ -2315,14 +2317,14 @@ const Admin = {
   },
   async zones(){
     autoStages(); let z = {}; try{ z = await DB.get('config/zones') || {}; if(z.wk!==weekKey()) z = {}; }catch(e){}
-    $('#zoneList').innerHTML = ZONES.map(x=>`<div class="zrow"><b>${x.n}</b><select class="field" data-z="${x.id}">${Object.keys(STAGE).map(s=>`<option ${ (z[x.id]||x.stage)===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join('');
+    $('#zoneList').innerHTML = ZONES.map(x=>`<div class="zrow"><b>${zName(x)}</b><select class="field" data-z="${x.id}">${Object.keys(STAGE).map(s=>`<option ${ (z[x.id]||x.stage)===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join('');
   },
   async saveZones(){
     const z = {wk:weekKey()}; document.querySelectorAll('#zoneList select').forEach(s=>z[s.dataset.z]=s.value);
     await DB.set('config/zones', z); toast('本週溫室階段已更新；下週會自動輪替');
   },
   async photo(){
-    const sel = $('#phZone'); if(!sel.options.length){ sel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${z.n}${z.emerald?'（翡翠溫室）':''}</option>`).join(''); sel.onchange = ()=>{ Admin.phM = null; Admin.photo(); }; }
+    const sel = $('#phZone'); if(!sel.options.length){ sel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${zName(z)}</option>`).join(''); sel.onchange = ()=>{ Admin.phM = null; Admin.photo(); }; }
     if(!$('#phYm').value) $('#phYm').value = ymOf(Date.now());
     const zid = sel.value; let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).map(phNorm).sort((a,b)=>b.created-a.created); }catch(e){}
     const nowY = new Date().getFullYear(), years = [...new Set([nowY, ...items.map(p=>+p.ym.slice(0,4))])].sort((a,b)=>b-a);
@@ -2649,7 +2651,7 @@ function danmaku(text, cls){
 function knightBattle(zid){
   const z = ZONES.find(x=>x.id===zid), base = roleBase(P.role), dmg = (base==='hero'||base==='apo') ? 2 : 1, HP = [24,30,38][diffOf('knight')], SEC = 25;
   openSheet(`<h2 class="h2 wk" style="margin-top:0">守護者 ${esc(P.name)} 出動！</h2>
-    <p class="sub">黑騎士佔領了${z.n}溫室，搶走寶箱。他其實是肚子餓又沒朋友才搗蛋。<b>往上滑把無花果丟給他</b>（他會左右跑），或<b>說好話</b>感化他，${SEC} 秒內讓他的搗蛋值歸零。說好話威力最大！<br><span class="lvtxt">難度：<b>${DIFF_N[diffOf('knight')]}</b>・搗蛋值 ${HP}・過關後自動提升</span></p>
+    <p class="sub">黑騎士佔領了${zName(z)}，搶走寶箱。他其實是肚子餓又沒朋友才搗蛋。<b>往上滑把無花果丟給他</b>（他會左右跑），或<b>說好話</b>感化他，${SEC} 秒內讓他的搗蛋值歸零。說好話威力最大！<br><span class="lvtxt">難度：<b>${DIFF_N[diffOf('knight')]}</b>・搗蛋值 ${HP}・過關後自動提升</span></p>
     <div class="arena"><div class="dm" id="dm"></div><div class="kn-av" id="knAv">${avatar('knight_m','leather','#5B2346')}</div><div class="kn-say" id="knSay">哼！寶箱是我的！</div></div>
     <div class="hpbar"><i id="khp"></i></div><p class="lvtxt" id="kinfo" style="text-align:center">搗蛋值 ${HP}/${HP}</p>
     <div id="kWarn" class="kwarn hide"></div>
@@ -2713,9 +2715,9 @@ function knightBattle(zid){
       over = true; clearInterval(tm); MUSIC.stop(); SND.win();
       P.daily.knightMet = true; P.knightWins = (P.knightWins||0)+1; addGuard('knight'); seen('knight'); const kup = diffAfter('knight', true);
       const pts = addPts(5), c = makeCoupon(), t = cpT(c); save();
-      setTimeout(()=>openSheet(`<div class="kn-av">${avatar('knight_m','leather','#5B2346')}</div><h2 class="h2 wk">黑騎士被你感化了！</h2><p class="sub">「謝謝你，守護者。寶箱還給你，我以後會好好幫忙顧溫室。」${z.n}溫室恢復平靜，今天不會再被偷了。${kup?`<br>🔺 ${kup}`:''}</p>
+      setTimeout(()=>openSheet(`<div class="kn-av">${avatar('knight_m','leather','#5B2346')}</div><h2 class="h2 wk">黑騎士被你感化了！</h2><p class="sub">「謝謝你，守護者。寶箱還給你，我以後會好好幫忙顧溫室。」${zName(z)}恢復平靜，今天不會再被偷了。${kup?`<br>🔺 ${kup}`:''}</p>
         ${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>黑騎士還回來的寶箱</b>${cpNote(c)}${pts?`<br>果友值 +${pts}`:''}</div></div>
-        <button class="btn main" onclick="openZone('${zid}')">進${z.n}溫室巡園</button>`, true), 500);
+        <button class="btn main" onclick="openZone('${zid}')">進${zName(z)}巡園</button>`, true), 500);
     }
     function lose(){
       over = true; MUSIC.stop(); SND.lose();
@@ -3135,7 +3137,7 @@ function taskInfo(force){
 function taskMark(){
   const ti = taskInfo(); if(!ti || ti.done) return '';
   const z = ti.zone, x = z.emerald ? z.x+70 : z.x+44, y = z.emerald ? z.y-30 : z.y-50;
-  return `<g class="zone-node task-node" role="button" aria-label="${z.n}溫室小任務：${ti.task.n}">
+  return `<g class="zone-node task-node" role="button" aria-label="${zName(z)}小任務：${ti.task.n}">
     <circle cx="${x}" cy="${y}" r="20" fill="#E8C33A" opacity=".3"><animate attributeName="r" values="17;24;17" dur="1.6s" repeatCount="indefinite"/></circle>
     <circle cx="${x}" cy="${y}" r="16" fill="#fff" stroke="#C99A2E" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="17">${ti.task.i}</text>
     <rect x="${x-26}" y="${y+18}" width="52" height="16" rx="8" fill="#C99A2E"/><text x="${x}" y="${y+30}" text-anchor="middle" font-size="9.5" font-weight="700" fill="#fff">小任務</text></g>`;
@@ -4288,7 +4290,7 @@ async function countVisit(){
 let PHOTO_N = {};
 function filmMarks(){
   return ZONES.filter(z=>PHOTO_N[z.id]>0).map(z=>{ const x = z.emerald ? z.x-74 : z.x-58, y = z.emerald ? z.y-48 : z.y-30;
-    return `<g class="film-node" data-fz="${z.id}" role="button" aria-label="${z.n}真實場景照片"><rect x="${x-15}" y="${y-12}" width="30" height="24" rx="6" fill="#2A1F2D" opacity=".85"/>
+    return `<g class="film-node" data-fz="${z.id}" role="button" aria-label="${zName(z)}真實場景照片"><rect x="${x-15}" y="${y-12}" width="30" height="24" rx="6" fill="#2A1F2D" opacity=".85"/>
       <rect x="${x-11}" y="${y-8}" width="22" height="16" rx="2" fill="#E8C33A"/><path d="M${x-11} ${y-5} h22 M${x-11} ${y+5} h22" stroke="#2A1F2D" stroke-width="1.6" stroke-dasharray="2 2"/>
       <text x="${x}" y="${y+24}" text-anchor="middle" font-size="9" font-weight="700" fill="#2A1F2D">真實場景</text></g>`; }).join('');
 }
@@ -4298,7 +4300,7 @@ function phNorm(p){ return {...p, ym: p.ym || ymOf(p.created||Date.now()), likes
 async function openPhotos(zid){
   const z = ZONES.find(x=>x.id===zid);
   if(P && (phNew(zid) || !P.badgeHintDone)){ P.phSeen = {...(P.phSeen||{}), [zid]: phKey(zid)}; P.badgeHintDone = true; Auth.save(); if(typeof renderMap==='function') renderMap(); }
-  openSheet(`<h2 class="h2" style="margin-top:0">🎞️ ${z.n}・真實場景</h2><div id="phView"><p class="sub">讀取照片中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
+  openSheet(`<h2 class="h2" style="margin-top:0">🎞️ ${zName(z)}・真實場景</h2><div id="phView"><p class="sub">讀取照片中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
   let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).map(phNorm).sort((a,b)=>b.created-a.created); }catch(e){}
   const box = $('#phView'); if(!box) return;
   if(!items.length){ box.innerHTML = '<p class="sub">這座溫室還沒有照片。</p>'; return; }
