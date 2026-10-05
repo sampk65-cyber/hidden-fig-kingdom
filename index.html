@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V7.1</title>
+<title>今天在隱花王國尋寶 V7.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -266,7 +266,12 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-ic{font-size:20px;line-height:1.3}
 .fm-t{flex:1;font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .fm-act{display:flex;gap:6px;align-items:center;margin-top:6px}.fm-act .chip{padding:5px 10px;font-size:12px}
-.fm-dots{flex:1;display:flex;gap:4px}.fm-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}.fm-dots i.on{background:var(--fig);width:14px;border-radius:4px}
+.fm-dots{flex:1;display:flex;gap:4px}
+.fm-cm{margin:8px 0 2px 28px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--fig) 6%,var(--card));font-size:13px;min-height:20px;overflow:hidden;cursor:pointer}
+.fm-cm.fm-none{color:var(--muted);cursor:default}
+.fm-cmv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fm-cmv.in{animation:cmIn .45s ease}
+@keyframes cmIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
+.chip b{color:var(--rose);margin-left:2px}.fm-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}.fm-dots i.on{background:var(--fig);width:14px;border-radius:4px}
 .arena.throw{height:260px;touch-action:none}
 .arena.throw .kn-av{top:12px;bottom:auto;transition:none}
 .kfig{position:absolute;left:0;top:0;width:44px;height:44px;z-index:3;pointer-events:none}.kfig svg{width:100%;height:100%}
@@ -813,7 +818,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
         <div><label class="lbl" for="pB">B 折 200 元券</label><input id="pB" class="field" type="number" inputmode="numeric"></div>
         <div><label class="lbl" for="pA">A 半價券</label><input id="pA" class="field" type="number" inputmode="numeric"></div>
         <div><label class="lbl" for="pZ">Z 免單：平均幾天一張</label><input id="pZ" class="field" type="number" inputmode="numeric"></div>
-      </div><button id="btnPool" class="btn main">儲存（明天起生效）</button><button id="btnPoolReset" class="btn ghost">今天的獎池也立即套用</button></div>
+      </div><button id="btnPool" class="btn main">儲存（明天起生效）</button><button id="btnPoolReset" class="btn ghost">儲存並立即套用到今天</button><div id="poolMsg" class="lvtxt"></div></div>
       <div class="card"><b>今日剩餘</b><div id="poolNow"></div></div>
     </div>
     <div class="admpane hide" id="ap-feed">
@@ -859,7 +864,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V7.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V7.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2380,8 +2385,21 @@ $('#btnPh').onclick = async()=>{
     toast(`已上傳 ${ok} 張到 ${ym.replace('-',' 年 ')} 月`); $('#phFile').value=''; $('#phCap').value=''; Admin.phY = +ym.slice(0,4); Admin.phM = +ym.slice(5); Admin.photo(); }
   btn.disabled = false; btn.textContent = '上傳';
 };
-$('#btnPool').onclick = async()=>{ const c={rev:Date.now(), e:+$('#pE').value||0, d:+$('#pD').value||0, c:+$('#pC').value||0, b:+$('#pB').value||0, a:+$('#pA').value||0, zEvery:Math.max(1,+$('#pZ').value||3)}; await DB.set('config/pool', c); toast('獎池設定已儲存'); Admin.pool(); };
-$('#btnPoolReset').onclick = async()=>{ await DB.set('pool/'+today(), await poolInit()); const c = await poolCfg(); await DB.set('config/pool', {...c, rev:Date.now()}); toast('今天的獎池已重設，玩家會收到新投放提醒'); Admin.pool(); };
+// V7.4：兩顆按鈕都以畫面上輸入的數字為準；「立即套用」會同時儲存設定並重設今天的獎池
+function poolInputs(){ const n = id=>Math.max(0, Math.min(50, Math.round(+$(id).value||0))); return {e:n('#pE'), d:n('#pD'), c:n('#pC'), b:n('#pB'), a:n('#pA'), zEvery:Math.max(1, Math.round(+$('#pZ').value||3))}; }
+$('#btnPool').onclick = async()=>{ const c = {...poolInputs(), rev:Date.now()}; await DB.set('config/pool', c); toast('獎池設定已儲存，明天起生效'); $('#poolMsg').textContent = `已儲存（${new Date().toLocaleTimeString('zh-TW')}），明天起生效`; Admin.pool(); };
+$('#btnPoolReset').onclick = async()=>{
+  const btn = $('#btnPoolReset'); btn.disabled = true;
+  try{
+    const c = {...poolInputs(), rev:Date.now()}; await DB.set('config/pool', c);
+    const z = seedRand('free'+today())() < 1/c.zEvery ? 1 : 0, pool = {e:c.e, d:c.d, c:c.c, b:c.b, a:c.a, z};
+    await DB.set('pool/'+today(), pool);
+    $('#poolNow').innerHTML = poolTable(pool);
+    $('#poolMsg').textContent = `已套用到今天（${new Date().toLocaleTimeString('zh-TW')}）${z ? '・今天有 1 張免單' : '・今天沒輪到免單（依「平均幾天一張」隨機）'}`;
+    toast('今天的獎池已更新，玩家會收到新投放提醒');
+  }catch(e){ console.error(e); toast('套用失敗：'+(e.code||e.message||'請稍後再試')); }
+  btn.disabled = false;
+};
 $('#btnWx').onclick = async()=>{
   const pests=[...document.querySelectorAll('#wxPests input:checked')].map(x=>x.value);
   await DB.set('config/weather', {mode:$('#wMode').value, temp:+$('#wTemp').value, rain:+$('#wRain').value, wind:+$('#wWind').value, pests, date:today()});
@@ -2951,6 +2969,7 @@ async function loadFeed(){
       ps = await DB.list('feed');
     }
     FEED = ps.sort((a,b)=>b.created-a.created).slice(0,3);
+    await Promise.all(FEED.map(async p=>{ try{ p.cms = (await DB.list(`feed/${p.id}/comments`)).sort((a,b)=>b.created-a.created); }catch(e){ p.cms = []; } }));   // V7.3：留言數與跑馬燈
   }catch(e){ FEED = []; }
   renderFeed();
 }
@@ -2960,10 +2979,16 @@ function renderFeed(){
   if(!FEED.length){ $('#feedBox').innerHTML = '<p class="lvtxt" style="margin:0">📣 農場留言板還沒有貼文</p>'; return; }
   const box = $('#feedBox'); FEED.i = (FEED.i||0) % FEED.length;
   const show = ()=>{
-    const p = FEED[FEED.i], likes = P.likes||[];
+    const p = FEED[FEED.i], likes = P.likes||[], cms = (p.cms||[]).slice(0,10);
     box.innerHTML = `<div class="fm"><span class="fm-ic">📣</span><div class="fm-t" id="fmT">${esc(p.text)}</div></div>
+      ${cms.length ? `<div class="fm-cm" id="fmCm"><div class="fm-cmv" id="fmCmV"></div></div>` : `<div class="fm-cm fm-none">還沒有留言，來說第一句吧！</div>`}
       <div class="fm-act"><div class="fm-dots">${FEED.map((_,k)=>`<i class="${k===FEED.i?'on':''}"></i>`).join('')}</div>
-      <button class="chip ${likes.includes(p.id)?'sel':''}" data-like="${p.id}">${likes.includes(p.id)?'💚':'🤍'} 讚</button><button class="chip" data-cm="${p.id}">💬 留言</button><button class="chip" data-shp="${p.id}">📣 分享</button></div>`;
+      <button class="chip ${likes.includes(p.id)?'sel':''}" data-like="${p.id}">${likes.includes(p.id)?'💚':'🤍'} 讚</button><button class="chip" data-cm="${p.id}">💬 留言${(p.cms||[]).length ? ` <b>${p.cms.length}</b>` : ''}</button><button class="chip" data-shp="${p.id}">📣 分享</button></div>`;
+    clearInterval(FEED.ctm);
+    if(cms.length){ let k = 0; const tick = ()=>{ const v = document.getElementById('fmCmV'); if(!v) return clearInterval(FEED.ctm); const c = cms[k % cms.length]; k++;
+        v.classList.remove('in'); void v.offsetWidth; v.innerHTML = `💬 <b>${esc(c.name||'王國居民')}</b>：${esc(c.text)}`; v.classList.add('in'); };
+      tick(); if(cms.length>1) FEED.ctm = setInterval(tick, 2600); }
+    box.querySelector('#fmCm') && (box.querySelector('#fmCm').onclick = ()=>openComments(p.id));
     box.querySelector('[data-like]').onclick = ()=>{ const id=p.id; P.likes=P.likes||[]; if(P.likes.includes(id)) return; P.likes.push(id); P.daily.likes=(P.daily.likes||0)+1;
       if(P.daily.likes<=3) socialReward(.5,'謝謝你按讚'); else { Auth.save(); toast('謝謝你按讚 💚'); } show(); };
     box.querySelector('[data-cm]').onclick = ()=>openComments(p.id);
@@ -2971,7 +2996,7 @@ function renderFeed(){
   };
   show();
   clearInterval(FEED.tm);
-  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; FEED.i=(FEED.i+1)%FEED.length; show(); }, 5000);   // 每 5 秒輪播下一則
+  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; FEED.i=(FEED.i+1)%FEED.length; show(); }, 8000);   // 每 8 秒輪播下一則（留言跑馬燈在中間輪動）
 }
 // 分享：把貼文連同「自己的分享券連結」一起分享；分享本身只給小獎勵（無法確認對方真的看到），朋友用分享券加入才給大獎勵
 async function sharePost(p){
@@ -2990,15 +3015,26 @@ async function openComments(id){
     <div class="kwarn hide" id="cw"></div>
     <div style="display:flex;gap:8px;margin-top:8px"><input class="field" style="margin:0" id="ci" maxlength="40" placeholder="說句好話…"><button class="tbtn" id="cs" style="padding:0 14px">送出</button></div>
     <button class="btn ghost" onclick="closeSheet()">關閉</button>`);
-  let cs = []; try{ cs = (await DB.list(`feed/${id}/comments`)).sort((a,b)=>a.created-b.created).slice(-8); }catch(e){}
+  let all = []; try{ all = (await DB.list(`feed/${id}/comments`)).sort((a,b)=>a.created-b.created); }catch(e){}
+  if(p){ p.cms = [...all].reverse(); if($('#feedBox')) renderFeed(); }
+  const cs = all.slice(-8);
   $('#cmList').innerHTML = cs.map(c=>`<div class="cm"><b>${esc(c.name)}</b>：${esc(c.text)}</div>`).join('') || '<p class="lvtxt">還沒有留言，來說第一句吧！</p>';
-  $('#cs').onclick = async()=>{
-    const v = ($('#ci').value||'').trim(); if(!v) return; const w = $('#cw');
+  const send = async()=>{
+    const btn = $('#cs'), w = $('#cw'), v = ($('#ci').value||'').trim();
+    if(!v){ w.className='kwarn'; w.textContent='先輸入一句話再送出喔'; return; }
+    if([...v].length > 40){ w.className='kwarn bad'; w.textContent='留言最多 40 個字'; return; }
+    if(P.guest || !PID){ w.className='kwarn bad'; w.textContent='訪客模式不能留言，掃果盒 QR 登入後就可以'; return; }
     if(judgeWords(v)==='bad'){ w.className='kwarn bad'; w.textContent='⚠️ 這句話不友善，已被擋下，換句好話試試。'; SND.bad(); return; }
-    try{ await DB.set(`feed/${id}/comments/${rid(8)}`, {pid:PID, name:P.name, text:v, created:Date.now()}); }catch(e){ toast('留言失敗，請稍後再試'); return; }
+    btn.disabled = true; btn.textContent = '送出中';
+    try{ await DB.set(`feed/${id}/comments/${rid(8)}`, {pid:PID, name:P.name, text:v, created:Date.now()}); }
+    catch(e){ console.error(e); btn.disabled = false; btn.textContent = '送出'; w.className='kwarn bad';
+      w.textContent = /permission/i.test(e.code||e.message||'') ? '留言被系統擋下：請重新整理遊戲後再試；仍不行請告訴農場（權限）' : '留言失敗：網路不穩，請稍後再試'; return; }
+    toast('留言已送出 💬'); SND.good(2);
     if(!P.daily.cmt){ P.daily.cmt=true; socialReward(1,'謝謝你的留言'); }
     openComments(id);
   };
+  $('#cs').onclick = send;
+  $('#ci').onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); send(); } };
 }
 
 /* =========================================================
