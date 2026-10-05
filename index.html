@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V7.8</title>
+<title>今天在隱花王國尋寶 V7.9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -272,6 +272,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-cmv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fm-cmv.in{animation:cmIn .45s ease}
 @keyframes cmIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
 .chip b{color:var(--rose);margin-left:2px}
+.pts-got{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px;border-radius:16px;background:color-mix(in srgb,#6E9E3E 12%,var(--card));margin:6px 0}.pts-got b{font-size:30px;color:#4E7E2E}.pts-got span{font-size:13px;color:var(--muted)}
 .chest-mini{width:34px;height:26px;vertical-align:middle;margin-right:2px}
 .tier-row{padding:10px 0 12px;border-bottom:1px solid var(--line)}.tier-row:last-child{border-bottom:0}
 .tier-h{display:flex;align-items:center;gap:10px;margin-bottom:2px}.tier-h svg{width:54px;height:40px;flex:none}.tier-h b{display:block;font-size:15px}.tier-h small{color:var(--muted);font-size:12px}
@@ -649,7 +650,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
   <!-- 背包 -->
   <div class="tab" id="tab-bag">
     <h2 class="h2 wk">我的優惠券</h2>
-    <p class="sub">每張券效期 7 天，每筆訂單限用 1 張，滿 NT$600 可用。每週最多拿 3 張、手上最多 3 張，用掉才能再拿新的。</p>
+    <p class="sub">每張券效期 7 天，每筆訂單限用 1 張。巡園寶箱每週最多拿 3 張、手上最多 3 張，用掉才能再拿新的；寶箱追逐賽的券另外計算。</p>
     <div id="couponList"></div>
     <h2 class="h2 wk" style="margin-top:22px">分享券</h2>
     <p class="sub">每兌換一盒送 2 張。親友用分享券加入後，你可以領 20 果友值。</p>
@@ -862,7 +863,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V7.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V7.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1046,7 +1047,7 @@ const COUPON_T = [
   {id:'ship',big:'免運', sub:'冷藏宅配', c:'#C99A2E'},
   {id:'free',big:'免單', sub:'上限 NT$500', c:'#5B2346'},
   {id:'pts', big:'+6',  sub:'果友值', c:'#6E9E3E'},
-  {id:'c200',big:'折200',sub:'滿 NT$1,000', c:'#B5651D'},
+  {id:'c200',big:'折200',sub:'直接折抵', c:'#B5651D'},
   {id:'half',big:'5折', sub:'半價・上限折 NT$600', c:'#E8287A'}
 ];
 const COUPON_W = [[60,10,0,30,0],[45,20,5,30,0],[30,30,10,29,1],[20,30,20,28,2]];
@@ -1655,7 +1656,7 @@ function renderHud(){
   $('#hudName').textContent = P.name + (P.guest?'（訪客）':'');
   $('#hudBar').style.width = N ? Math.min(100,(P.points-L.min)/(N.min-L.min)*100)+'%' : '100%';
   $('#hudLv').innerHTML = `${L.icon} ${L.n}・${P.points||0} 分`;
-  $('#hudSt').textContent = '⚡'+stamina(); $('#hudLeaf').textContent = '🎟️'+weekN()+'/'+WEEK_CAP;
+  $('#hudSt').textContent = '⚡'+stamina(); $('#hudLeaf').textContent = '🎟️'+holdN()+'/'+HOLD_CAP;
   $('#tdPts').textContent = `${P.daily.pts}/${DAILY_CAP}`;
   $('#tdChest').textContent = `${P.daily.chests}/${CHEST_CAP}`;
   $('#tdStreak').textContent = `${P.streak} 天`;
@@ -1982,9 +1983,11 @@ function logChest(src, r){ if(!P || P.guest) return; P.chestLog = [...(P.chestLo
 function chestOpen(c, pts, back){
   const t = cpT(c);
   logChest(back ? '獎勵寶箱' : `巡園寶箱・${curZone ? curZone.n : ''}`, (t.id==='pts' ? `果友值 ${t.big}` : `${t.big}（${t.sub}）`) + (pts ? `＋果友值 ${pts}` : '')); Auth.save();
-  setTimeout(()=>openSheet(`${chestSvg()}<h2 class="h2 wk">寶箱開出 ${t.big}${t.id==='free'?'！':''}</h2>
-    <div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
-    <div class="cright"><b>${cpNote(c)}</b>滿 NT$600 可用，7 天內有效${pts?`<br>果友值 +${pts}`:''}</div></div>
+  const isPts = c.t==='pts', got = (isPts ? (c.pts||6) : 0) + (pts||0);
+  setTimeout(()=>openSheet(`${chestSvg()}<h2 class="h2 wk">寶箱開出 ${isPts ? `果友值 +${got}` : t.big+(t.id==='free'?'！':'')}</h2>
+    ${isPts ? `<div class="pts-got"><b>🍃 +${got}</b><span>已直接加進果友值，不占優惠券名額</span></div><p class="lvtxt">${cpNote(c)}</p>`
+    : `<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
+    <div class="cright"><b>已放進優惠券</b>7 天內有效${pts?`<br>另加果友值 +${pts}`:''}</div></div>`}
     ${P.guest?'<p class="sub">登入後找到的優惠券才能保存使用。</p>':''}
     <button class="btn main" onclick="${back?'closeSheet()':`openZone('${curZone.id}')`}">${back?'好':'繼續巡園'}</button>`, true), 50);
 }
@@ -2103,7 +2106,7 @@ function renderBag(){
     ? `<div class="empty">還沒有優惠券。<br>到王國地圖巡園，寶箱裡會有折扣、免運，運氣好還有免單。</div>`
     : list.map(c=>{
         const t = cpT(c), d = Math.ceil((c.exp-Date.now())/864e5);
-        const nm = t.id==='sp'?`${c.spI||'🎁'} ${t.big}`:t.id==='free'?'免單券（上限 NT$500）':t.id==='ship'?'冷藏宅配免運':t.id==='half'?'半價券（上限折 NT$600）':t.id==='c200'?'折 200 元（滿 NT$1,000）':t.big+'鮮果券';
+        const nm = t.id==='sp'?`${c.spI||'🎁'} ${t.big}`:t.id==='free'?'免單券（上限 NT$500）':t.id==='ship'?'冷藏宅配免運':t.id==='half'?'半價券（上限折 NT$600）':t.id==='c200'?'折 200 元':t.big+'鮮果券';
         return `<div class="coupon" data-cp="${c.id}" role="button" tabindex="0"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
           <div class="cright"><b>${nm}</b>剩 ${d} 天・券號 <b style="display:inline;font-size:13px">${PID}-${c.id}</b><br><span class="cpqr">📱 點這裡出示核銷 QR</span></div></div>`;
       }).join('');
@@ -2779,13 +2782,13 @@ function famGame(){
 const WEEK_CAP = 3, HOLD_CAP = 3;
 function weekKey(){ const d=new Date(); const day=(d.getDay()+6)%7; const m=new Date(d.getFullYear(), d.getMonth(), d.getDate()-day); return m.getFullYear()+'-'+(m.getMonth()+1)+'-'+m.getDate(); }
 function weekN(){ return (P.weekCp && P.weekCp.wk===weekKey()) ? P.weekCp.n : 0; }
-function holdN(){ return MY_COUPONS.filter(c=>!c.used && c.exp>Date.now()).length; }
+function holdN(){ return MY_COUPONS.filter(c=>!c.used && c.exp>Date.now() && c.src!=='chase' && c.t!=='sp').length; }   // 追逐賽與特別獎的券不占手上 3 張
 function makeCoupon(){
   if(weekN()>=WEEK_CAP || holdN()>=HOLD_CAP){ const pts = addPts(6,'buy'); return {t:'pts', pts}; }
   P.weekCp = {wk:weekKey(), n:weekN()+1};
   return makeCouponRaw();
 }
-function cpNote(c){ return c.t==='pts' ? (holdN()>=HOLD_CAP ? '手上已有 3 張券，寶箱改裝果友值' : '本週 3 張券已拿滿，寶箱改裝果友值') : '已放進優惠券'; }
+function cpNote(c){ return c.t==='pts' ? (holdN()>=HOLD_CAP ? '手上已有 3 張券，用掉一張後寶箱才會再開出券' : '本週 3 張券已拿滿，下週一重新計算') : '已放進優惠券'; }
 
 /* ---------- 探索圖鑑：知識卡、稀有收藏、守護事件 ---------- */
 const RARES = [
@@ -4010,7 +4013,7 @@ function drawTier(p){ const items = TIERS.map(t=>({k:t.k, w:(p[t.k]||0)*t.f})).f
 function poolTable(p){ return `<table class="ladder">${TIERS.map(t=>`<tr><td>${chestSvg(t.k, true)} <b>${t.chest}</b>・${esc(t.n)}${t.note?`<br><span class="lvtxt">${esc(t.note)}</span>`:''}</td><td style="text-align:right;white-space:nowrap">剩 <b>${p[t.k]||0}</b></td></tr>`).join('')}</table>`; }
 function grantCoupon(type, extra={}){
   const {days, ...more} = extra;
-  const c = {id:rid(4), t:type, exp:Date.now()+(days||7)*864e5, used:false, created:Date.now(), ...more};
+  const c = {id:rid(4), t:type, exp:Date.now()+(days||7)*864e5, used:false, created:Date.now(), src:'chase', ...more};
   MY_COUPONS.push(c);
   DB.set('players/'+PID+'/coupons/'+c.id, {t:c.t, exp:c.exp, used:false, created:c.created, name:P.name||'', src:'chase', ...more}).catch(()=>toast('優惠券同步失敗，請檢查網路'));
   return c;
