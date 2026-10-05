@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V8.2</title>
+<title>今天在隱花王國尋寶 V8.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -866,7 +866,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V8.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V8.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -983,14 +983,15 @@ const BASE_STAMINA = 5, STEP_STAMINA_MAX = 10, TREES_N = 12;
 // 六區溫室：栽培階段每週自動輪替（剪枝→座果→採收）；後台可覆寫當週；採收期寶箱較多
 const ZONES = [
   {id:'z1', n:'一期', g:'晨曦', stage:'採收', x:92,  y:470},
-  {id:'z2', n:'二期', g:'夕霧', stage:'座果', x:270, y:402},
+  {id:'z2', n:'二期', g:'映日', stage:'座果', x:270, y:402},
   {id:'z3', n:'三期', g:'春泥', stage:'採收', x:96,  y:322},
   {id:'z4', n:'四南', g:'虛舟', stage:'剪枝', x:264, y:246},
-  {id:'z5', n:'四北', g:'彼岸', stage:'座果', x:104, y:170},
+  {id:'z5', n:'四北', g:'松濤', stage:'座果', x:104, y:170},
   {id:'z6', n:'五期', g:'翡翠', stage:'採收', x:180, y:74, emerald:true}
 ];
 // V8.2：溫室雅名＋期別，例如「晨曦溫室・一期」（資料仍以 id 對應，改名不影響既有資料）
-function zName(z){ return z ? `${z.g||''}溫室・${z.n}` : ''; }
+function zName(z){ return z ? `${z.g||z.n}溫室` : ''; }              // V8.4：玩家端只顯示雅名，例如「晨曦溫室」
+function zAdm(z){ return z ? `${z.g||''}溫室（${z.n}）` : ''; }        // 後台保留期別，方便農場對照
 const STAGE_CYCLE = ['剪枝','座果','採收'];
 function autoStages(){ const wk = Math.floor((Date.now()/864e5 + 3)/7); ZONES.forEach((z,i)=>{ z.stage = STAGE_CYCLE[(wk + i) % 3]; }); }
 const STAGE = {
@@ -1734,15 +1735,15 @@ function renderMap(){
       <path d="M${z.x-40} ${z.y+30} L${z.x-40} ${z.y-14} M${z.x-14} ${z.y+30} L${z.x-14} ${z.y-26} M${z.x+14} ${z.y+30} L${z.x+14} ${z.y-26} M${z.x+40} ${z.y+30} L${z.x+40} ${z.y-14}" stroke="#7FE0BF" stroke-width="2"/>
       <path d="M${z.x-62} ${z.y+4} Q${z.x} ${z.y-30} ${z.x+62} ${z.y+4}" stroke="#7FE0BF" stroke-width="2" fill="none"/>
       <rect x="${z.x-46}" y="${z.y+38}" width="92" height="24" rx="12" fill="#fff"/>
-      <text x="${z.x}" y="${z.y+55}" text-anchor="middle" font-size="13" font-weight="700" fill="#14735A">翡翠溫室・五期</text>
+      <text x="${z.x}" y="${z.y+55}" text-anchor="middle" font-size="13" font-weight="700" fill="#14735A">翡翠溫室</text>
       ${zBadge(z, z.x+56, z.y-10, st.c, `${tapped}/10`)}</g>`;
     return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${zName(z)}，${z.stage}">
       <ellipse cx="${z.x}" cy="${z.y+18}" rx="40" ry="7" fill="#0002"/>
       <path d="M${z.x-36} ${z.y+16} L${z.x-36} ${z.y-2} Q${z.x} ${z.y-34} ${z.x+36} ${z.y-2} L${z.x+36} ${z.y+16}Z" fill="#F5FAF2" stroke="#8FB087" stroke-width="2"/>
       <path d="M${z.x-18} ${z.y+16} L${z.x-18} ${z.y-14} M${z.x} ${z.y+16} L${z.x} ${z.y-19} M${z.x+18} ${z.y+16} L${z.x+18} ${z.y-14}" stroke="#B9D2B0" stroke-width="1.5"/>
-      <rect x="${z.x-50}" y="${z.y+24}" width="100" height="22" rx="11" fill="#fff"/>
-      <text x="${z.x-14}" y="${z.y+39}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1F2D">${z.g}・${z.n}</text>
-      <text x="${z.x+32}" y="${z.y+39}" text-anchor="middle" font-size="10" fill="${st.c}" font-weight="700">${z.stage}</text>
+      <rect x="${z.x-42}" y="${z.y+24}" width="84" height="22" rx="11" fill="#fff"/>
+      <text x="${z.x-11}" y="${z.y+39}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1F2D">${z.g}溫室</text>
+      <text x="${z.x+25}" y="${z.y+39}" text-anchor="middle" font-size="10" fill="${st.c}" font-weight="700">${z.stage}</text>
       ${zBadge(z, z.x+34, z.y-8, st.c, `${tapped}/${TREES_N}`)}</g>`;
   }).join('');
   $('#mapSvg').innerHTML = `<svg viewBox="0 0 360 580" aria-label="隱花王國地圖">
@@ -2214,7 +2215,7 @@ function printLabels(items, key){
 const Admin = {
   async start(){
     document.body.classList.add('admin'); show('admin');
-    $('#qZone').innerHTML = ZONES.map(z=>`<option value="${zName(z)}">${zName(z)}</option>`).join('');
+    $('#qZone').innerHTML = ZONES.map(z=>`<option value="${zName(z)}">${zAdm(z)}</option>`).join('');
     $('#qLayout').innerHTML = Object.entries(LAYOUTS).map(([k,l])=>`<option value="${k}">${l.n}</option>`).join('');
     $('#qHarvest').value = today();
     try{ await DB.init(); }catch(e){ $('#admHint').textContent='Firebase 連線失敗，請檢查設定與網路。'; return; }
@@ -2317,14 +2318,14 @@ const Admin = {
   },
   async zones(){
     autoStages(); let z = {}; try{ z = await DB.get('config/zones') || {}; if(z.wk!==weekKey()) z = {}; }catch(e){}
-    $('#zoneList').innerHTML = ZONES.map(x=>`<div class="zrow"><b>${zName(x)}</b><select class="field" data-z="${x.id}">${Object.keys(STAGE).map(s=>`<option ${ (z[x.id]||x.stage)===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join('');
+    $('#zoneList').innerHTML = ZONES.map(x=>`<div class="zrow"><b>${zAdm(x)}</b><select class="field" data-z="${x.id}">${Object.keys(STAGE).map(s=>`<option ${ (z[x.id]||x.stage)===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join('');
   },
   async saveZones(){
     const z = {wk:weekKey()}; document.querySelectorAll('#zoneList select').forEach(s=>z[s.dataset.z]=s.value);
     await DB.set('config/zones', z); toast('本週溫室階段已更新；下週會自動輪替');
   },
   async photo(){
-    const sel = $('#phZone'); if(!sel.options.length){ sel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${zName(z)}</option>`).join(''); sel.onchange = ()=>{ Admin.phM = null; Admin.photo(); }; }
+    const sel = $('#phZone'); if(!sel.options.length){ sel.innerHTML = ZONES.map(z=>`<option value="${z.id}">${zAdm(z)}</option>`).join(''); sel.onchange = ()=>{ Admin.phM = null; Admin.photo(); }; }
     if(!$('#phYm').value) $('#phYm').value = ymOf(Date.now());
     const zid = sel.value; let items = []; try{ items = (await DB.list(`zonephotos/${zid}/items`)).map(phNorm).sort((a,b)=>b.created-a.created); }catch(e){}
     const nowY = new Date().getFullYear(), years = [...new Set([nowY, ...items.map(p=>+p.ym.slice(0,4))])].sort((a,b)=>b-a);
@@ -3833,7 +3834,7 @@ function openEmerald(){
   const z6 = ZONES.find(z=>z.emerald); curZone = z6;
   const ov = document.createElement('div'); ov.id = 'emOv';
   ov.innerHTML = `<canvas id="emCv"></canvas>
-    <div class="em-top"><div><b>🌿 翡翠溫室・五期</b><div class="em-loc" id="emLoc">大門</div></div><div class="em-st" id="emSt"></div><button class="em-x" id="emX">離開</button></div>
+    <div class="em-top"><div><b>🌿 翡翠溫室</b><div class="em-loc" id="emLoc">大門</div></div><div class="em-st" id="emSt"></div><button class="em-x" id="emX">離開</button></div>
     <div class="em-map" id="emStrip"><div class="em-bar"><i id="emDot"></i></div><div class="em-zn">${[1,2,3,4,5].map(i=>`<span>A${i}｜B${i}</span>`).join('')}</div></div>
     <canvas id="emMini" class="hide"></canvas><div class="em-chase hide" id="emChase"></div>
     <div id="emJoy"><div id="emStick"></div><span>走動（上下左右）</span></div>
