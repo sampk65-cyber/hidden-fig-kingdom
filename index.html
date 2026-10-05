@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V8.5</title>
+<title>今天在隱花王國尋寶 V8.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -275,6 +275,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .cd-wrap{overflow-x:auto;margin-top:4px}.cd-tb th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:4px 6px}.cd-tb td{font-size:13px;vertical-align:top;padding:6px}
 .cd-id{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:3px 8px;font:inherit;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap;color:var(--ink)}.cd-id span{color:var(--muted);font-weight:400}
 .cd-nm{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}
+.rk-me td{background:color-mix(in srgb,var(--gold) 18%,transparent);font-weight:700}
 .pts-got{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px;border-radius:16px;background:color-mix(in srgb,#6E9E3E 12%,var(--card));margin:6px 0}.pts-got b{font-size:30px;color:#4E7E2E}.pts-got span{font-size:13px;color:var(--muted)}
 .chest-mini{width:34px;height:26px;vertical-align:middle;margin-right:2px}
 .tier-row{padding:10px 0 12px;border-bottom:1px solid var(--line)}.tier-row:last-child{border-bottom:0}
@@ -866,7 +867,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V8.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V8.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -3152,8 +3153,9 @@ function openTask(ti){
   const slotTxt = (ti.patrol||ti.em) ? '' : TASK_SLOTS[ti.slot].map(h=>h+':00').join('–');
   openSheet(`<div class="big">${ti.task.i}</div><h2 class="h2 wk">${ti.em?'翡翠溫室挑戰：':ti.patrol?'巡園時遇到挑戰：':ti.zone.n+'溫室小任務：'}${ti.task.n}</h2>
     <p class="sub">${ti.task.d}</p><div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">${ti.task.rules||''}</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf(ti.task.id)]}</b>・兩星以上自動提升</p></div><p class="sub">${ti.em?'每天第一次挑戰計入過關指數，之後可以一直刷新最佳紀錄。':ti.patrol?'今天只會遇到這一次，':`這個時段（${slotTxt}）限定，`}完成後拿「過關指數」，指數越高果友值越多。${ti.done?'<br>這個時段已經完成，再玩只刷新最佳紀錄。':''}</p>
-    <button class="btn main" id="tGo">正式開始</button><button class="btn ghost" onclick="closeSheet()">等一下</button>`, true);
+    <button class="btn main" id="tGo">正式開始</button><button class="btn ghost" id="tRk0">🏆 排行榜・我的最佳 ${((P.pass||{}).best||{})[ti.task.id]||0}</button><button class="btn ghost" onclick="closeSheet()">等一下</button>`, true);
   $('#tGo').onclick = ()=>{ closeSheet(); ti.task.play(res=>taskFinish(ti, res)); };
+  $('#tRk0').onclick = ()=>openRank(ti.task.id, ti.task.n, ti.task.i);
 }
 function taskFinish(ti, res){
   const idx = Math.max(0, Math.min(100, Math.round(res.score))), stars = idx>=90?3:idx>=70?2:idx>=45?1:0;
@@ -3161,16 +3163,33 @@ function taskFinish(ti, res){
   const first = !(P.daily.tasks||[]).includes(ti.slot);
   let pts = 0;
   if(first){ P.daily.tasks = [...(P.daily.tasks||[]), ti.slot]; P.pass.total += idx; P.daily.passToday = (P.daily.passToday||0)+idx; pts = addPts(stars*2+1); }
-  const best = Math.max(P.pass.best[ti.task.id]||0, idx); P.pass.best[ti.task.id] = best;
+  const best = Math.max(P.pass.best[ti.task.id]||0, idx); P.pass.best[ti.task.id] = best; postScore(ti.task.id, best);
   const tup = stars>=2 ? diffAfter(ti.task.id, true) : '';
   Auth.save(); renderAll();
   openSheet(`<div class="big pop">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div><h2 class="h2 wk">過關指數 ${idx}</h2>
     <p class="sub">${res.detail||''}<br>${first?`累計過關指數 +${idx}${pts?`，果友值 +${pts}`:''}`:'這個時段已經領過，只更新最佳紀錄'}・最佳 ${best}${tup?`<br>🔺 ${tup}`:''}</p>
     <div class="card" style="text-align:left"><b>📖 農場小知識</b><p class="sub" style="margin:4px 0 0">${ti.task.d}</p></div>
-    <button class="btn main" id="tAgain">再玩一次</button><button class="btn ghost" onclick="closeSheet()">回王國</button>`, true);
+    <button class="btn main" id="tAgain">再玩一次</button><button class="btn ghost" id="tRank">🏆 ${ti.task.n}排行榜</button><button class="btn ghost" onclick="closeSheet()">回王國</button>`, true);
   $('#tAgain').onclick = ()=>{ closeSheet(); ti.task.play(r=>taskFinish(ti, r)); };
+  $('#tRank').onclick = ()=>openRank(ti.task.id, ti.task.n, ti.task.i);
 }
 
+// V8.6：小遊戲個人最佳＋王國總排行榜（只上傳自己的最佳分數）
+function postScore(gid, best){
+  if(DEMO || !PID || P.guest || !(best>0)) return;
+  DB.set(`scores/${gid}/top/${PID}`, {pid:PID, name:(P.name||'王國居民').slice(0,20), score:Math.round(best), t:Date.now()}).catch(e=>console.warn('排行榜上傳失敗', e));
+}
+async function openRank(gid, name, icon){
+  openSheet(`<div class="big">${icon||'🏆'}</div><h2 class="h2 wk">${name}・王國排行榜</h2><div id="rkBox"><p class="sub">讀取中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
+  let rows = [];
+  try{
+    if(DEMO) rows = (await DB.list(`scores/${gid}/top`)).sort((a,b)=>b.score-a.score).slice(0,10);
+    else { const q = fb.fs.query(fb.fs.collection(fb.F, `scores/${gid}/top`), fb.fs.orderBy('score','desc'), fb.fs.limit(10)); rows = (await fb.fs.getDocs(q)).docs.map(d=>({id:d.id, ...d.data()})); }
+  }catch(e){ console.warn(e); }
+  const box = $('#rkBox'); if(!box) return; const my = ((P.pass||{}).best||{})[gid]||0, md = ['🥇','🥈','🥉'];
+  box.innerHTML = `<p class="sub">你的最佳：<b>${my}</b></p>${rows.length ? `<table class="ladder">${rows.map((r,i)=>`<tr class="${r.pid===PID?'rk-me':''}"><td>${md[i]||(i+1)+'.'} ${esc(r.name||'')}</td><td><b>${r.score}</b></td></tr>`).join('')}</table>` : '<p class="sub">還沒有人上榜，快來搶第一！</p>'}
+    ${my && !rows.some(r=>r.pid===PID) ? '<p class="lvtxt">你還沒進前 10 名，再挑戰一次吧！</p>' : ''}`;
+}
 function pickPatrolEvent(){
   const played = P.daily.mgPlayed||[], wx = pendingCh().filter(k=>!played.includes(k));
   if(wx.length) return wx[0];                                   // 今天的天氣事件優先出現
