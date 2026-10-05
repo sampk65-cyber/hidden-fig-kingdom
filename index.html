@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.6</title>
+<title>今天在隱花王國尋寶 V9.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -875,7 +875,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1493,11 +1493,15 @@ function postRank(){
 }
 async function openPointsRank(){
   openSheet(`<div class="big">🏆</div><h2 class="h2 wk">守護者積分前 10 名</h2><div id="prBox"><p class="sub">讀取中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
-  postRank(); let rows = [];
+  postRank(); let live = [], pub = [];
   try{
-    if(DEMO) rows = (await DB.list('ranks')).sort((a,b)=>b.points-a.points).slice(0,10);
-    else { const q = fb.fs.query(fb.fs.collection(fb.F, 'ranks'), fb.fs.orderBy('points','desc'), fb.fs.limit(10)); rows = (await fb.fs.getDocs(q)).docs.map(d=>({id:d.id, ...d.data()})); }
+    if(DEMO) live = await DB.list('ranks');
+    else { const q = fb.fs.query(fb.fs.collection(fb.F, 'ranks'), fb.fs.orderBy('points','desc'), fb.fs.limit(10)); live = (await fb.fs.getDocs(q)).docs.map(d=>({id:d.id, ...d.data()})); }
   }catch(e){ console.warn(e); }
+  try{ const c = await DB.get('config/rank'); pub = (c && c.list) || []; }catch(e){}
+  const m = {}; [...pub, ...live].forEach(r=>{ if(!r.pid) return; if(!m[r.pid] || (r.points||0) >= (m[r.pid].points||0)) m[r.pid] = r; });   // 後台發布＋玩家即時，取較新的分數
+  if(PID && P && !P.guest && P.role) m[PID] = {pid:PID, name:P.name, points:Math.round(P.points||0)};
+  const rows = Object.values(m).sort((a,b)=>(b.points||0)-(a.points||0)).slice(0,10);
   const box = $('#prBox'); if(!box) return; const md = ['🥇','🥈','🥉'];
   box.innerHTML = rows.length ? `<table class="ladder">${rows.map((r,i)=>`<tr class="${r.pid===PID?'rk-me':''}"><td>${md[i]||(i+1)+'.'} ${LEVELS[lvIndex(r.points||0)].icon} ${esc(r.name||'')}</td><td><b>${r.points}</b> 分</td></tr>`).join('')}</table>
     ${rows.some(r=>r.pid===PID) ? '' : `<p class="lvtxt">你目前 ${P.points||0} 分，繼續加油擠進前 10 名！</p>`}` : '<p class="sub">排行榜準備中，玩家登入後就會出現。</p>';
@@ -2446,6 +2450,8 @@ const Admin = {
     const [ps, cs] = await Promise.all([DB.list('players'), DB.list('codes')]);
     const box = cs.filter(c=>c.type==='box'), share = cs.filter(c=>c.type==='share');
     const players = ps.filter(p=>p.role).sort((a,b)=>b.points-a.points), top = players.slice(0,10);
+    // V9.7：後台打開數據頁時，把目前全部玩家的積分前 10 名發布到前台（不用等玩家登入）
+    DB.set('config/rank', {t:Date.now(), list:players.slice(0,20).map(p=>({pid:p.id, name:(p.name||'王國居民').slice(0,20), points:Math.round(p.points||0)}))}).catch(e=>console.warn(e));
     const logs = ps.flatMap(p=>(p.chestLog||[]).map(l=>({...l, name:p.name||'（未命名）', pid:p.id}))).sort((a,b)=>b.t-a.t).slice(0,40);
     const tm = t=>{ const d = new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
     Admin.ps = ps;
