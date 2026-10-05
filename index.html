@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.3</title>
+<title>今天在隱花王國尋寶 V9.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -274,6 +274,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .chip b{color:var(--rose);margin-left:2px}
 .cd-wrap{overflow-x:auto;margin-top:4px}.cd-tb th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:4px 6px}.cd-tb td{font-size:13px;vertical-align:top;padding:6px}
 .cd-id{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:3px 8px;font:inherit;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap;color:var(--ink)}.cd-id span{color:var(--muted);font-weight:400}
+.cd-note{min-width:120px;padding:6px 8px;font-size:13px;margin:0}
 .cd-nm{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}
 .pid-tag{margin-left:4px;font-size:11px;color:var(--muted);font-weight:400}.pid-tag.dup{color:var(--rose);font-weight:700}
 .rk-me td{background:color-mix(in srgb,var(--gold) 18%,transparent);font-weight:700}
@@ -868,7 +869,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.3';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2328,14 +2329,18 @@ const Admin = {
       box.innerHTML = `<div class="cd-head"><b>已使用 ${used} / ${cs.length}</b>
           <div class="seg" style="margin:6px 0"><button class="chip ${f==='all'?'sel':''}" data-f="all">全部</button><button class="chip ${f==='used'?'sel':''}" data-f="used">已使用</button><button class="chip ${f==='unused'?'sel':''}" data-f="unused">未使用</button></div>
           <div class="seg" style="margin:0 0 6px"><button class="chip" data-cpall="1">複製這些 QR 碼</button><button class="chip" data-csv="1">下載 CSV</button></div></div>
-        <div class="cd-wrap"><table class="ladder cd-tb"><tr><th>QR 碼</th><th>已使用</th><th>對應暱稱</th></tr>${list.map(c=>`<tr>
+        <div class="cd-wrap"><table class="ladder cd-tb"><tr><th>QR 碼</th><th>已使用</th><th>對應暱稱</th><th>備註</th></tr>${list.map(c=>`<tr>
           <td><button class="cd-id" data-copy="${c.id}" title="點一下複製">${c.id} <span>⧉</span></button></td>
           <td>${c.used ? `✅ <small>${tm(c.usedAt)}</small>` : '<span class="lvtxt">未使用</span>'}</td>
-          <td>${c.usedPid ? `<button class="cd-nm" data-pl="${c.usedPid}">${esc(names[c.usedPid]||'')}</button><br><small class="lvtxt">${c.usedPid}</small>` : '—'}</td></tr>`).join('') || '<tr><td colspan="3">沒有符合的 QR</td></tr>'}</table></div>`;
+          <td>${c.usedPid ? `<button class="cd-nm" data-pl="${c.usedPid}">${esc(names[c.usedPid]||'')}</button><br><small class="lvtxt">${c.usedPid}</small>` : '—'}</td>
+          <td><input class="field cd-note" data-note="${c.id}" maxlength="40" placeholder="例如：給王小姐" value="${esc(c.note||'')}"></td></tr>`).join('') || '<tr><td colspan="4">沒有符合的 QR</td></tr>'}</table></div>`;
       box.querySelectorAll('[data-f]').forEach(x=>x.onclick=()=>{ f = x.dataset.f; draw(); });
+      // V9.4：每個 QR 可加備註（離開輸入框自動儲存，只寫 note 欄位）
+      box.querySelectorAll('[data-note]').forEach(x=>x.onchange=async()=>{ const id = x.dataset.note, v = x.value.trim(), c = cs.find(y=>y.id===id);
+        try{ await DB.update('codes/'+id, {note:v}); if(c) c.note = v; toast('備註已儲存'); }catch(e){ console.error(e); toast('備註儲存失敗'); } });
       box.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>copyText(x.dataset.copy, `已複製 ${x.dataset.copy}`));
       box.querySelector('[data-cpall]').onclick = ()=>copyText(list.map(c=>c.id).join('\n'), `已複製 ${list.length} 個 QR 碼`);
-      box.querySelector('[data-csv]').onclick = ()=>{ const rows = [['QR 碼','已使用','使用時間','對應暱稱','會員編號'], ...cs.map(c=>[c.id, c.used?'是':'否', tm(c.usedAt), c.usedPid?(names[c.usedPid]||''):'', c.usedPid||''])];
+      box.querySelector('[data-csv]').onclick = ()=>{ const rows = [['QR 碼','已使用','使用時間','對應暱稱','會員編號','備註'], ...cs.map(c=>[c.id, c.used?'是':'否', tm(c.usedAt), c.usedPid?(names[c.usedPid]||''):'', c.usedPid||'', c.note||''])];
         saveBlob(new Blob(['\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}), `QR使用明細_${(b&&b.product)||''}_${bid}.csv`); };
       box.querySelectorAll('[data-pl]').forEach(x=>x.onclick=async()=>{ if(!Admin.ps) Admin.ps = await DB.list('players'); Admin.player(x.dataset.pl); });
     };
