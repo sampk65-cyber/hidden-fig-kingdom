@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V7.4</title>
+<title>今天在隱花王國尋寶 V7.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -271,7 +271,10 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-cm.fm-none{color:var(--muted);cursor:default}
 .fm-cmv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fm-cmv.in{animation:cmIn .45s ease}
 @keyframes cmIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
-.chip b{color:var(--rose);margin-left:2px}.fm-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}.fm-dots i.on{background:var(--fig);width:14px;border-radius:4px}
+.chip b{color:var(--rose);margin-left:2px}
+.tier-row{padding:10px 0 12px;border-bottom:1px solid var(--line)}.tier-row:last-child{border-bottom:0}
+.tier-h{display:flex;align-items:center;gap:10px;margin-bottom:2px}.tier-h svg{width:54px;height:40px;flex:none}.tier-h b{display:block;font-size:15px}.tier-h small{color:var(--muted);font-size:12px}
+.sp-box{margin-top:12px;padding:12px;border-radius:14px;border:1.5px dashed #D4A017;background:color-mix(in srgb,#D4A017 7%,var(--card))}.sp-on{display:flex;align-items:center;gap:6px;font-weight:700;margin:4px 0}.fm-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}.fm-dots i.on{background:var(--fig);width:14px;border-radius:4px}
 .arena.throw{height:260px;touch-action:none}
 .arena.throw .kn-av{top:12px;bottom:auto;transition:none}
 .kfig{position:absolute;left:0;top:0;width:44px;height:44px;z-index:3;pointer-events:none}.kfig svg{width:100%;height:100%}
@@ -810,15 +813,9 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     </div>
     <div class="admpane hide" id="ap-pool">
       <h2 class="h2 wk">寶箱追逐賽・每日獎池</h2>
-      <p class="sub">每天的獎項數量，所有玩家共用，搶完就沒了。免單是「平均幾天出現一張」，系統每天依機率決定今天有沒有。</p>
-      <div class="card"><div class="grid2">
-        <div><label class="lbl" for="pE" style="margin-top:0">E 果友值 +10</label><input id="pE" class="field" type="number" inputmode="numeric"></div>
-        <div><label class="lbl" for="pD" style="margin-top:0">D 果友值 +20</label><input id="pD" class="field" type="number" inputmode="numeric"></div>
-        <div><label class="lbl" for="pC">C 免運券</label><input id="pC" class="field" type="number" inputmode="numeric"></div>
-        <div><label class="lbl" for="pB">B 折 200 元券</label><input id="pB" class="field" type="number" inputmode="numeric"></div>
-        <div><label class="lbl" for="pA">A 半價券</label><input id="pA" class="field" type="number" inputmode="numeric"></div>
-        <div><label class="lbl" for="pZ">Z 免單：平均幾天一張</label><input id="pZ" class="field" type="number" inputmode="numeric"></div>
-      </div><button id="btnPool" class="btn main">儲存（明天起生效）</button><button id="btnPoolReset" class="btn ghost">儲存並立即套用到今天</button><div id="poolMsg" class="lvtxt"></div></div>
+      <p class="sub">每天的寶箱數量，所有玩家共用，搶完就沒了。鑽石寶盒是「平均幾天出現一個」，系統每天依機率決定今天有沒有。</p>
+      <div class="card"><p class="lvtxt" style="margin-top:0">由低到高：木箱、鐵箱、銅箱、銀箱、金箱、鑽石。每種寶箱可改數量、獎品、獎品名稱與副標備註（例如把鑽石改成「孫爸特別獎」）。</p>
+      <div id="tierRows"></div><button id="btnPool" class="btn main">儲存（明天起生效）</button><button id="btnPoolReset" class="btn ghost">儲存並立即套用到今天</button><div id="poolMsg" class="lvtxt"></div></div>
       <div class="card"><b>今日剩餘</b><div id="poolNow"></div></div>
     </div>
     <div class="admpane hide" id="ap-feed">
@@ -864,7 +861,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V7.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V7.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1846,7 +1843,7 @@ function renderStory(){
   const b=$('#btnStory'); if(b) b.onclick=()=>{
     P.daily.storyClaimed=true; const pts=addPts(10); const c2=makeCoupon(); Auth.save(); renderAll();
     curZone = curZone || ZONES[5];
-    const t = COUPON_T.find(x=>x.id===c2.t);
+    const t = cpT(c2);
     openSheet(`<div class="big pop">🏆</div><h2 class="h2 wk">今日劇情完成</h2><p class="sub">果友值 +${pts}，劇情寶箱開出「${t.big}」，${cpNote(c2)}。</p><button class="btn main" onclick="closeSheet()">好</button>`, true);
   };
 }
@@ -1862,12 +1859,23 @@ function chMark(){
     <circle cx="${x}" cy="${y}" r="19" fill="#F59A2A" opacity=".3"><animate attributeName="r" values="16;23;16" dur="1.5s" repeatCount="indefinite"/></circle>
     <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${CH[k].i}</text></g>`;
 }
-function chestSvg(){
-  return `<svg class="chest pop" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="112" rx="56" ry="6" fill="#0002"/>
+const CH_PAL = {e:['#A0703C','#7A5228','#BC8A52','#5E3E1E'], d:['#7C8A96','#56626C','#97A5B1','#3E474E'], c:['#B8733A','#8C5426','#CF8C50','#6E3E18'],
+  b:['#AFC4D6','#8AA2B6','#CCDCE8','#F4F8FB'], a:['#E2B23A','#B8892A','#F2CB5B','#FFF1B0'], z:['#4FC3F7','#2B8FC0','#8EDDFB','#FFFFFF']};
+function chestSvg(k){
+  const P2 = CH_PAL[k];
+  if(!P2) return `<svg class="chest pop" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="112" rx="56" ry="6" fill="#0002"/>
     <rect x="22" y="52" width="116" height="56" rx="8" fill="#7A2E52"/><rect x="22" y="52" width="116" height="10" fill="#5B2346"/>
     <path d="M18 52 Q80 4 142 52Z" fill="#9C3A64"/><rect x="72" y="20" width="16" height="88" fill="#E8C33A"/><rect x="18" y="74" width="124" height="12" fill="#E8C33A"/>
     <path d="M80 22 C66 4 46 10 56 24 C62 30 74 26 80 22Z M80 22 C94 4 114 10 104 24 C98 30 86 26 80 22Z" fill="#F2D35B" stroke="#C99A2E" stroke-width="2"/>
     <circle cx="80" cy="24" r="6" fill="#C99A2E"/><g fill="#FFF6C2"><circle cx="34" cy="30" r="3"/><circle cx="130" cy="24" r="2.5"/><circle cx="142" cy="44" r="2"/></g></svg>`;
+  const [body, dark, lid, band] = P2, wood = k==='e', shine = ['b','a','z'].includes(k);
+  return `<svg class="chest pop" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="112" rx="56" ry="6" fill="#0002"/>
+    <rect x="22" y="52" width="116" height="56" rx="8" fill="${body}"/>${wood?`<path d="M26 70h108M26 88h108" stroke="${dark}" stroke-width="2" opacity=".6"/>`:''}
+    <rect x="22" y="52" width="116" height="10" fill="${dark}"/><path d="M18 52 Q80 8 142 52Z" fill="${lid}"/>
+    <rect x="30" y="20" width="12" height="88" fill="${band}" opacity=".9"/><rect x="118" y="20" width="12" height="88" fill="${band}" opacity=".9"/>
+    <rect x="66" y="60" width="28" height="28" rx="6" fill="${band}"/><circle cx="80" cy="72" r="5" fill="${dark}"/><rect x="78" y="74" width="4" height="9" fill="${dark}"/>
+    ${k==='z'?`<path d="M80 6 L94 20 L80 38 L66 20Z" fill="#E1F7FF" stroke="#2B8FC0" stroke-width="2"/><path d="M66 20 H94 M80 6 L74 20 L80 38 L86 20Z" stroke="#2B8FC0" stroke-width="1.2" fill="none"/>`:''}
+    ${shine?`<g fill="#FFFBE6"><path d="M34 22 l2 6 6 2 -6 2 -2 6 -2 -6 -6 -2 6 -2z"/><circle cx="132" cy="26" r="2.5"/><circle cx="144" cy="44" r="2"/></g>`:''}</svg>`;
 }
 
 /* ---------- 粉絲等級：清楚顯示目前等級、差幾分、怎麼賺 ---------- */
@@ -1956,7 +1964,7 @@ function makeCouponRaw(){
 // V6.7：寶箱紀錄（存在玩家資料，保留最近 50 筆，後台可查）
 function logChest(src, r){ if(!P || P.guest) return; P.chestLog = [...(P.chestLog||[]), {t:Date.now(), s:src, r}].slice(-50); }
 function chestOpen(c, pts, back){
-  const t = COUPON_T.find(x=>x.id===c.t);
+  const t = cpT(c);
   logChest(back ? '獎勵寶箱' : `巡園寶箱・${curZone ? curZone.n : ''}`, (t.id==='pts' ? `果友值 ${t.big}` : `${t.big}（${t.sub}）`) + (pts ? `＋果友值 ${pts}` : '')); Auth.save();
   setTimeout(()=>openSheet(`${chestSvg()}<h2 class="h2 wk">寶箱開出 ${t.big}${t.id==='free'?'！':''}</h2>
     <div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
@@ -2078,8 +2086,8 @@ function renderBag(){
   $('#couponList').innerHTML = !list.length
     ? `<div class="empty">還沒有優惠券。<br>到王國地圖巡園，寶箱裡會有折扣、免運，運氣好還有免單。</div>`
     : list.map(c=>{
-        const t = COUPON_T.find(x=>x.id===c.t), d = Math.ceil((c.exp-Date.now())/864e5);
-        const nm = t.id==='free'?'免單券（上限 NT$500）':t.id==='ship'?'冷藏宅配免運':t.id==='half'?'半價券（上限折 NT$600）':t.id==='c200'?'折 200 元（滿 NT$1,000）':t.big+'鮮果券';
+        const t = cpT(c), d = Math.ceil((c.exp-Date.now())/864e5);
+        const nm = t.id==='sp'?`${c.spI||'🎁'} ${t.big}`:t.id==='free'?'免單券（上限 NT$500）':t.id==='ship'?'冷藏宅配免運':t.id==='half'?'半價券（上限折 NT$600）':t.id==='c200'?'折 200 元（滿 NT$1,000）':t.big+'鮮果券';
         return `<div class="coupon" data-cp="${c.id}" role="button" tabindex="0"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
           <div class="cright"><b>${nm}</b>剩 ${d} 天・券號 <b style="display:inline;font-size:13px">${PID}-${c.id}</b><br><span class="cpqr">📱 點這裡出示核銷 QR</span></div></div>`;
       }).join('');
@@ -2088,7 +2096,7 @@ function renderBag(){
 }
 // 結帳出示：每張券有自己的 QR，店家用手機相機掃描就會打開後台核銷頁並自動查詢
 function showCouponQR(cid){
-  const c = MY_COUPONS.find(x=>x.id===cid); if(!c) return; const t = COUPON_T.find(x=>x.id===c.t), code = `${PID}-${cid}`;
+  const c = MY_COUPONS.find(x=>x.id===cid); if(!c) return; const t = cpT(c), code = `${PID}-${cid}`;
   openSheet(`<h2 class="h2 wk" style="margin-top:0">${t.big}・${t.sub}</h2><p class="sub">結帳時請店家用手機相機掃描</p>
     <div class="mqr">${qrSvg(BASE_URL()+'?admin&v='+code)}</div><p class="lvtxt" style="text-align:center">券號 <b style="font-size:18px;letter-spacing:1px">${code}</b><br>每張券只能用一次，核銷後就會消失</p>
     <button class="btn main" onclick="closeSheet()">完成</button>`, true);
@@ -2238,7 +2246,7 @@ const Admin = {
     if(!pid || !cid){ toast('券號格式：會員編號-券號'); return; }
     const c = await DB.get(`players/${pid}/coupons/${cid}`).catch(()=>null);
     if(!c){ $('#cpRes').innerHTML = '<div class="empty">查無此券</div>'; return; }
-    const t = COUPON_T.find(x=>x.id===c.t), exp = c.exp<Date.now();
+    const t = cpT(c), exp = c.exp<Date.now();
     $('#cpRes').innerHTML = `<div class="coupon"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>${esc(c.name||'')} 的券</b>
       ${c.used?'已核銷':exp?'已過期':'可使用'}・到期 ${new Date(c.exp).toLocaleDateString('zh-TW')}</div></div>
       ${!c.used && !exp ? `<button class="btn main" id="btnUse">確認核銷</button>` : ''}`;
@@ -2273,7 +2281,13 @@ const Admin = {
       await DB.del(`zonephotos/${zid}/items/${b.dataset.del}`); const c = await DB.get('config/photos') || {}; c[zid] = Math.max(0,(c[zid]||1)-1); await DB.set('config/photos', c); toast('已刪除'); Admin.photo(); });
   },
   async pool(){
-    const c = await poolCfg(); $('#pE').value=c.e; $('#pD').value=c.d; $('#pC').value=c.c; $('#pB').value=c.b; $('#pA').value=c.a; $('#pZ').value=c.zEvery;
+    const c = await poolCfg();
+    $('#tierRows').innerHTML = ['e','d','c','b','a','z'].map(k=>{ const t = TCFG[k], q = k==='z' ? c.zEvery : c[k];
+      return `<div class="tier-row" data-k="${k}"><div class="tier-h">${chestSvg(k)}<div><b>${CHEST[k].icon} ${CHEST[k].chest}</b><small>${CHEST[k].grade}・${k.toUpperCase()} 級</small></div></div>
+        <div class="grid2"><div><label class="lbl">${k==='z'?'平均幾天出現一個':'每日數量'}</label><input class="field t-q" type="number" inputmode="numeric" value="${q}"></div>
+          <div><label class="lbl">獎品</label><select class="field t-r">${Object.entries(REWARDS).map(([id,r])=>`<option value="${id}" ${t.r===id?'selected':''}>${r.n}</option>`).join('')}</select></div>
+          <div><label class="lbl">獎品名稱（選填）</label><input class="field t-n" maxlength="14" placeholder="${REWARDS[t.r]?REWARDS[t.r].n:''}" value="${esc(t.name||'')}"></div>
+          <div><label class="lbl">副標備註（選填）</label><input class="field t-note" maxlength="30" placeholder="例如：現場送一盒" value="${esc(t.note||'')}"></div></div></div>`; }).join('');
     $('#poolNow').innerHTML = poolTable(await poolToday());
   },
   async weather(){
@@ -2386,7 +2400,13 @@ $('#btnPh').onclick = async()=>{
   btn.disabled = false; btn.textContent = '上傳';
 };
 // V7.4：兩顆按鈕都以畫面上輸入的數字為準；「立即套用」會同時儲存設定並重設今天的獎池
-function poolInputs(){ const n = id=>Math.max(0, Math.min(50, Math.round(+$(id).value||0))); return {e:n('#pE'), d:n('#pD'), c:n('#pC'), b:n('#pB'), a:n('#pA'), zEvery:Math.max(1, Math.round(+$('#pZ').value||3))}; }
+function poolInputs(){
+  const out = {tiers:{}};
+  document.querySelectorAll('#tierRows .tier-row').forEach(r=>{ const k = r.dataset.k, q = Math.round(+r.querySelector('.t-q').value||0);
+    if(k==='z') out.zEvery = Math.max(1, q||3); else out[k] = Math.max(0, Math.min(50, q));
+    out.tiers[k] = {r:r.querySelector('.t-r').value, name:r.querySelector('.t-n').value.trim(), note:r.querySelector('.t-note').value.trim()}; });
+  for(const k of Object.keys(TCFG)) TCFG[k] = {...TCFG[k], ...out.tiers[k]}; ZEVERY = out.zEvery;
+  return out; }
 $('#btnPool').onclick = async()=>{ const c = {...poolInputs(), rev:Date.now()}; await DB.set('config/pool', c); toast('獎池設定已儲存，明天起生效'); $('#poolMsg').textContent = `已儲存（${new Date().toLocaleTimeString('zh-TW')}），明天起生效`; Admin.pool(); };
 $('#btnPoolReset').onclick = async()=>{
   const btn = $('#btnPoolReset'); btn.disabled = true;
@@ -2631,7 +2651,7 @@ function knightBattle(zid){
     function win(){
       over = true; clearInterval(tm); MUSIC.stop(); SND.win();
       P.daily.knightMet = true; P.knightWins = (P.knightWins||0)+1; addGuard('knight'); seen('knight'); const kup = diffAfter('knight', true);
-      const pts = addPts(5), c = makeCoupon(), t = COUPON_T.find(x=>x.id===c.t); save();
+      const pts = addPts(5), c = makeCoupon(), t = cpT(c); save();
       setTimeout(()=>openSheet(`<div class="kn-av">${avatar('knight_m','leather','#5B2346')}</div><h2 class="h2 wk">黑騎士被你感化了！</h2><p class="sub">「謝謝你，守護者。寶箱還給你，我以後會好好幫忙顧溫室。」${z.n}溫室恢復平靜，今天不會再被偷了。${kup?`<br>🔺 ${kup}`:''}</p>
         ${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>黑騎士還回來的寶箱</b>${cpNote(c)}${pts?`<br>果友值 +${pts}`:''}</div></div>
         <button class="btn main" onclick="openZone('${zid}')">進${z.n}溫室巡園</button>`, true), 500);
@@ -2727,7 +2747,7 @@ function famGame(){
     F.intimacy += gain; F.games++; F.best = Math.max(F.best, caught);
     const pts = P.daily.famGames===1 ? addPts(5) : 0;
     let chest = '';
-    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=COUPON_T.find(x=>x.id===c.t); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>親密值每 100 送一個</div></div>`; }
+    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=cpT(c); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>親密值每 100 送一個</div></div>`; }
     Auth.save(); renderAll();
     openSheet(`<div class="big pop">👨‍👩‍👧</div><h2 class="h2 wk">${esc(F.names[0])} 丟、${esc(F.names[1])} 接</h2>
       <p class="sub">丟出 ${thrown} 顆，接到 <b>${caught}</b> 顆，最長連續 ${best} 顆。<br>${counted?`親密值 +${gain}`:'今天前 3 場才計親密值，下一場明天再來'}${pts?`，果友值 +${pts}`:''}</p>${chest}
@@ -2851,7 +2871,7 @@ function famWeed(){
     const wup = total>=[20,26,32][diffOf('weed')] ? diffAfter('weed', true) : '';
     const pts = P.daily.famGames===1 ? addPts(5) : 0;
     let chest='';
-    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=COUPON_T.find(x=>x.id===c.t); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
+    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=cpT(c); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
     Auth.save(); renderAll();
     const win = sc.A===sc.B ? '平手！默契十足' : `${esc(sc.A>sc.B?F.names[0]:F.names[1])} 贏了！`;
     const pulled = WEEDS.map(w=>`${w.n} ${kinds[w.id]||0}`).join('・');
@@ -3547,7 +3567,7 @@ function famWood(){
     F.intimacy += gain; F.games++;
     const pts = P.daily.famGames===1 ? addPts(5) : 0, up = (s[0]+s[1])/2>=[6,8,10][diffOf('wood')]*.7 ? diffAfter('wood', true) : '';
     let chest='';
-    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=COUPON_T.find(x=>x.id===c.t); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
+    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=cpT(c); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
     Auth.save(); renderAll();
     const win = s[0]===s[1] ? '平手！' : `${esc(s[0]>s[1]?F.names[0]:F.names[1])} 贏了！`;
     openSheet(`<div class="big pop">🪵</div><h2 class="h2 wk">${win}</h2><p class="sub">${esc(F.names[0])} ${s[0]} 車・${esc(F.names[1])} ${s[1]} 車（推越多車越厲害）<br>${counted?`一起整理枝條，親密值 +${gain}`:'今天前 3 場才計親密值'}${pts?`，果友值 +${pts}`:''}${up?`<br>🔺 ${up}`:''}</p>${chest}
@@ -3609,7 +3629,7 @@ function famHockey(){
     F.intimacy += gain; F.games++; F.hockBest = Math.max(F.hockBest||0, hits);
     const pts = P.daily.famGames===1 ? addPts(5) : 0, up = hits>=[12,18,24][d] ? diffAfter('hockey', true) : '';
     let chest='';
-    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=COUPON_T.find(x=>x.id===c.t); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
+    if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=cpT(c); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
     Auth.save(); renderAll();
     const win = score.T===score.B ? '平手！' : `${esc(score.T>score.B?F.names[0]:F.names[1])} 贏了！`;
     openSheet(`<div class="big pop">🏒</div><h2 class="h2 wk">${win}</h2><p class="sub">${esc(F.names[0])} ${score.T} : ${score.B} ${esc(F.names[1])}・來回擊球 ${hits} 次<br>${counted?`來回越多親密值越高，親密值 +${gain}`:'今天前 3 場才計親密值'}${pts?`，果友值 +${pts}`:''}${up?`<br>🔺 ${up}`:''}</p>${chest}
@@ -3831,20 +3851,22 @@ function openEmerald(){
     SND.win();
     let k = c.tier, ok = false;
     try{ ok = await claimPrize(k); if(!ok && k!=='e'){ k='e'; ok = await claimPrize('e'); } }catch(e){ ok=false; }
-    const T = TIERS.find(t=>t.k===k);
+    const T = TIERS.find(t=>t.k===k), R = tc(k), noteHtml = R.note ? `<br><span class="lvtxt">${esc(R.note)}</span>` : '';
     let body;
     if(!ok){ const pts = addPts(3,'buy'); body = `<p class="sub">這個獎項剛好被別人先搶走了，送你果友值 +${pts}。</p>`; }
-    else if(k==='e' || k==='d'){ const pts = addPts(k==='e'?10:20,'buy'); body = `<p class="sub">${T.icon} ${k.toUpperCase()} 級寶箱：果友值 +${pts}</p>`; }
-    else { const cp = grantCoupon({c:'ship', b:'c200', a:'half', z:'free'}[k]), t = COUPON_T.find(x=>x.id===cp.t);
-      body = `<p class="sub">${T.icon} ${k.toUpperCase()} 級${c.rare?'珍貴':''}寶箱！</p><div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>${T.n}</b>已放進優惠券（追逐賽獎項不占每週 3 張的名額）</div></div>`; }
-    logChest(`寶箱追逐賽・${c.name}`, !ok ? '被搶走，補償果友值 +3' : (k==='e'||k==='d') ? T.n : `${T.n}（${k.toUpperCase()} 級）`);
+    else if(R.rw.pts){ const pts = addPts(R.rw.pts,'buy'); body = `<p class="sub">${T.icon} <b>${T.chest}</b>：${esc(R.prize)}${R.prize.includes('果友值')?'':`（果友值 +${pts}）`}${noteHtml}</p>`; }
+    else if(R.rw.cp==='sp'){ grantCoupon('sp', {spN:R.prize, spD:R.note||'到農場出示此券兌換', spI:T.icon, days:14});
+      body = `<p class="sub"><b>恭喜抽中 ${esc(R.prize)}！</b></p><div class="coupon" style="text-align:left"><div class="cleft" style="background:#D4A017">${T.icon}<small>${T.chest}</small></div><div class="cright"><b>${esc(R.prize)}</b>${esc(R.note||'到農場出示此券兌換')}<br>有效 14 天，到「優惠券」出示 QR 由農場核銷</div></div>`; }
+    else { const cp = grantCoupon(R.rw.cp), t = cpT(cp);
+      body = `<p class="sub">${T.icon} <b>${T.chest}</b>${c.rare?'（珍貴寶箱）':''}</p><div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>${esc(R.prize)}</b>${R.note?esc(R.note)+'<br>':''}已放進優惠券（追逐賽獎項不占每週 3 張的名額）</div></div>`; }
+    logChest(`寶箱追逐賽・${c.name}`, !ok ? '被搶走，補償果友值 +3' : `${T.chest}・${R.prize}`);
     P.chaseWins = (P.chaseWins||0)+1; Auth.save(); renderAll(); curZone = z6;
     const p = await poolToday();
-    openSheet(`${chestSvg()}<h2 class="h2 wk">${c.rare?'珍貴寶箱':'寶箱'}到手！</h2><p class="lvtxt">在 ${c.name} 區打開</p>${body}
+    openSheet(`${chestSvg(ok ? k : 'e')}<h2 class="h2 wk">${ok ? T.chest : '寶箱'}到手！</h2><p class="lvtxt">在 ${c.name} 區打開</p>${body}
       <details class="card" style="text-align:left"><summary><b>今日獎池剩餘</b></summary>${poolTable(p)}</details>
       <button class="btn main" onclick="closeSheet()">繼續逛溫室</button>`, true);
   }
-  const TCOL = {z:'#E8287A', a:'#9C27B0', b:'#E07A2E', c:'#3E7FC4', d:'#7A2E52', e:'#3E9A3A'};
+  const TCOL = {z:'#2BB3EE', a:'#E2A821', b:'#9DB3C6', c:'#B8733A', d:'#6E7C88', e:'#A0703C'};
   function drawMini(now){
     const w=112, h=196, ch=EM.chase; mx.clearRect(0,0,w,h);
     mx.fillStyle='#7EAE69'; mx.beginPath(); mx.roundRect ? mx.roundRect(2,2,w-4,h-4,12) : mx.rect(2,2,w-4,h-4); mx.fill(); mx.strokeStyle='#EEF9EF'; mx.lineWidth=2; mx.stroke();
@@ -3919,7 +3941,7 @@ function openEmerald(){
         cx.globalAlpha=.22; cx.fillStyle=col; cx.fillRect(p.x-.3*p.s, top?top.y:0, .6*p.s, p.y-(top?top.y:0)); cx.globalAlpha=1;   // 光柱，遠遠也看得到
         const w=Math.max(14,.7*p.s)*(near?1+.08*Math.sin(now/90):1), h=w*.7; cx.fillStyle = col; cx.fillRect(p.x-w/2, p.y-h/2, w, h);
         cx.fillStyle='#E8C33A'; cx.fillRect(p.x-w*.08, p.y-h/2, w*.16, h); cx.fillRect(p.x-w/2, p.y-h*.1, w, h*.2);
-        const lab = `${c.tier.toUpperCase()} ${TIERS.find(x=>x.k===c.tier).n}・${left.toFixed(0)}s`, fs=Math.max(10, Math.min(15, .22*p.s));
+        const lab = `${c.tier.toUpperCase()} ${TIERS.find(x=>x.k===c.tier).chest}・${left.toFixed(0)}s`, fs=Math.max(10, Math.min(15, .22*p.s));
         cx.font=`900 ${fs}px "Noto Sans TC",sans-serif`; cx.textAlign='center'; const tw=cx.measureText(near?'👆 點我打開！':lab).width+12;
         cx.fillStyle = near ? '#2A1F2D' : col; cx.fillRect(p.x-tw/2, p.y-h/2-fs-12, tw, fs+8); cx.fillStyle='#fff'; cx.fillText(near?'👆 點我打開！':lab, p.x, p.y-h/2-10);
         EM.chestHit.push({c, x:p.x, y:p.y, r:Math.max(30,w), near});
@@ -3937,7 +3959,7 @@ function openEmerald(){
       EM.chase.chests.forEach(c=>{ if(c.alive && now>=c.end) c.alive=false; });
       const alive = EM.chase.chests.filter(c=>c.alive);
       $('#emChase').innerHTML = alive.map(c=>{ const left=Math.max(0,(c.end-now)/1000), d=Math.hypot(c.x-EM.px, c.z-EM.pz);
-        return `<div class="chrow"><span class="chtag" style="background:${TCOL[c.tier]}">${c.tier.toUpperCase()}</span><span>${TIERS.find(x=>x.k===c.tier).n}・${c.name}・${d.toFixed(0)}m</span><b>${left.toFixed(1)}s</b></div><div class="bar" style="height:4px;margin:2px 0 4px"><i style="width:${left/c.total*100}%;background:${TCOL[c.tier]}"></i></div>`; }).join('');
+        return `<div class="chrow"><span class="chtag" style="background:${TCOL[c.tier]}">${c.tier.toUpperCase()}</span><span>${TIERS.find(x=>x.k===c.tier).chest}・${c.name}・${d.toFixed(0)}m</span><b>${left.toFixed(1)}s</b></div><div class="bar" style="height:4px;margin:2px 0 4px"><i style="width:${left/c.total*100}%;background:${TCOL[c.tier]}"></i></div>`; }).join('');
       drawMini(now);
       if(!alive.length) endChase(null); }
     EM.raf = requestAnimationFrame(frame);
@@ -3947,18 +3969,21 @@ function openEmerald(){
 
 /* ---------- 寶箱追逐賽：今日獎池（全體玩家共用、數量有限） ---------- */
 const POOL_DEF = {e:20, d:10, c:5, b:3, a:1, zEvery:3};
-const TIERS = [
-  {k:'z', n:'免單券',      icon:'👑', f:.3, note:'平均 3 天才出現一張'},
-  {k:'a', n:'半價券',      icon:'💎', f:.4},
-  {k:'b', n:'折 200 元券', icon:'💰', f:.6},
-  {k:'c', n:'免運券',      icon:'🚚', f:.8},
-  {k:'d', n:'果友值 +20',  icon:'💜', f:1},
-  {k:'e', n:'果友值 +10',  icon:'💚', f:1}
-];
+// V7.6：六種寶箱（木箱→鑽石），每種寶箱的獎品、名稱、副標都可在後台改，獎池欄位不變（不必改 Firebase 規則）
+const CHEST = {e:{chest:'橡木小箱', icon:'🪵', grade:'木箱'}, d:{chest:'鍛鐵寶箱', icon:'⚙️', grade:'鐵箱'}, c:{chest:'青銅寶箱', icon:'🥉', grade:'銅箱'},
+  b:{chest:'月光銀箱', icon:'🥈', grade:'銀箱'}, a:{chest:'黃金寶箱', icon:'🥇', grade:'金箱'}, z:{chest:'星鑽寶盒', icon:'💎', grade:'鑽石'}};
+const REWARDS = {p10:{n:'果友值 +10', pts:10}, p20:{n:'果友值 +20', pts:20}, ship:{n:'免運券', cp:'ship'}, c200:{n:'折 200 元券', cp:'c200'},
+  half:{n:'半價券', cp:'half'}, free:{n:'免單券', cp:'free'}, custom:{n:'自訂獎品（現場兌換）', cp:'sp'}};
+let TCFG = {e:{r:'p10'}, d:{r:'p20'}, c:{r:'ship'}, b:{r:'c200'}, a:{r:'half'}, z:{r:'free'}}, ZEVERY = 3;
+function tc(k){ const t = TCFG[k]||{}, r = REWARDS[t.r] ? t.r : 'p10'; return {r, rw:REWARDS[r], prize:(t.name||'').trim() || REWARDS[r].n, note:(t.note||'').trim()}; }
+const TIERS = ['z','a','b','c','d','e'].map(k=>({k, f:{z:.3,a:.4,b:.6,c:.8,d:1,e:1}[k],
+  get chest(){ return CHEST[k].chest; }, get icon(){ return CHEST[k].icon; }, get n(){ return tc(k).prize; },
+  get note(){ return tc(k).note || (k==='z' ? `平均 ${ZEVERY} 天才出現一個` : ''); }}));
 const RARE_TIERS = ['z','a','b'];
-async function poolCfg(){ let c = {...POOL_DEF}; try{ const x = await DB.get('config/pool'); if(x) c = {...c, ...x}; }catch(e){} return c; }
+async function poolCfg(){ let c = {...POOL_DEF}; try{ const x = await DB.get('config/pool'); if(x) c = {...c, ...x}; }catch(e){}
+  for(const k of Object.keys(TCFG)) TCFG[k] = {...TCFG[k], ...((c.tiers||{})[k]||{})}; ZEVERY = Math.max(1, +c.zEvery||3); return c; }
 async function poolInit(){ const c = await poolCfg(); const z = seedRand('free'+today())() < 1/Math.max(1, c.zEvery||3) ? 1 : 0; return {e:+c.e, d:+c.d, c:+c.c, b:+c.b, a:+c.a, z}; }
-async function poolToday(){ let p = null; try{ p = await DB.get('pool/'+today()); }catch(e){} return p || await poolInit(); }
+async function poolToday(){ let p = null; const init = await poolInit(); try{ p = await DB.get('pool/'+today()); }catch(e){} return p || init; }
 async function claimPrize(k){   // 搶一個獎項（多人同時搶也不會超發）
   const init = await poolInit(), key = 'pool/'+today();
   if(DEMO){ const d = DB._l(); d[key] = d[key] || init; if(d[key][k]>0){ d[key][k]--; DB._s(d); return true; } return false; }
@@ -3967,13 +3992,16 @@ async function claimPrize(k){   // 搶一個獎項（多人同時搶也不會超
 }
 function drawTier(p){ const items = TIERS.map(t=>({k:t.k, w:(p[t.k]||0)*t.f})).filter(x=>x.w>0); const sum = items.reduce((a,b)=>a+b.w,0); if(!sum) return null;
   let x = Math.random()*sum; for(const it of items){ if((x-=it.w)<=0) return it.k; } return items[items.length-1].k; }
-function poolTable(p){ return `<table class="ladder">${TIERS.map(t=>`<tr><td>${t.icon} ${t.k.toUpperCase()}・${t.n}${t.note?`<br><span class="lvtxt">${t.note}</span>`:''}</td><td style="text-align:right;white-space:nowrap">剩 <b>${p[t.k]||0}</b></td></tr>`).join('')}</table>`; }
-function grantCoupon(type){
-  const c = {id:rid(4), t:type, exp:Date.now()+7*864e5, used:false, created:Date.now()};
+function poolTable(p){ return `<table class="ladder">${TIERS.map(t=>`<tr><td>${t.icon} <b>${t.chest}</b>・${esc(t.n)}${t.note?`<br><span class="lvtxt">${esc(t.note)}</span>`:''}</td><td style="text-align:right;white-space:nowrap">剩 <b>${p[t.k]||0}</b></td></tr>`).join('')}</table>`; }
+function grantCoupon(type, extra={}){
+  const {days, ...more} = extra;
+  const c = {id:rid(4), t:type, exp:Date.now()+(days||7)*864e5, used:false, created:Date.now(), ...more};
   MY_COUPONS.push(c);
-  DB.set('players/'+PID+'/coupons/'+c.id, {t:c.t, exp:c.exp, used:false, created:c.created, name:P.name||'', src:'chase'}).catch(()=>toast('優惠券同步失敗，請檢查網路'));
+  DB.set('players/'+PID+'/coupons/'+c.id, {t:c.t, exp:c.exp, used:false, created:c.created, name:P.name||'', src:'chase', ...more}).catch(()=>toast('優惠券同步失敗，請檢查網路'));
   return c;
 }
+// 特別獎券用自己的名稱與說明，其他券照原本類型
+function cpT(c){ return c.t==='sp' ? {id:'sp', big:c.spN||'特別獎', sub:c.spD||'', c:'#D4A017'} : cpT(c); }
 
 /* ---------- 摘果挑戰賽：由下往上、一葉一果依序成熟，紅紫色才採 ---------- */
 const PICK_TASK = {id:'pick', n:'摘果挑戰賽', i:'🧺',
