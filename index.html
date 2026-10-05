@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V7.7</title>
+<title>今天在隱花王國尋寶 V7.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -272,6 +272,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-cmv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fm-cmv.in{animation:cmIn .45s ease}
 @keyframes cmIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
 .chip b{color:var(--rose);margin-left:2px}
+.chest-mini{width:34px;height:26px;vertical-align:middle;margin-right:2px}
 .tier-row{padding:10px 0 12px;border-bottom:1px solid var(--line)}.tier-row:last-child{border-bottom:0}
 .tier-h{display:flex;align-items:center;gap:10px;margin-bottom:2px}.tier-h svg{width:54px;height:40px;flex:none}.tier-h b{display:block;font-size:15px}.tier-h small{color:var(--muted);font-size:12px}
 .sp-box{margin-top:12px;padding:12px;border-radius:14px;border:1.5px dashed #D4A017;background:color-mix(in srgb,#D4A017 7%,var(--card))}.sp-on{display:flex;align-items:center;gap:6px;font-weight:700;margin:4px 0}.fm-dots i{width:6px;height:6px;border-radius:50%;background:var(--line)}.fm-dots i.on{background:var(--fig);width:14px;border-radius:4px}
@@ -861,7 +862,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V7.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V7.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1859,17 +1860,32 @@ function chMark(){
     <circle cx="${x}" cy="${y}" r="19" fill="#F59A2A" opacity=".3"><animate attributeName="r" values="16;23;16" dur="1.5s" repeatCount="indefinite"/></circle>
     <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${CH[k].i}</text></g>`;
 }
-const CH_PAL = {e:['#A0703C','#7A5228','#BC8A52','#5E3E1E'], d:['#7C8A96','#56626C','#97A5B1','#3E474E'], c:['#B8733A','#8C5426','#CF8C50','#6E3E18'],
+const CH_PAL = {e:['#A0703C','#7A5228','#BC8A52','#5E3E1E'], d:['#7C8A96','#56626C','#97A5B1','#3E474E'], c:['#C77A3C','#93501F','#E39A5E','#F0C46A'],
   b:['#AFC4D6','#8AA2B6','#CCDCE8','#F4F8FB'], a:['#E2B23A','#B8892A','#F2CB5B','#FFF1B0'], z:['#4FC3F7','#2B8FC0','#8EDDFB','#FFFFFF']};
-function chestSvg(k){
+// V7.8：追逐賽 3D 畫面裡的寶箱，外觀跟著等級（木、鐵、銅、銀、金、鑽石）
+function drawChest3D(cx, x, y, w, k, now){
+  const [body, dark, lid, band] = CH_PAL[k] || CH_PAL.e, h = w*.62, x0 = x-w/2, y0 = y-h/2+w*.08;
+  cx.fillStyle='rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(x, y0+h+2, w*.52, w*.08, 0, 0, Math.PI*2); cx.fill();
+  cx.fillStyle = body; cx.fillRect(x0, y0, w, h);
+  if(k==='e'){ cx.strokeStyle = dark; cx.globalAlpha=.55; cx.lineWidth = Math.max(1, w*.025); cx.beginPath(); cx.moveTo(x0, y0+h*.4); cx.lineTo(x0+w, y0+h*.4); cx.moveTo(x0, y0+h*.72); cx.lineTo(x0+w, y0+h*.72); cx.stroke(); cx.globalAlpha=1; }
+  cx.fillStyle = lid; cx.beginPath(); cx.moveTo(x0-w*.03, y0); cx.quadraticCurveTo(x, y0-h*.75, x0+w*1.03, y0); cx.closePath(); cx.fill();
+  cx.fillStyle = dark; cx.fillRect(x0, y0, w, h*.14);
+  cx.fillStyle = band; cx.fillRect(x0+w*.12, y0-h*.38, w*.1, h*1.38); cx.fillRect(x0+w*.78, y0-h*.38, w*.1, h*1.38);
+  cx.fillRect(x-w*.12, y0+h*.18, w*.24, h*.38); cx.fillStyle = dark; cx.beginPath(); cx.arc(x, y0+h*.32, w*.04, 0, Math.PI*2); cx.fill();
+  if(k==='z'){ const g = w*.16, gy = y0-h*.62; cx.fillStyle='#E1F7FF'; cx.strokeStyle='#2B8FC0'; cx.lineWidth=Math.max(1,w*.02);
+    cx.beginPath(); cx.moveTo(x, gy-g); cx.lineTo(x+g, gy); cx.lineTo(x, gy+g*1.2); cx.lineTo(x-g, gy); cx.closePath(); cx.fill(); cx.stroke(); }
+  if(['b','a','z'].includes(k)){ const tw = (Math.sin(now/220)+1)/2; cx.fillStyle = `rgba(255,251,230,${.4+.6*tw})`;
+    [[-.42,-.5,.06],[.46,-.3,.045],[.3,.55,.035]].forEach(([dx,dy,r])=>{ cx.beginPath(); cx.arc(x+dx*w, y0+dy*h, r*w*(.6+.4*tw), 0, Math.PI*2); cx.fill(); }); }
+}
+function chestSvg(k, mini){
   const P2 = CH_PAL[k];
-  if(!P2) return `<svg class="chest pop" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="112" rx="56" ry="6" fill="#0002"/>
+  if(!P2) return `<svg class="${mini?'chest-mini':'chest pop'}" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="112" rx="56" ry="6" fill="#0002"/>
     <rect x="22" y="52" width="116" height="56" rx="8" fill="#7A2E52"/><rect x="22" y="52" width="116" height="10" fill="#5B2346"/>
     <path d="M18 52 Q80 4 142 52Z" fill="#9C3A64"/><rect x="72" y="20" width="16" height="88" fill="#E8C33A"/><rect x="18" y="74" width="124" height="12" fill="#E8C33A"/>
     <path d="M80 22 C66 4 46 10 56 24 C62 30 74 26 80 22Z M80 22 C94 4 114 10 104 24 C98 30 86 26 80 22Z" fill="#F2D35B" stroke="#C99A2E" stroke-width="2"/>
     <circle cx="80" cy="24" r="6" fill="#C99A2E"/><g fill="#FFF6C2"><circle cx="34" cy="30" r="3"/><circle cx="130" cy="24" r="2.5"/><circle cx="142" cy="44" r="2"/></g></svg>`;
   const [body, dark, lid, band] = P2, wood = k==='e', shine = ['b','a','z'].includes(k);
-  return `<svg class="chest pop" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="112" rx="56" ry="6" fill="#0002"/>
+  return `<svg class="${mini?'chest-mini':'chest pop'}" viewBox="0 0 160 120" aria-hidden="true"><ellipse cx="80" cy="112" rx="56" ry="6" fill="#0002"/>
     <rect x="22" y="52" width="116" height="56" rx="8" fill="${body}"/>${wood?`<path d="M26 70h108M26 88h108" stroke="${dark}" stroke-width="2" opacity=".6"/>`:''}
     <rect x="22" y="52" width="116" height="10" fill="${dark}"/><path d="M18 52 Q80 8 142 52Z" fill="${lid}"/>
     <rect x="30" y="20" width="12" height="88" fill="${band}" opacity=".9"/><rect x="118" y="20" width="12" height="88" fill="${band}" opacity=".9"/>
@@ -3939,11 +3955,10 @@ function openEmerald(){
       } else if(it.k==='chest'){
         const c=it.c, p=pj(it.x,.35,it.z), top=pj(it.x,6,it.z); if(!p) continue; const col=TCOL[c.tier], left=Math.max(0,(c.end-now)/1000), near=Math.hypot(c.x-EM.px,c.z-EM.pz)<4.5;
         cx.globalAlpha=.22; cx.fillStyle=col; cx.fillRect(p.x-.3*p.s, top?top.y:0, .6*p.s, p.y-(top?top.y:0)); cx.globalAlpha=1;   // 光柱，遠遠也看得到
-        const w=Math.max(14,.7*p.s)*(near?1+.08*Math.sin(now/90):1), h=w*.7; cx.fillStyle = col; cx.fillRect(p.x-w/2, p.y-h/2, w, h);
-        cx.fillStyle='#E8C33A'; cx.fillRect(p.x-w*.08, p.y-h/2, w*.16, h); cx.fillRect(p.x-w/2, p.y-h*.1, w, h*.2);
+        const w=Math.max(16,.75*p.s)*(near?1+.08*Math.sin(now/90):1), h=w*.7; drawChest3D(cx, p.x, p.y, w, c.tier, now);
         const lab = `${c.tier.toUpperCase()} ${TIERS.find(x=>x.k===c.tier).chest}・${left.toFixed(0)}s`, fs=Math.max(10, Math.min(15, .22*p.s));
         cx.font=`900 ${fs}px "Noto Sans TC",sans-serif`; cx.textAlign='center'; const tw=cx.measureText(near?'👆 點我打開！':lab).width+12;
-        cx.fillStyle = near ? '#2A1F2D' : col; cx.fillRect(p.x-tw/2, p.y-h/2-fs-12, tw, fs+8); cx.fillStyle='#fff'; cx.fillText(near?'👆 點我打開！':lab, p.x, p.y-h/2-10);
+        const ly = p.y-h/2-w*.5; cx.fillStyle = near ? '#2A1F2D' : (CH_PAL[c.tier]||[col,col])[1]; cx.fillRect(p.x-tw/2, ly-fs-12, tw, fs+8); cx.fillStyle='#fff'; cx.fillText(near?'👆 點我打開！':lab, p.x, ly-10);
         EM.chestHit.push({c, x:p.x, y:p.y, r:Math.max(30,w), near});
       }
     }
@@ -3992,7 +4007,7 @@ async function claimPrize(k){   // 搶一個獎項（多人同時搶也不會超
 }
 function drawTier(p){ const items = TIERS.map(t=>({k:t.k, w:(p[t.k]||0)*t.f})).filter(x=>x.w>0); const sum = items.reduce((a,b)=>a+b.w,0); if(!sum) return null;
   let x = Math.random()*sum; for(const it of items){ if((x-=it.w)<=0) return it.k; } return items[items.length-1].k; }
-function poolTable(p){ return `<table class="ladder">${TIERS.map(t=>`<tr><td>${t.icon} <b>${t.chest}</b>・${esc(t.n)}${t.note?`<br><span class="lvtxt">${esc(t.note)}</span>`:''}</td><td style="text-align:right;white-space:nowrap">剩 <b>${p[t.k]||0}</b></td></tr>`).join('')}</table>`; }
+function poolTable(p){ return `<table class="ladder">${TIERS.map(t=>`<tr><td>${chestSvg(t.k, true)} <b>${t.chest}</b>・${esc(t.n)}${t.note?`<br><span class="lvtxt">${esc(t.note)}</span>`:''}</td><td style="text-align:right;white-space:nowrap">剩 <b>${p[t.k]||0}</b></td></tr>`).join('')}</table>`; }
 function grantCoupon(type, extra={}){
   const {days, ...more} = extra;
   const c = {id:rid(4), t:type, exp:Date.now()+(days||7)*864e5, used:false, created:Date.now(), ...more};
