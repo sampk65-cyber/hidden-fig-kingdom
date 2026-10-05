@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.2</title>
+<title>今天在隱花王國尋寶 V9.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -868,7 +868,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.3';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1901,8 +1901,11 @@ function renderStory(){
 }
 /* ---------- 黑騎士：每天佔領一座溫室，趕走他才能搶回寶箱 ---------- */
 function knightZone(){ if(!P.daily.knightZone) P.daily.knightZone = ZONES[Math.floor(seedRand('kn'+today())()*ZONES.length)].id; return P.daily.knightZone; }
-function kzName(){ return ZONES.find(z=>z.id===knightZone()).n; }
-function chZone(){ const pool = ZONES.filter(z=>!z.emerald && z.id!==knightZone()); return pool[Math.floor(seedRand('ch'+today())()*pool.length)].id; }
+function kzName(){ return zName(ZONES.find(z=>z.id===knightZone())); }
+// V9.3：挑戰每 3 小時換一次地點；每挑戰一次（不論成敗）也換到下一座溫室
+function chSlot(){ return Math.floor(new Date().getHours()/3); }
+function chZone(){ const pool = ZONES.filter(z=>!z.emerald && z.id!==knightZone()), base = Math.floor(seedRand('ch'+today())()*pool.length);
+  return pool[(base + chSlot() + ((P && P.daily && P.daily.chTry)||0)) % pool.length].id; }
 function czName(){ return zName(ZONES.find(z=>z.id===chZone())); }
 function chMark(){
   const k = pendingCh()[0]; if(!k) return '';
@@ -2573,7 +2576,14 @@ const CH = {
   rust:    {i:'🍂', n:'銹病', when:w=>(w.pests||[]).includes('rust'),     hint:'葉面出現黃褐色斑點', tip:'摘掉病葉、保持通風，銹病就不容易擴散。'},
   myna:    {i:MYNA_SVG, n:'八哥入侵', when:w=>(w.pests||[]).includes('myna'), hint:'八哥從破洞飛進溫室偷吃熟果', tip:'八哥會啄熟果。防鳥網要定期巡，發現破洞馬上補；趕鳥用聲音和引導，不傷害牠們。'}
 };
-function activeCh(){ const pr=['rain','wind','heat','whitefly','myna','drought','rust']; return Object.keys(CH).filter(k=>CH[k].when(WX)).sort((a,b)=>pr.indexOf(a)-pr.indexOf(b)).slice(0,1); }   // 一天最多一個天氣事件
+// V9.3：天氣觸發的挑戰優先；處理完或沒有天氣事件時，各種挑戰依時段輪流出現（每 3 小時換一種）
+function activeCh(){
+  const pr = ['rain','wind','heat','whitefly','myna','drought','rust'].filter(k=>CH[k]);
+  const w = pr.filter(k=>CH[k].when(WX)).find(k=>!chDone(k)); if(w) return [w];
+  const D = Math.floor(Date.parse(today())/864e5), start = (D*8 + chSlot()) % pr.length;
+  for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!chDone(k)) return [k]; }
+  return [pr[start]];
+}
 function chDone(k){ return P.daily && P.daily.ch && P.daily.ch[k]==='ok'; }
 function pendingCh(){ return activeCh().filter(k=>!chDone(k)); }
 // 越熱果越多；雨和風讓果子變少（沒處理的挑戰不扣分，隔天自動換）
@@ -3512,6 +3522,7 @@ function finishChallenge(k, ok){
   if(PRACTICE) return practiceEnd(k, ok);
   const c = CH[k]; P.daily.ch = P.daily.ch || {};
   let msg;
+  P.daily.chTry = (P.daily.chTry||0)+1;
   if(ok){ P.daily.ch[k]='ok'; P.chStreak=(P.chStreak||0)+1; addGuard(['whitefly','rust','myna'].includes(k)?'pest':'disaster'); seen(k);
     const pts=addPts(6); msg=`果友值 +${pts}，果況恢復。連續成功 ${P.chStreak} 次，開到好券的機會提高。`; const up = diffAfter(k, true); if(up) msg += `<br>🔺 ${up}`; }
   else { P.chStreak=0; msg='差一點！可以再試一次。'; }
