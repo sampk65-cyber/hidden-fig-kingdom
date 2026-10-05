@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V8.0</title>
+<title>今天在隱花王國尋寶 V8.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -272,6 +272,9 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-cmv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fm-cmv.in{animation:cmIn .45s ease}
 @keyframes cmIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
 .chip b{color:var(--rose);margin-left:2px}
+.cd-wrap{overflow-x:auto;margin-top:4px}.cd-tb th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:4px 6px}.cd-tb td{font-size:13px;vertical-align:top;padding:6px}
+.cd-id{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:3px 8px;font:inherit;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap;color:var(--ink)}.cd-id span{color:var(--muted);font-weight:400}
+.cd-nm{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}
 .pts-got{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px;border-radius:16px;background:color-mix(in srgb,#6E9E3E 12%,var(--card));margin:6px 0}.pts-got b{font-size:30px;color:#4E7E2E}.pts-got span{font-size:13px;color:var(--muted)}
 .chest-mini{width:34px;height:26px;vertical-align:middle;margin-right:2px}
 .tier-row{padding:10px 0 12px;border-bottom:1px solid var(--line)}.tier-row:last-child{border-bottom:0}
@@ -863,7 +866,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V8.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V8.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2261,8 +2264,8 @@ const Admin = {
     $('#batchList').innerHTML = !bs.length ? '<div class="empty">還沒有批次，先到「印 QR」產生。</div>' : bs.map(b=>`
       <div class="card"><b>${esc(b.product)}</b><div class="lvtxt">${esc(b.zone)}・${fmtDate(b.harvest)}採收・${b.qty} 張・每盒 ${b.pts} 分・${b.id}</div>
       <div class="lvtxt" id="use-${b.id}"></div>
-      <div class="seg" style="margin:8px 0 0"><button class="chip" data-use="${b.id}">兌換狀況</button><button class="chip" data-rp="${b.id}" data-all="0">重印未使用</button><button class="chip" data-rp="${b.id}" data-all="1">全部重印</button></div></div>`).join('');
-    $('#batchList').querySelectorAll('[data-use]').forEach(x=>x.onclick=async()=>{ const cs=await DB.list('codes','batch',x.dataset.use); $('#use-'+x.dataset.use).textContent=`已兌換 ${cs.filter(c=>c.used).length} / ${cs.length}`; });
+      <div class="seg" style="margin:8px 0 0"><button class="chip" data-use="${b.id}">📋 QR 使用明細</button><button class="chip" data-rp="${b.id}" data-all="0">重印未使用</button><button class="chip" data-rp="${b.id}" data-all="1">全部重印</button></div></div>`).join('');
+    $('#batchList').querySelectorAll('[data-use]').forEach(x=>x.onclick=()=>Admin.codeTable(x.dataset.use, bs.find(y=>y.id===x.dataset.use)));
     $('#batchList').querySelectorAll('[data-rp]').forEach(x=>x.onclick=async()=>{
       const b = bs.find(y=>y.id===x.dataset.rp); let cs = await DB.list('codes','batch',b.id);
       if(x.dataset.all==='0') cs = cs.filter(c=>!c.used);
@@ -2270,6 +2273,34 @@ const Admin = {
       printLabels(cs.map(c=>({id:c.id, product:c.product, zone:c.zone, harvest:c.harvest})), $('#rpLayout').value || b.layout);
     });
     $('#rpLayout').innerHTML = `<option value="">用原本的版型</option>`+Object.entries(LAYOUTS).map(([k,l])=>`<option value="${k}">${l.n}</option>`).join('');
+  },
+  // V8.1：批次 QR 使用明細：QR 碼（可複製）、是否已使用、對應暱稱
+  async codeTable(bid, b){
+    const box = $('#use-'+bid); if(box.dataset.open==='1'){ box.innerHTML = ''; box.dataset.open = '0'; return; }
+    box.dataset.open = '1'; box.innerHTML = '<p class="lvtxt">讀取中…</p>';
+    const cs = (await DB.list('codes','batch',bid)).sort((a,c)=>(c.used?1:0)-(a.used?1:0) || (c.usedAt||0)-(a.usedAt||0) || a.id.localeCompare(c.id));
+    const pids = [...new Set(cs.filter(c=>c.usedPid).map(c=>c.usedPid))], names = {};
+    await Promise.all(pids.map(async pid=>{ const ps = (Admin.ps||[]).find(x=>x.id===pid); if(ps){ names[pid] = ps.name||''; return; }
+      try{ const p = await DB.get('players/'+pid); names[pid] = p ? (p.name||'（未取名）') : '（帳號不存在）'; }catch(e){ names[pid] = '—'; } }));
+    const used = cs.filter(c=>c.used).length; let f = 'all';
+    const tm = t=>t ? new Date(t).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'}) : '';
+    const draw = ()=>{
+      const list = cs.filter(c=> f==='all' || (f==='used' ? c.used : !c.used));
+      box.innerHTML = `<div class="cd-head"><b>已使用 ${used} / ${cs.length}</b>
+          <div class="seg" style="margin:6px 0"><button class="chip ${f==='all'?'sel':''}" data-f="all">全部</button><button class="chip ${f==='used'?'sel':''}" data-f="used">已使用</button><button class="chip ${f==='unused'?'sel':''}" data-f="unused">未使用</button></div>
+          <div class="seg" style="margin:0 0 6px"><button class="chip" data-cpall="1">複製這些 QR 碼</button><button class="chip" data-csv="1">下載 CSV</button></div></div>
+        <div class="cd-wrap"><table class="ladder cd-tb"><tr><th>QR 碼</th><th>已使用</th><th>對應暱稱</th></tr>${list.map(c=>`<tr>
+          <td><button class="cd-id" data-copy="${c.id}" title="點一下複製">${c.id} <span>⧉</span></button></td>
+          <td>${c.used ? `✅ <small>${tm(c.usedAt)}</small>` : '<span class="lvtxt">未使用</span>'}</td>
+          <td>${c.usedPid ? `<button class="cd-nm" data-pl="${c.usedPid}">${esc(names[c.usedPid]||'')}</button><br><small class="lvtxt">${c.usedPid}</small>` : '—'}</td></tr>`).join('') || '<tr><td colspan="3">沒有符合的 QR</td></tr>'}</table></div>`;
+      box.querySelectorAll('[data-f]').forEach(x=>x.onclick=()=>{ f = x.dataset.f; draw(); });
+      box.querySelectorAll('[data-copy]').forEach(x=>x.onclick=()=>copyText(x.dataset.copy, `已複製 ${x.dataset.copy}`));
+      box.querySelector('[data-cpall]').onclick = ()=>copyText(list.map(c=>c.id).join('\n'), `已複製 ${list.length} 個 QR 碼`);
+      box.querySelector('[data-csv]').onclick = ()=>{ const rows = [['QR 碼','已使用','使用時間','對應暱稱','會員編號'], ...cs.map(c=>[c.id, c.used?'是':'否', tm(c.usedAt), c.usedPid?(names[c.usedPid]||''):'', c.usedPid||''])];
+        saveBlob(new Blob(['\ufeff'+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'}), `QR使用明細_${(b&&b.product)||''}_${bid}.csv`); };
+      box.querySelectorAll('[data-pl]').forEach(x=>x.onclick=async()=>{ if(!Admin.ps) Admin.ps = await DB.list('players'); Admin.player(x.dataset.pl); });
+    };
+    draw();
   },
   async findCoupon(){
     const v = $('#cpIn').value.trim().toUpperCase(), [pid, cid] = v.split('-');
@@ -4327,6 +4358,11 @@ function compressImage(file, maxSide, q){
 
 /* ---------- V6.8：會員卡圖片、資料備份、從相簿或備份檔登入（每個帳號唯一一張登入 QR） ---------- */
 function cardLink(){ return `${SITE_URL}?r=${PID}.${P.rtok}`; }
+async function copyText(t, msg){
+  try{ await navigator.clipboard.writeText(t); }
+  catch(e){ const a = document.createElement('textarea'); a.value = t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); try{ document.execCommand('copy'); }catch(_){} a.remove(); }
+  toast(msg || '已複製');
+}
 function saveBlob(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
 function stampDone(kind){ if(kind==='card') P.cardSaved = true; else { P.cardSaved = true; P.bkAt = Date.now(); } Auth.save(); if($('#home').classList.contains('on')) renderMe(); }
 async function downloadCard(){
