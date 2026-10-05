@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.5</title>
+<title>今天在隱花王國尋寶 V9.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -193,6 +193,8 @@ nav button.on{color:var(--fig);font-weight:700}
 .car-info{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px;text-align:left}.car-info small{display:block;color:var(--muted);font-size:12px}
 .like-btn{border:1.5px solid var(--line);background:var(--card);border-radius:99px;padding:6px 14px;font-weight:700;white-space:nowrap}.like-btn.on{background:#FCE4EC;border-color:#E8287A;color:#B0195A}.ph-ring{transform-box:fill-box;transform-origin:center;animation:phG 1.3s ease-in-out infinite}
 @keyframes phG{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.45);opacity:.25}}
+.pill-row{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}.pill-row .visit-pill{margin:0}
+.rank-pill{cursor:pointer;font:inherit}
 .visit-pill{display:table;margin:0 0 8px auto;background:var(--card);border:1.5px solid var(--gold);border-radius:99px;padding:5px 14px;font-size:13px;font-weight:700;color:var(--ink)}
 #lvCard{position:relative}.lv-ver{position:absolute;top:10px;right:16px;font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.04em}
 .dx.gev small.gv{display:block;font-size:11px;color:var(--muted);margin-top:2px}.dx.gev small.gv i{font-style:normal;color:#fff;border-radius:6px;padding:0 5px;margin-right:2px}
@@ -609,7 +611,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <div class="card lvcard" id="lvCard"></div>
     <div id="wxBox"></div>
     <div class="card hide" id="poolNews"></div>
-    <div class="visit-pill hide" id="visitPill"></div>
+    <div class="pill-row"><button class="visit-pill rank-pill" id="rankPill">🏆 守護者積分前 10 名</button><div class="visit-pill hide" id="visitPill"></div></div>
     <div class="mapwrap" id="mapSvg"></div>
     <div class="today">
       <div>今日果友值<b id="tdPts">0/80</b></div>
@@ -873,7 +875,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1469,7 +1471,7 @@ const Auth = {
   save(){ if(!PID || saveTimer) return; saveTimer = setTimeout(()=>{ saveTimer=null; Auth.flush(); }, 8000); },   // 最多 8 秒存一次，省 Firebase 寫入
   async flush(){ clearTimeout(saveTimer); saveTimer=null; if(!PID || !P) return;
     if(!saveSafe()){ console.warn('存檔保護：偵測到資料異常，這次不寫入雲端', {points:P.points, boxes:P.boxes, base:LOADED}); return; }
-    try{ await DB.update('players/'+PID, playerPayload()); LOADED = {points:P.points, boxes:P.boxes||0}; }catch(e){ console.error(e); toast('同步失敗，請檢查網路'); } }
+    try{ await DB.update('players/'+PID, playerPayload()); LOADED = {points:P.points, boxes:P.boxes||0}; postRank(); }catch(e){ console.error(e); toast('同步失敗，請檢查網路'); } }
 };
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') Auth.flush(); });
 addEventListener('pagehide', ()=>Auth.flush());
@@ -1481,6 +1483,24 @@ function saveSafe(){
   if(P.boxes!=null && (typeof P.boxes!=='number' || !isFinite(P.boxes))) return false;
   if(LOADED && (P.points < LOADED.points || (P.boxes||0) < LOADED.boxes)) return false;
   return true;
+}
+// V9.6：前台守護者積分排行（只公開暱稱與積分）
+let RANK_SENT = null;
+function postRank(){
+  if(DEMO || !PID || !P || P.guest || !P.role || RANK_SENT===P.points+'|'+P.name) return;
+  RANK_SENT = P.points+'|'+P.name;
+  DB.set('ranks/'+PID, {pid:PID, name:(P.name||'王國居民').slice(0,20), points:Math.round(P.points||0), t:Date.now()}).catch(e=>{ RANK_SENT = null; console.warn('積分排行上傳失敗', e); });
+}
+async function openPointsRank(){
+  openSheet(`<div class="big">🏆</div><h2 class="h2 wk">守護者積分前 10 名</h2><div id="prBox"><p class="sub">讀取中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
+  postRank(); let rows = [];
+  try{
+    if(DEMO) rows = (await DB.list('ranks')).sort((a,b)=>b.points-a.points).slice(0,10);
+    else { const q = fb.fs.query(fb.fs.collection(fb.F, 'ranks'), fb.fs.orderBy('points','desc'), fb.fs.limit(10)); rows = (await fb.fs.getDocs(q)).docs.map(d=>({id:d.id, ...d.data()})); }
+  }catch(e){ console.warn(e); }
+  const box = $('#prBox'); if(!box) return; const md = ['🥇','🥈','🥉'];
+  box.innerHTML = rows.length ? `<table class="ladder">${rows.map((r,i)=>`<tr class="${r.pid===PID?'rk-me':''}"><td>${md[i]||(i+1)+'.'} ${LEVELS[lvIndex(r.points||0)].icon} ${esc(r.name||'')}</td><td><b>${r.points}</b> 分</td></tr>`).join('')}</table>
+    ${rows.some(r=>r.pid===PID) ? '' : `<p class="lvtxt">你目前 ${P.points||0} 分，繼續加油擠進前 10 名！</p>`}` : '<p class="sub">排行榜準備中，玩家登入後就會出現。</p>';
 }
 function newPlayer(uid){
   return {uids:[uid], rtok:rid(16), name:'', role:null, mat:'linen', color:COLORS[3], points:0, leaves:0,
@@ -1683,7 +1703,7 @@ function stamina(){ return BASE_STAMINA + (roleBase(P.role)==='bunny' ? 1 : 0) +
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
 function startHome(){
   P.route = P.route || 'active';
-  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard(); ensureNameClaim(); if(!newDay) setTimeout(newPhotoToast, 1500); setTimeout(checkMessages, 2200);
+  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard(); ensureNameClaim(); setTimeout(postRank, 3000); if(!newDay) setTimeout(newPhotoToast, 1500); setTimeout(checkMessages, 2200);
   if(newDay){
     const got = addPts(2); Auth.save(); renderHud();
     openSheet(`<div class="big pop">🌅</div><h2 class="h2 wk">早安，${esc(P.name)}</h2>
@@ -2222,6 +2242,7 @@ function renderMe(){
 }
 $('#btnEdit').onclick = ()=>openCreate();
 $('#btnCardDl').onclick = ()=>downloadCard();
+$('#rankPill').onclick = ()=>openPointsRank();
 // V9.5：登入狀態直接兌換果盒（不用另外開網址），並增加家庭親密值
 $('#btnRd').onclick = ()=>{ const v = ($('#rdIn').value||'').trim().toUpperCase().replace(/[^0-9A-Z]/g,''); if(v.length<8){ toast('請輸入 QR 下方的 10 碼'); return; } $('#rdIn').value=''; redeem(v); };
 $('#rdImg').onchange = async e=>{ const f = e.target.files[0]; e.target.value=''; if(!f) return; toast('讀取 QR 中…');
