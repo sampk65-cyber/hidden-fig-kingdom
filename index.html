@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.7</title>
+<title>今天在隱花王國尋寶 V9.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -200,6 +200,8 @@ nav button.on{color:var(--fig);font-weight:700}
 .dx.gev small.gv{display:block;font-size:11px;color:var(--muted);margin-top:2px}.dx.gev small.gv i{font-style:normal;color:#fff;border-radius:6px;padding:0 5px;margin-right:2px}
 .chlog td{font-size:12px;vertical-align:top}.chlog tr.pl-row,.ladder tr.pl-row{cursor:pointer}.pl-all{display:flex;flex-wrap:wrap;gap:6px}
 .msg.n{border-left:4px solid var(--gold)}.msg.m{border-left:4px solid var(--rose)}
+.pw-form{margin:14px 0 8px;padding-top:12px;border-top:1px dashed var(--line)}.pw-form .field{margin:6px 0}
+.pw-show{margin-top:10px;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--fig) 6%,var(--card));text-align:left}.pw-show>div:first-child,.pw-show>div:nth-child(2){display:flex;justify-content:space-between;gap:8px;padding:2px 0}.pw-show small{color:var(--muted)}.pw-show b{font-family:ui-monospace,Menlo,monospace;letter-spacing:.06em;word-break:break-all}
 label.btn{display:block;text-align:center;cursor:pointer;box-sizing:border-box}
 .copy{text-align:center;font-size:11px;color:var(--muted);letter-spacing:.04em;margin:14px 0 6px}
 .fert-bk.on{animation:none;outline:2px solid var(--leaf)}
@@ -556,6 +558,12 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <input id="codeIn" class="field" maxlength="12" placeholder="例如 K7QX2MPA9D" autocapitalize="characters" autocomplete="off" spellcheck="false">
     <button id="btnCode" class="btn main">兌換進入</button>
     <p class="hint">換了手機？用相機掃描你保存的「我的會員卡」，或用下面兩種方式找回帳號。</p>
+    <form id="pwForm" class="pw-form" autocomplete="on">
+      <div class="lbl">已有帳號？用會員編號＋會員密碼登入</div>
+      <input id="pwId" name="username" class="field" autocomplete="username" autocapitalize="characters" spellcheck="false" placeholder="會員編號，例如 WTGS7VRZ" maxlength="10">
+      <input id="pwKey" name="password" type="password" class="field" autocomplete="current-password" autocapitalize="characters" spellcheck="false" placeholder="會員密碼（16 碼）" maxlength="24">
+      <button class="btn main" type="submit">登入我的帳號</button>
+    </form>
     <label class="btn ghost" for="cardImg">📷 從相簿選會員卡圖片</label><input id="cardImg" type="file" accept="image/*" class="hide">
     <label class="btn ghost" for="bkFile">📂 用備份檔登入</label><input id="bkFile" type="file" accept=".json,application/json" class="hide">
   </div>
@@ -705,6 +713,9 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <p class="sub" style="margin:4px 0 8px">這張 QR 是你帳號<b>唯一</b>的登入鑰匙。換手機時用相機掃描，或在登入頁「從相簿選會員卡圖片」，就能找回角色、果友值和優惠券。請不要給別人。</p>
       <div id="memberQR" class="mqr"></div>
       <p class="lvtxt" id="memberNo" style="text-align:center"></p>
+      <div class="pw-show"><div><small>會員編號</small><b id="pwShowId"></b></div><div><small>會員密碼</small><b id="pwShowKey">••••••••••••••••</b></div>
+        <div class="seg" style="margin:6px 0 0"><button class="chip" id="btnPwEye">👁 顯示</button><button class="chip" id="btnPwCopy">複製編號＋密碼</button></div>
+        <p class="lvtxt" style="margin:6px 0 0">換手機、iPhone 加到主畫面、清除瀏覽器資料後，用這組編號＋密碼就能回到同一個帳號。可存進手機的密碼管理（iPhone 鑰匙圈）。</p></div>
       <button id="btnCardDl" class="btn main">📥 下載會員卡圖片</button>
       <button id="btnBkDl" class="btn ghost">💾 下載我的資料（選用）</button>
       <p class="lvtxt" id="bkLast" style="text-align:center"></p>
@@ -875,7 +886,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2241,11 +2252,21 @@ function renderMe(){
   $('#ladder').innerHTML = LEVELS.map((L,k)=>`<tr class="${k===lv?'cur':''}"><td style="white-space:nowrap">${L.icon} <b>${L.n}</b><br><span class="lvtxt">${L.min.toLocaleString()} 分起</span></td><td>${L.perk}</td></tr>`).join('');
   $('#memberQR').innerHTML = qrSvg(`${BASE_URL()}?r=${PID}.${P.rtok}`);
   $('#memberNo').textContent = '會員編號 '+PID+'・已兌換 '+(P.boxes||0)+' 盒';
+  $('#pwShowId').textContent = PID; $('#pwShowKey').textContent = '••••••••••••••••'; $('#btnPwEye').textContent = '👁 顯示';
   $('#bkLast').textContent = P.bkAt ? `上次備份：${new Date(P.bkAt).toLocaleDateString('zh-TW')}` : '還沒有下載過備份';
   $('#testCard').classList.toggle('hide', !TEST_TOOLS);
 }
 $('#btnEdit').onclick = ()=>openCreate();
 $('#btnCardDl').onclick = ()=>downloadCard();
+// V9.8：會員編號＋會員密碼（＝會員卡金鑰）登入，iPhone 可存進鑰匙圈自動填入
+$('#btnPwEye').onclick = ()=>{ const k = $('#pwShowKey'), on = k.textContent.includes('•'); k.textContent = on ? (P.rtok||'') : '••••••••••••••••'; $('#btnPwEye').textContent = on ? '🙈 隱藏' : '👁 顯示'; };
+$('#btnPwCopy').onclick = ()=>copyText(`隱花王國 會員編號：${PID}　會員密碼：${P.rtok}`, '已複製，請存在安全的地方');
+$('#pwForm').onsubmit = async e=>{
+  e.preventDefault();
+  const id = ($('#pwId').value||'').toUpperCase().replace(/[^0-9A-Z]/g,''), key = ($('#pwKey').value||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
+  if(id.length<6 || key.length<12){ toast('請輸入會員編號和 16 碼會員密碼'); return; }
+  try{ await Login.anon(); await recover(id+'.'+key); }catch(err){ console.error(err); toast('登入失敗，請檢查網路'); }
+};
 $('#rankPill').onclick = ()=>openPointsRank();
 // V9.5：登入狀態直接兌換果盒（不用另外開網址），並增加家庭親密值
 $('#btnRd').onclick = ()=>{ const v = ($('#rdIn').value||'').trim().toUpperCase().replace(/[^0-9A-Z]/g,''); if(v.length<8){ toast('請輸入 QR 下方的 10 碼'); return; } $('#rdIn').value=''; redeem(v); };
