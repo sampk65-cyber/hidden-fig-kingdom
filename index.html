@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.8</title>
+<title>今天在隱花王國尋寶 V9.9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -886,7 +886,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V9.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1476,17 +1476,47 @@ function roleBase(roleId){ return (ROLES.find(x=>x.id===roleId)||ROLES[0]).base;
    Session：一次性 QR 兌換、會員卡找回、雲端同步
    ========================================================= */
 let P = null, PID = null, MY_COUPONS = [], saveTimer = null;
-const PROTECTED = ['uids','rtok','claim'];
+const PROTECTED = ['uids','rtok','claim','sess','claimCode'];
 function playerPayload(){ const o={}; for(const [k,v] of Object.entries(P)) if(!PROTECTED.includes(k)) o[k]=v; return o; }
 const Auth = {
-  save(){ if(!PID || saveTimer) return; saveTimer = setTimeout(()=>{ saveTimer=null; Auth.flush(); }, 8000); },   // 最多 8 秒存一次，省 Firebase 寫入
-  async flush(){ clearTimeout(saveTimer); saveTimer=null; if(!PID || !P) return;
+  save(){ if(!PID || saveTimer || KICKED) return; saveTimer = setTimeout(()=>{ saveTimer=null; Auth.flush(); }, 8000); },   // 最多 8 秒存一次，省 Firebase 寫入
+  async flush(){ clearTimeout(saveTimer); saveTimer=null; if(!PID || !P || KICKED) return;
+    if(MYSESS && !(await sessCheck())) return;
     if(!saveSafe()){ console.warn('存檔保護：偵測到資料異常，這次不寫入雲端', {points:P.points, boxes:P.boxes, base:LOADED}); return; }
     try{ await DB.update('players/'+PID, playerPayload()); LOADED = {points:P.points, boxes:P.boxes||0}; postRank(); }catch(e){ console.error(e); toast('同步失敗，請檢查網路'); } }
 };
 document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='hidden') Auth.flush(); });
 addEventListener('pagehide', ()=>Auth.flush());
 
+// V9.9：同一帳號只能一台裝置在線。最後登入的裝置有效，其他裝置會被登出（資料都在雲端）
+let MYSESS = null, KICKED = false, FRESH_LOGIN = false;
+function sessLocal(){ try{ return localStorage.getItem('hfk_sess_'+PID); }catch(e){ return MYSESS; } }
+async function sessClaim(){
+  if(DEMO || !PID) return; const id = rid(12); MYSESS = id; KICKED = false;
+  try{ localStorage.setItem('hfk_sess_'+PID, id); }catch(e){}
+  try{ await DB.update('players/'+PID, {sess:{id, t:Date.now(), dev:/iPhone|iPad/.test(navigator.userAgent)?'iPhone':/Android/.test(navigator.userAgent)?'Android':'電腦'}}); }catch(e){ console.warn(e); }
+}
+async function sessCheck(){
+  if(DEMO || !PID || KICKED) return !KICKED;
+  let p = null; try{ p = await DB.get('players/'+PID); }catch(e){ return true; }
+  const r = p && p.sess;
+  if(!r || !r.id){ await sessClaim(); return true; }
+  if(r.id === MYSESS) return true;
+  sessKicked(r); return false;
+}
+function sessKicked(r){
+  KICKED = true; clearTimeout(saveTimer); saveTimer = null;
+  openSheet(`<div class="big pop">🔐</div><h2 class="h2 wk">帳號已在其他裝置登入</h2><p class="sub">同一個帳號一次只能在一台裝置上玩${r && r.dev ? `（目前在${esc(r.dev)}）` : ''}。這台裝置已暫停，資料都在雲端，不會遺失。</p>
+    <button class="btn main" id="sessTake">在這台裝置繼續</button><p class="lvtxt">按下後，另一台裝置會被登出。</p>`, true);
+  $('#sessTake').onclick = async()=>{ $('#sessTake').disabled = true; await sessClaim(); await loadMine(); await loadCoupons(); closeSheet(); startHome(); toast('已切換到這台裝置'); };
+}
+async function sessStart(){
+  if(DEMO || !PID || P.guest) return;
+  if(FRESH_LOGIN || !sessLocal()){ FRESH_LOGIN = false; await sessClaim(); return; }
+  MYSESS = sessLocal(); await sessCheck();
+}
+setInterval(()=>{ if(PID && MYSESS && !KICKED && document.visibilityState==='visible') sessCheck(); }, 60000);
+document.addEventListener('visibilitychange', ()=>{ if(document.visibilityState==='visible' && PID && MYSESS && !KICKED) sessCheck(); });
 // V8.0：存檔保護。只用「合併更新」寫入（不會刪掉既有欄位），而且果友值、兌換盒數只能增加，數字異常就不寫入
 let LOADED = null;
 function saveSafe(){
@@ -1552,8 +1582,16 @@ async function redeem(raw){
   if(mine) await loadCoupons();
   if(c.used){
     if(mine && c.usedPid===PID){ history.replaceState(null,'',location.pathname); toast('這盒已經兌換過了，歡迎回來'); return P.role ? startHome() : openCreate(); }
-    return info('🔒','這個 QR 碼已經用過了', mine ? '每個 QR 只能兌換一次。' : '如果是你之前兌換的，請掃描「我的會員卡」，或在登入頁選會員卡圖片、備份檔找回帳號。');
+    if(!mine && c.usedPid){   // V9.9：用過的 QR＝該帳號的登入鑰匙，任何裝置都能回到同一個帳號
+      try{
+        await DB.batch([{op:'update', path:'players/'+c.usedPid, data:{uids:{$union:[Login.uid]}, claimCode:code}}, {op:'set', path:'users/'+Login.uid, data:{pid:c.usedPid}}]);
+        history.replaceState(null,'',location.pathname); await loadMine(); await loadCoupons(); FRESH_LOGIN = true;
+        toast('歡迎回來，已登入你的帳號'); return P.role ? startHome() : openCreate();
+      }catch(e){ console.error(e); }
+    }
+    return info('🔒','這個 QR 碼已經用過了', mine ? '這個 QR 屬於另一個帳號，每個 QR 只能兌換一次。' : '請掃描「我的會員卡」，或用會員編號＋會員密碼登入。');
   }
+  FRESH_LOGIN = true;
   const now = Date.now(), used = {used:true, usedBy:Login.uid, usedAt:now};
   if(c.type==='share'){
     if(mine) return info('🎟️','你已經是王國居民了','這張分享券留給還沒加入的親友吧。');
@@ -1604,7 +1642,7 @@ async function recover(tok){
     await DB.batch([{op:'update', path:'players/'+pid, data:{uids:{$union:[Login.uid]}, claim:rt}}, {op:'set', path:'users/'+Login.uid, data:{pid}}]);
   }catch(e){ try{ localStorage.removeItem('hfk_card'); }catch(_){} return info('🔒','找回失敗','會員卡無效或已更換，請聯絡農場協助。'); }
   history.replaceState(null,'',location.pathname);
-  await loadMine(); await loadCoupons();
+  await loadMine(); await loadCoupons(); FRESH_LOGIN = true;
   toast('帳號已找回'); P.role ? startHome() : openCreate();
 }
 $('#btnCode').onclick = async ()=>{
@@ -1718,7 +1756,7 @@ function stamina(){ return BASE_STAMINA + (roleBase(P.role)==='bunny' ? 1 : 0) +
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
 function startHome(){
   P.route = P.route || 'active';
-  const newDay = ensureDay(); Auth.save(); show('home'); renderAll(); navGuard(); ensureNameClaim(); setTimeout(postRank, 3000); if(!newDay) setTimeout(newPhotoToast, 1500); setTimeout(checkMessages, 2200);
+  const newDay = ensureDay(); show('home'); renderAll(); navGuard(); sessStart().then(()=>{ if(!KICKED){ Auth.save(); ensureNameClaim(); } }); setTimeout(postRank, 3000); if(!newDay) setTimeout(newPhotoToast, 1500); setTimeout(checkMessages, 2200);
   if(newDay){
     const got = addPts(2); Auth.save(); renderHud();
     openSheet(`<div class="big pop">🌅</div><h2 class="h2 wk">早安，${esc(P.name)}</h2>
@@ -2901,7 +2939,7 @@ async function famJoinNew(fid){
       await DB.batch([{op:'set', path:'players/'+pid, data:np}, {op:'set', path:'users/'+Login.uid, data:{pid}},
         {op:'update', path:'fams/'+fid, data:{members:{$union:[pid]}, ['names.'+pid]:'新家人', lastJoin:pid}}]);
     }catch(e){ console.error(e); return info('⚠️','加入失敗','家庭可能已滿或邀請已失效，請邀請人重新產生 QR。'); }
-    history.replaceState(null,'',location.pathname); P = np; PID = pid; MY_COUPONS = []; LOADED = {points:0, boxes:0}; closeSheet(); openCreate();
+    history.replaceState(null,'',location.pathname); P = np; PID = pid; MY_COUPONS = []; LOADED = {points:0, boxes:0}; FRESH_LOGIN = true; closeSheet(); openCreate();
   };
 }
 async function famJoinExisting(fid){
