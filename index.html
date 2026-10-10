@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V10.8</title>
+<title>今天在隱花王國尋寶 V10.9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -941,7 +941,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V10.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V10.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1226,11 +1226,13 @@ function mycoGame(done){
     if(leaves.length>=NT){ targets = leaves.slice(0,NT); break; }
   }
   targets.forEach((i,k)=>cell[i].t = k%2 ? '🟤' : '💧');
+  cell.forEach(c=>c.sol = c.m);   // V10.9：保存正確答案
   cell.forEach((c,i)=>{ if(!c.rock && c.m){ const r = 1+rnd(3); for(let k=0;k<r;k++) c.m = rot(c.m); } });
   const ov = document.createElement('div'); ov.id = 'mycoOv';
   ov.innerHTML = `<button class="wo-x" id="mycoX">離開</button><div class="mem-h"><b>🍄 菌絲連線・${DIFF_N[d]}</b><span id="myInfo">點格子旋轉菌絲，把 🌱 根連到所有 💧 水分和 🟤 養分</span></div>
     <div class="mem-bar"><i id="myBar"></i></div><div class="my-g" id="myG" style="grid-template-columns:repeat(${N},1fr)"></div>
-    <div class="mem-f"><span id="myL">連通 0/${NT}</span><span id="myM">旋轉 0 次</span></div>`;
+    <div class="mem-f"><span id="myL">連通 0/${NT}</span><span id="myM">旋轉 0 次</span></div>
+    <div style="text-align:center;margin-top:10px"><button class="btn" id="mySol" style="width:auto;padding:8px 18px">💡 放棄，看解答</button></div>`;
   document.body.appendChild(ov); MUSIC.start();
   let moves = 0, over = false, t0 = performance.now(), raf = 0, lit = new Set();
   const flow = ()=>{ lit = new Set([rootI]); const q = [rootI];
@@ -1241,13 +1243,22 @@ function mycoGame(done){
     const seg = [[50,0],[100,50],[50,100],[0,50]].map(([x,y],k)=>c.m&(1<<k) ? `<line x1="50" y1="50" x2="${x}" y2="${y}" stroke="${col}" stroke-width="${on?14:11}" stroke-linecap="round"/>` : '').join('');
     return `<button class="my-c ${on?'on':''}" data-i="${i}"><svg viewBox="0 0 100 100">${on?`<circle cx="50" cy="50" r="40" fill="#F6D36522"/>`:''}${seg}<circle cx="50" cy="50" r="${c.t||i===rootI?16:9}" fill="${col}"/></svg>${i===rootI?'<b>🌱</b>':c.t?`<b>${c.t}</b>`:''}</button>`; };
   const render = ()=>{ const n = flow(); $('#myG').innerHTML = cell.map(tile).join(''); $('#myL').textContent = `連通 ${n}/${NT}`; if(n===NT && !over) setTimeout(()=>end(true), 450); };
-  const end = (win, quit)=>{ if(over) return; over = true; cancelAnimationFrame(raf); MUSIC.stop(); ov.remove(); if(quit) return closeSheet();
+  /* V10.9：沒過關時先顯示解答，再看結果 */
+  const reveal = timeUp=>{ if(over) return; over = true; cancelAnimationFrame(raf); MUSIC.stop(); SND.lose();
     const secs = (performance.now()-t0)/1000, n = targets.filter(i=>lit.has(i)).length;
+    cell.forEach(c=>c.m = c.sol); render();
+    $('#myInfo').innerHTML = `${timeUp?'⏰ 時間到！':''}<b>💡 解答</b>：金色就是正確的菌絲通路`;
+    $('#myL').textContent = `你連通 ${n}/${NT}`;
+    const go = ()=>{ ov.remove(); finish(false, n, secs); }; $('#mySol').textContent = '看結果 ▶'; $('#mySol').onclick = go; $('#mycoX').onclick = go; };
+  const end = (win, quit)=>{ if(over) return; over = true; cancelAnimationFrame(raf); MUSIC.stop(); ov.remove(); if(quit) return closeSheet();
+    win ? SND.win() : SND.lose(); finish(win, targets.filter(i=>lit.has(i)).length, (performance.now()-t0)/1000); };
+  const finish = (win, n, secs)=>{
     const pct = win ? Math.round(Math.max(60, Math.min(100, 60 + (1-secs/LIMIT)*45 - Math.max(0, moves - N*N)*.5))) : Math.round(n/NT*50);
-    win ? SND.win() : SND.lose(); done({score:pct, detail:`${N}×${N}・連通 ${n}/${NT}・旋轉 ${moves} 次・${Math.round(secs)} 秒`}); };
+    done({score:pct, detail:`${N}×${N}・連通 ${n}/${NT}・旋轉 ${moves} 次・${Math.round(secs)} 秒`}); };
   $('#mycoX').onclick = ()=>end(false, true);
+  $('#mySol').onclick = ()=>reveal(false);
   $('#myG').addEventListener('click', e=>{ const b = e.target.closest('.my-c[data-i]'); if(!b || over) return; const c = cell[+b.dataset.i]; c.m = rot(c.m); moves++; $('#myM').textContent = `旋轉 ${moves} 次`; SND.tick(); render(); });
-  const tick = now=>{ if(over) return; const left = LIMIT - (now-t0)/1000; $('#myBar').style.width = Math.max(0,left/LIMIT*100)+'%'; $('#myBar').classList.toggle('low', left<10); if(left<=0) return end(false); raf = requestAnimationFrame(tick); };
+  const tick = now=>{ if(over) return; const left = LIMIT - (now-t0)/1000; $('#myBar').style.width = Math.max(0,left/LIMIT*100)+'%'; $('#myBar').classList.toggle('low', left<10); if(left<=0) return reveal(true); raf = requestAnimationFrame(tick); };
   render(); raf = requestAnimationFrame(tick);
 }
 
