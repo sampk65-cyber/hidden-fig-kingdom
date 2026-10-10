@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V9.9</title>
+<title>今天在隱花王國尋寶 V10.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -278,6 +278,8 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .chip b{color:var(--rose);margin-left:2px}
 .cd-wrap{overflow-x:auto;margin-top:4px}.cd-tb th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:4px 6px}.cd-tb td{font-size:13px;vertical-align:top;padding:6px}
 .cd-id{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:3px 8px;font:inherit;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap;color:var(--ink)}.cd-id span{color:var(--muted);font-weight:400}
+.prac-d{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.prac-d button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;gap:4px;align-items:center;font:inherit;color:var(--ink);cursor:pointer}.prac-d button b{font-size:17px}.prac-d small{font-size:11px;color:var(--muted);line-height:1.4}.prac-d button.cur{border-color:var(--fig)}
+.prac-sc{display:flex;flex-direction:column;align-items:center;margin:4px 0 6px}.prac-sc b{font-size:44px;color:var(--fig);line-height:1.1}.prac-sc small{color:var(--muted)}
 .rd-box{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);text-align:left}
 .cd-note{min-width:120px;padding:6px 8px;font-size:13px;margin:0}
 .cd-nm{border:0;background:none;padding:0;font:inherit;font-weight:700;color:var(--ink);text-decoration:underline;cursor:pointer}
@@ -886,7 +888,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V9.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V10.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1582,6 +1584,14 @@ async function redeem(raw){
   if(mine) await loadCoupons();
   if(c.used){
     if(mine && c.usedPid===PID){ history.replaceState(null,'',location.pathname); toast('這盒已經兌換過了，歡迎回來'); return P.role ? startHome() : openCreate(); }
+    if(mine && c.usedPid && c.usedPid!==PID){   // V10.0：這台裝置正在用別的帳號 → 詢問是否切換
+      await Auth.flush();
+      return openSheet(`<div class="big pop">🔄</div><h2 class="h2 wk">切換帳號？</h2><p class="sub">這個 QR 屬於另一個帳號。切換後，這台裝置會改登入那個帳號；目前帳號的資料都保留在雲端，之後可用它的 QR 或會員卡再切回來。</p>
+        <button class="btn main" id="swGo">切換到這個帳號</button><button class="btn ghost" id="swNo">留在目前帳號</button>`, true), $('#swNo').onclick = ()=>{ closeSheet(); history.replaceState(null,'',location.pathname); P.role ? startHome() : openCreate(); },
+        $('#swGo').onclick = async()=>{ try{ await DB.batch([{op:'update', path:'players/'+c.usedPid, data:{uids:{$union:[Login.uid]}, claimCode:code}}, {op:'set', path:'users/'+Login.uid, data:{pid:c.usedPid}}]);
+          history.replaceState(null,'',location.pathname); closeSheet(); await loadMine(); await loadCoupons(); FRESH_LOGIN = true; KICKED = false; toast('已切換帳號'); P.role ? startHome() : openCreate(); }
+          catch(e){ console.error(e); toast('切換失敗，請確認規則已更新'); } };
+    }
     if(!mine && c.usedPid){   // V9.9：用過的 QR＝該帳號的登入鑰匙，任何裝置都能回到同一個帳號
       try{
         await DB.batch([{op:'update', path:'players/'+c.usedPid, data:{uids:{$union:[Login.uid]}, claimCode:code}}, {op:'set', path:'users/'+Login.uid, data:{pid:c.usedPid}}]);
@@ -2686,12 +2696,15 @@ const CH = {
   myna:    {i:MYNA_SVG, n:'八哥入侵', when:w=>(w.pests||[]).includes('myna'), hint:'八哥從破洞飛進溫室偷吃熟果', tip:'八哥會啄熟果。防鳥網要定期巡，發現破洞馬上補；趕鳥用聲音和引導，不傷害牠們。'}
 };
 // V9.3：天氣觸發的挑戰優先；處理完或沒有天氣事件時，各種挑戰依時段輪流出現（每 3 小時換一種）
+// V10.1：挑戰輪流出現：每挑戰一次（不論成敗）就換一種、換一座溫室；今天玩過的種類先不重複
 function activeCh(){
   const pr = ['rain','wind','heat','whitefly','myna','drought','rust'].filter(k=>CH[k]);
-  const w = pr.filter(k=>CH[k].when(WX)).find(k=>!chDone(k)); if(w) return [w];
-  const D = Math.floor(Date.parse(today())/864e5), start = (D*8 + chSlot()) % pr.length;
-  for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!chDone(k)) return [k]; }
-  return [pr[start]];
+  const tried = (P && P.daily && P.daily.chTried) || [], n = (P && P.daily && P.daily.chTry) || 0;
+  const w = pr.filter(k=>CH[k].when(WX)).find(k=>!tried.includes(k) && !chDone(k)); if(w) return [w];
+  const D = Math.floor(Date.parse(today())/864e5), start = (D*3 + chSlot() + n) % pr.length;
+  for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!tried.includes(k) && !chDone(k)) return [k]; }
+  for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!chDone(k) && k!==tried.at(-1)) return [k]; }
+  return [];
 }
 function chDone(k){ return P.daily && P.daily.ch && P.daily.ch[k]==='ok'; }
 function pendingCh(){ return activeCh().filter(k=>!chDone(k)); }
@@ -3596,7 +3609,7 @@ function woodGame(done, who){
 // V9.2：小遊戲難度分層：過關 3 次 簡單→中級，再過關 5 次 中級→高級（舊資料自動換算，已升級的不會降）
 const DIFF_N = ['簡單','中級','高級'];
 function diffWins(id){ P.dwin = P.dwin || {}; if(P.dwin[id]==null){ const old = (P.diff && P.diff[id]) || 0; P.dwin[id] = [0,3,8][old] || 0; } return P.dwin[id]; }
-function diffOf(id){ const w = diffWins(id); return w>=8 ? 2 : w>=3 ? 1 : 0; }
+function diffOf(id){ if(PRACTICE && PRACTICE_D!=null) return PRACTICE_D; const w = diffWins(id); return w>=8 ? 2 : w>=3 ? 1 : 0; }
 function diffNext(id){ const w = diffWins(id); return w>=8 ? '' : w>=3 ? `再過關 ${8-w} 次升高級` : `再過關 ${3-w} 次升中級`; }
 function diffAfter(id, ok){ if(!ok) return ''; const d = diffOf(id); P.dwin[id] = diffWins(id)+1; const d2 = diffOf(id);
   P.diff = P.diff || {}; P.diff[id] = d2; return d2>d ? `難度升級為「${DIFF_N[d2]}」` : ''; }
@@ -3604,7 +3617,7 @@ const KIKI = ()=>roleBase(P.role)==='kiki' ? 3 : 0;
 const HOWTO = {
   whitefly:d=>({t:'銀葉粉蝨躲在葉背吸汁液，牠們會在葉子間飛來飛去，看準了就點掉。', goal:`${[14,12,10][d]} 秒內點掉 ${[5,7,9][d]} 隻`}),
   rain:    d=>({t:'豪雨把垃圾沖進排水溝：酒瓶、玻璃罐、鋁罐、鐵罐頭、寶特瓶、塑膠袋、樹枝、落葉順著水流下來，越後面水流越快。水溝裡還有小魚，點到魚會扣分！把它們拖到下方正確的分類桶（也可以先點垃圾、再點桶子）。垃圾卡住排水口或丟錯桶，水位都會上升。', goal:`水滿出來之前分類好 ${[8,10,12][d]} 件垃圾`}),
-  rust:    d=>({t:'連續 3 輪，每一輪都要把有黃褐色斑點的病葉 🍂 全部摘掉，健康的葉子 🍃 不要摘。葉子會一直換位置，越後面換得越快。', goal:`${[24,20,16][d]} 秒內完成 3 輪，摘錯最多 ${[2,1,1][d]} 次`}),
+  rust:    d=>({t:'連續 3 輪，每一輪都要把有黃褐色斑點的病葉 🍂 全部摘掉，健康的葉子 🍃 不要摘。葉子會一直換位置，越後面換得越快。', goal:`${[26,24,22][d]} 秒內完成 3 輪，摘錯最多 ${[2,1,1][d]} 次`}),
   drought: d=>({t:`要連續澆 3 次水：按住「滴灌」讓水位上升，停在綠色區就放開。綠色區一次比一次窄，水位也越升越快${d>0?"，綠色區還會上下飄動":""}。澆太多會爛根。`, goal:`連續 3 次都停在綠色區（寬度 ${[[26,18,13],[22,15,10],[18,12,9]][d].join('% → ')}%）`}),
   heat:    d=>({t:'正中午的陽光一直射下來。手指按住畫面左右滑，陽傘會跟著移動，擋住射向無花果樹的陽光，別讓果子曬傷。', goal:`撐過 ${[12,15,18][d]} 秒，曬傷值不到 100`}),
   wind:    d=>({t:`強風把枝條吹得左右擺。每條吊繩上有一個橘色夾子，等枝條擺到和吊繩一樣垂直（枝條變綠色）時，點那一排，夾子就會把枝條夾在吊繩上。歪的時候點會夾空。${d>0?"還會有陣風把夾好的夾子吹掉，要再夾一次。":""}`, goal:`${[26,24,22][d]} 秒內把 ${[4,5,5][d]} 根枝條都夾直${d>0?'（夾空扣 1 秒）':''}`}),
@@ -3631,14 +3644,14 @@ function finishChallenge(k, ok){
   if(PRACTICE) return practiceEnd(k, ok);
   const c = CH[k]; P.daily.ch = P.daily.ch || {};
   let msg;
-  P.daily.chTry = (P.daily.chTry||0)+1;
+  P.daily.chTry = (P.daily.chTry||0)+1; P.daily.chTried = [...(P.daily.chTried||[]).filter(x=>x!==k), k];
   if(ok){ P.daily.ch[k]='ok'; P.chStreak=(P.chStreak||0)+1; addGuard(['whitefly','rust','myna'].includes(k)?'pest':'disaster'); seen(k);
     const pts=addPts(6); msg=`果友值 +${pts}，果況恢復。連續成功 ${P.chStreak} 次，開到好券的機會提高。`; const up = diffAfter(k, true); if(up) msg += `<br>🔺 ${up}`; }
   else { P.chStreak=0; msg='差一點！可以再試一次。'; }
   Auth.save(); renderAll();
   openSheet(`<div class="big pop">${ok?'🎉':'😵'}</div><h2 class="h2 wk">${ok?'你守住了溫室！':'挑戰失敗'}</h2><p class="sub">${msg}</p>
     <div class="card" style="text-align:left;margin:10px 0"><b>📖 農場小知識</b><p class="sub" style="margin:4px 0 0">${c.tip}</p></div>
-    ${ok?'':`<button class="btn main" id="mgRetry">再試一次</button>`}<button class="btn ghost" onclick="closeSheet()">回王國</button>`, true);
+    ${pendingCh().length ? `<p class="lvtxt">下一個挑戰：${CH[pendingCh()[0]].i} ${CH[pendingCh()[0]].n}，出現在${czName()}</p>` : ''}${ok?'':`<p class="lvtxt">想再練這一關，可以到「我想玩遊戲」選難度練習。</p>`}<button class="btn ghost" onclick="closeSheet()">回王國</button>`, true);
   const r = $('#mgRetry'); if(r) r.onclick = ()=>startChallenge(k);
 }
 function tapGame(k, d){
@@ -3726,7 +3739,7 @@ function parasolGame(k, d){
 }
 /* 銹病：連續 3 輪，每輪摘完所有病葉；限時內完成，越後面葉子換位越快 */
 function rustGame(k, d){
-  const mg = $('#mg'), sec = [24,20,16][d]+KIKI(), maxMiss = [2,1,1][d], baseIv = [1700,1300,1000][d];
+  const mg = $('#mg'), sec = [26,24,22][d]+KIKI(), maxMiss = [2,1,1][d], baseIv = [1700,1300,1000][d];
   let round = 0, miss = 0, left = sec, done = false, bad = new Set(), picked = new Set(), shuf = null;
   const upd = ()=>{ $('#mgInfo').textContent = `第 ${round+1}/3 輪・剩 ${left} 秒・病葉 ${picked.size}/${bad.size}・摘錯 ${miss}/${maxMiss}`; };
   function layout(){
@@ -4441,7 +4454,7 @@ function renderSound(){
 }
 
 /* ---------- 我想玩遊戲：練習模式（不加任何數值，不影響難度與每日紀錄） ---------- */
-let PRACTICE = false;
+let PRACTICE = false, PRACTICE_D = null, PRAC_T0 = 0;
 const PRACTICE_LIST = [
   {k:'whitefly', i:'🦟', n:'銀葉粉蝨'}, {k:'rust', i:'🍂', n:'銹病三輪'}, {k:'rain', i:'🌧️', n:'豪雨垃圾分類'},
   {k:'drought', i:'💧', n:'乾旱澆水'}, {k:'heat', i:'☀️', n:'高溫撐陽傘'}, {k:'wind', i:'🌪️', n:'強風夾枝'},
@@ -4453,21 +4466,36 @@ function playMenu(){
     <p class="sub">好的，您想玩什麼遊戲？（練習模式，不會增加任何數值）</p>
     <div class="play-list">${PRACTICE_LIST.map(g=>`<button data-g="${g.k}"><b>${g.i}</b>${g.n}</button>`).join('')}</div>
     <button class="btn ghost" onclick="closeSheet()">先不要</button>`, true);
-  document.querySelectorAll('.play-list [data-g]').forEach(b=>b.onclick=()=>practice(b.dataset.g));
+  document.querySelectorAll('.play-list [data-g]').forEach(b=>b.onclick=()=>pracPick(b.dataset.g));
 }
-function practice(k){
-  PRACTICE = true;
-  if(k==='wood'){ closeSheet(); PRACTICE = true; return woodGame(res=>practiceEnd(k, res.score>=50, res.detail)); }
-  if(k==='pick'){ closeSheet(); PRACTICE = true; return pickGame(res=>practiceEnd(k, res.score>=50, res.detail)); }
+// V10.1：練習可選難度（簡單／中級／高級），並記錄練習分數與各難度最佳
+function pracBest(k, d){ return ((P.prac||{})[k]||{})[d]||0; }
+function pracPick(k){
+  const g = PRACTICE_LIST.find(x=>x.k===k), cur = diffOf(k);
+  openSheet(`<div class="big">${g.i}</div><h2 class="h2">${g.n}・練習</h2><p class="sub">選一個難度（練習不影響正式難度和果友值）</p>
+    <div class="prac-d">${DIFF_N.map((n,d)=>`<button data-d="${d}" class="${d===cur?'cur':''}"><b>${n}</b><small>最佳 ${pracBest(k,d)} 分${d===cur?'・目前正式難度':''}</small></button>`).join('')}</div>
+    <button class="btn ghost" id="pBack">換一個遊戲</button>`, true);
+  document.querySelectorAll('.prac-d [data-d]').forEach(b=>b.onclick=()=>practice(k, +b.dataset.d));
+  $('#pBack').onclick = playMenu;
+}
+function practice(k, d){
+  if(d==null) d = PRACTICE_D!=null ? PRACTICE_D : diffOf(k);
+  PRACTICE = true; PRACTICE_D = d; PRAC_T0 = Date.now();
+  if(k==='wood'){ closeSheet(); return woodGame(res=>practiceEnd(k, res.score>=50, res.detail, res.score)); }
+  if(k==='pick'){ closeSheet(); return pickGame(res=>practiceEnd(k, res.score>=50, res.detail, res.score)); }
   runChallenge(k);
 }
-function practiceEnd(k, ok, detail){
-  PRACTICE = false;
-  const g = PRACTICE_LIST.find(x=>x.k===k);
+function practiceEnd(k, ok, detail, score){
+  const d = PRACTICE_D!=null ? PRACTICE_D : 0; PRACTICE = false;
+  const g = PRACTICE_LIST.find(x=>x.k===k), secs = Math.round((Date.now()-PRAC_T0)/1000);
+  if(score==null) score = ok ? Math.max(60, Math.min(100, 100 - Math.max(0, secs-10))) : Math.min(45, 15 + secs);   // 挑戰類：過關 60–100（越快越高），未過關最多 45
+  score = Math.max(0, Math.min(100, Math.round(score)));
+  P.prac = P.prac || {}; P.prac[k] = P.prac[k] || {}; const best = Math.max(pracBest(k,d), score), nb = score > pracBest(k,d); P.prac[k][d] = best; Auth.save();
   openSheet(`<div class="big pop">${ok?'🎉':'😊'}</div><h2 class="h2">${ok?'練習成功！':'再接再厲！'}</h2>
-    <p class="sub">${g.i} ${g.n}・練習模式不計分${detail?`<br>${detail}`:''}</p>
-    <button class="btn main" id="pAgain">再玩一次</button><button class="btn ghost" id="pMenu">換一個遊戲</button><button class="btn ghost" onclick="closeSheet()">結束</button>`, true);
-  $('#pAgain').onclick = ()=>practice(k); $('#pMenu').onclick = playMenu;
+    <div class="prac-sc"><b>${score}</b><small>練習分數・${DIFF_N[d]}${nb?'・🆕 新紀錄':''}</small></div>
+    <p class="sub">${g.i} ${g.n}・最佳 ${best} 分${detail?`<br>${detail}`:''}<br><span class="lvtxt">練習不增加果友值，也不影響正式難度</span></p>
+    <button class="btn main" id="pAgain">再玩一次（${DIFF_N[d]}）</button><button class="btn ghost" id="pDiff">換難度</button><button class="btn ghost" id="pMenu">換一個遊戲</button><button class="btn ghost" onclick="closeSheet()">結束</button>`, true);
+  $('#pAgain').onclick = ()=>practice(k, d); $('#pDiff').onclick = ()=>pracPick(k); $('#pMenu').onclick = playMenu;
 }
 
 /* ---------- 溫室幫忙：澆水／打芽／除草／施肥，跟我的樹同樣節奏；越少出現的工作換越多能量；各溫室開放日隨機錯開 ---------- */
