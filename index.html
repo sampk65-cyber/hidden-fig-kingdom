@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V10.1</title>
+<title>今天在隱花王國尋寶 V10.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -278,6 +278,9 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .chip b{color:var(--rose);margin-left:2px}
 .cd-wrap{overflow-x:auto;margin-top:4px}.cd-tb th{text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:4px 6px}.cd-tb td{font-size:13px;vertical-align:top;padding:6px}
 .cd-id{border:1.5px solid var(--line);background:var(--card);border-radius:8px;padding:3px 8px;font:inherit;font-family:ui-monospace,Menlo,monospace;font-weight:700;letter-spacing:.04em;cursor:pointer;white-space:nowrap;color:var(--ink)}.cd-id span{color:var(--muted);font-weight:400}
+.fold-c summary{cursor:pointer;list-style:none;display:flex;flex-direction:column;gap:2px}.fold-c summary::-webkit-details-marker{display:none}.fold-c summary b::before{content:'▸ ';color:var(--muted)}.fold-c[open] summary b::before{content:'▾ '}.fold-c summary small{color:var(--muted);font-size:12px}
+.lg-y>summary,.lg-m>summary,.lg-d>summary{cursor:pointer;font-weight:700;padding:6px 0}.lg-m{margin-left:8px}.lg-d{margin-left:16px}.lg-d>summary{font-weight:600;color:var(--fig)}
+.adm-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.adm-row small{display:block;color:var(--muted);font-size:12px}
 .prac-d{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.prac-d button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;gap:4px;align-items:center;font:inherit;color:var(--ink);cursor:pointer}.prac-d button b{font-size:17px}.prac-d small{font-size:11px;color:var(--muted);line-height:1.4}.prac-d button.cur{border-color:var(--fig)}
 .prac-sc{display:flex;flex-direction:column;align-items:center;margin:4px 0 6px}.prac-sc b{font-size:44px;color:var(--fig);line-height:1.1}.prac-sc small{color:var(--muted)}
 .rd-box{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);text-align:left}
@@ -760,6 +763,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
         <button class="adm-card" data-a="pool"><b>寶箱獎池</b><small>設定每日獎項數量與免單頻率</small></button>
         <button class="adm-card" data-a="photo"><b>照片</b><small>依溫室／年／月上傳、看讚數</small></button>
         <button class="adm-card hi" data-a="stats"><b>數據</b><small>排行、寶箱紀錄、公告與私訊</small></button>
+        <button class="adm-card" data-a="admins"><b>管理員</b><small>新增 Email＋密碼，各自登入後台</small></button>
       </div>
     </div>
     <div class="adm-bar hide" id="admBar"><button class="chip" id="btnAdmHome">← 後台首頁</button><b id="admCur"></b></div>
@@ -850,6 +854,17 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div class="card"><label class="lbl" for="fdText" style="margin-top:0">新貼文</label><textarea id="fdText" class="field" rows="3" maxlength="120" placeholder="今天溫室發生了什麼事？"></textarea><button id="btnFd" class="btn main">發布貼文</button></div>
       <div class="card"><label class="lbl" for="scCode" style="margin-top:0">本週粉專通關密語</label><p class="lvtxt">貼在 FB／IG 粉專貼文裡，顧客輸入後我的樹加速 3 天（運動路線換果友值）。每週換一次。</p><input id="scCode" class="field" maxlength="20" placeholder="例如：小呱夜巡"><button id="btnScSave" class="btn main">儲存密語</button></div>
     </div>
+    <div class="admpane hide" id="ap-admins">
+      <h2 class="h2 wk">管理員</h2>
+      <p class="sub">每位管理員用自己的 Email＋密碼登入 hidden-fig-kingdom.vercel.app/?admin，可同時在不同裝置操作。</p>
+      <div class="card"><b>➕ 新增管理員</b>
+        <label class="lbl" for="aName">稱呼</label><input id="aName" class="field" maxlength="20" placeholder="例如：小明">
+        <label class="lbl" for="aEmail">Email</label><input id="aEmail" class="field" type="email" autocomplete="off" placeholder="name@example.com">
+        <label class="lbl" for="aPw">密碼（至少 6 字元，請告知對方）</label><input id="aPw" class="field" type="text" autocomplete="new-password">
+        <button id="btnAddAdm" class="btn main">新增管理員</button>
+        <p class="lvtxt">已經有 Firebase 帳號的 Email，輸入他原本的密碼即可加入。對方登入後可到 Firebase 主控台重設密碼。</p></div>
+      <div class="card"><b>目前管理員</b><div id="admList"></div></div>
+    </div>
     <div class="admpane hide" id="ap-stats">
       <h2 class="h2 wk">數據</h2>
       <div class="card"><b>📢 對全體玩家發言</b><p class="lvtxt" style="margin:2px 0 6px">玩家下次打開遊戲會跳出這則公告（每則只跳一次）。</p>
@@ -888,7 +903,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V10.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V10.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1548,6 +1563,14 @@ async function openPointsRank(){
   const box = $('#prBox'); if(!box) return; const md = ['🥇','🥈','🥉'];
   box.innerHTML = rows.length ? `<table class="ladder">${rows.map((r,i)=>`<tr class="${r.pid===PID?'rk-me':''}"><td>${md[i]||(i+1)+'.'} ${LEVELS[lvIndex(r.points||0)].icon} ${esc(r.name||'')}</td><td><b>${r.points}</b> 分</td></tr>`).join('')}</table>
     ${rows.some(r=>r.pid===PID) ? '' : `<p class="lvtxt">你目前 ${P.points||0} 分，繼續加油擠進前 10 名！</p>`}` : '<p class="sub">排行榜準備中，玩家登入後就會出現。</p>';
+}
+// V10.2：寶箱紀錄依年 → 月 → 日收攏（最新的一天預設展開）
+function logTree(logs, tm, nm){
+  const ym = {}; logs.forEach(l=>{ const d = new Date(l.t), y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate(); ((ym[y] = ym[y]||{})[m] = ym[y][m]||{})[day] = [...((ym[y][m]||{})[day]||[]), l]; });
+  let first = true; const row = l=>`<tr class="pl-row" data-pid="${l.pid}"><td>${tm(l.t).split(' ')[1]}<br><b>${nm(l.name, l.pid)}</b></td><td>${esc(l.s)}<br>${esc(l.r)}</td></tr>`;
+  return Object.keys(ym).sort((a,b)=>b-a).map(y=>`<details class="lg-y" open><summary>${y} 年</summary>${Object.keys(ym[y]).sort((a,b)=>b-a).map(m=>{ const days = ym[y][m], cnt = Object.values(days).reduce((a,b)=>a+b.length,0);
+    return `<details class="lg-m" ${first?'open':''}><summary>${m} 月（${cnt} 筆）</summary>${Object.keys(days).sort((a,b)=>b-a).map(d=>{ const o = first; first = false;
+      return `<details class="lg-d" ${o?'open':''}><summary>${m}/${d}（${days[d].length} 筆）</summary><table class="ladder chlog">${days[d].map(row).join('')}</table></details>`; }).join('')}</details>`; }).join('')}</details>`).join('');
 }
 function newPlayer(uid){
   return {uids:[uid], rtok:rid(16), name:'', role:null, mat:'linen', color:COLORS[3], points:0, leaves:0,
@@ -2394,6 +2417,7 @@ const Admin = {
     if(k==='weather') Admin.weather();
     if(k==='pool') Admin.pool();
     if(k==='photo') Admin.photo();
+    if(k==='admins') Admin.admins();
   },
   async gen(){
     const product = $('#qProd').value.trim(), price = +$('#qPrice').value, zone = $('#qZone').value, harvest = $('#qHarvest').value, qty = Math.floor(+$('#qQty').value), layout = $('#qLayout').value;
@@ -2521,7 +2545,7 @@ const Admin = {
     const players = ps.filter(p=>p.role).sort((a,b)=>b.points-a.points), top = players.slice(0,10);
     // V9.7：後台打開數據頁時，把目前全部玩家的積分前 10 名發布到前台（不用等玩家登入）
     DB.set('config/rank', {t:Date.now(), list:players.slice(0,20).map(p=>({pid:p.id, name:(p.name||'王國居民').slice(0,20), points:Math.round(p.points||0)}))}).catch(e=>console.warn(e));
-    const logs = ps.flatMap(p=>(p.chestLog||[]).map(l=>({...l, name:p.name||'（未命名）', pid:p.id}))).sort((a,b)=>b.t-a.t).slice(0,40);
+    const logs = ps.flatMap(p=>(p.chestLog||[]).map(l=>({...l, name:p.name||'（未命名）', pid:p.id}))).sort((a,b)=>b.t-a.t);
     const tm = t=>{ const d = new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; };
     Admin.ps = ps;
     // V8.8：同名玩家加註會員編號末 4 碼，並標示重名
@@ -2529,9 +2553,39 @@ const Admin = {
     const nm = (name, pid)=>{ const n = (name||'').trim() || '（未命名）', dup = cnt[n]>1; return `${esc(n)}<small class="pid-tag${dup?' dup':''}">#${String(pid||'').slice(-4)}${dup?' 同名':''}</small>`; };
     $('#statBox').innerHTML = `<div class="today"><div>玩家<b>${ps.length}</b></div><div>果盒兌換<b>${box.filter(c=>c.used).length}/${box.length}</b></div><div>分享券使用<b>${share.filter(c=>c.used).length}/${share.length}</b></div></div>
       <div class="card"><div class="lbl" style="margin-top:0">果友值前 10 名</div><table class="ladder">${top.map((p,i)=>`<tr class="pl-row" data-pid="${p.id}"><td>${i+1}. ${nm(p.name, p.id)}</td><td>${LEVELS[lvIndex(p.points)].icon} ${p.points} 分・${p.boxes||0} 盒 ›</td></tr>`).join('') || '<tr><td>還沒有玩家</td></tr>'}</table></div>
-      <div class="card"><div class="lbl" style="margin-top:0">🎁 最近寶箱紀錄（全部玩家）</div>${logs.length ? `<table class="ladder chlog">${logs.map(l=>`<tr class="pl-row" data-pid="${l.pid}"><td>${tm(l.t)}<br><b>${nm(l.name, l.pid)}</b></td><td>${esc(l.s)}<br>${esc(l.r)}</td></tr>`).join('')}</table>` : '<p class="sub">還沒有紀錄（這個版本之後開的寶箱才會記錄）</p>'}</div>
-      <div class="card"><div class="lbl" style="margin-top:0">👥 全部玩家（點名字看寶箱、私訊）</div><div class="pl-all">${players.map(p=>`<button class="chip pl-row" data-pid="${p.id}">${LEVELS[lvIndex(p.points)].icon} ${nm(p.name, p.id)}</button>`).join('') || '<p class="sub">還沒有玩家</p>'}</div></div>`;
+      <details class="card fold-c"><summary><b>🎁 寶箱紀錄（${logs.length} 筆）</b><small>依年月日整理，點開查看</small></summary>${logs.length ? logTree(logs, tm, nm) : '<p class="sub">還沒有紀錄</p>'}</details>
+      <details class="card fold-c"><summary><b>👥 全部玩家（${players.length} 位）</b><small>點開後可搜尋，點名字看寶箱、私訊</small></summary>
+        <input id="plQ" class="field" placeholder="搜尋暱稱或會員編號" style="margin:8px 0">
+        <div class="pl-all" id="plAll">${players.map(p=>`<button class="chip pl-row" data-pid="${p.id}" data-q="${esc((p.name||'')+' '+p.id).toLowerCase()}">${LEVELS[lvIndex(p.points)].icon} ${nm(p.name, p.id)}</button>`).join('') || '<p class="sub">還沒有玩家</p>'}</div><p class="lvtxt hide" id="plNone">找不到符合的玩家</p></details>`;
+    const q = $('#plQ'); if(q) q.oninput = ()=>{ const v = q.value.trim().toLowerCase(); let n = 0;
+      document.querySelectorAll('#plAll .pl-row').forEach(b=>{ const ok = !v || b.dataset.q.includes(v); b.classList.toggle('hide', !ok); if(ok) n++; }); $('#plNone').classList.toggle('hide', n>0); };
     $('#statBox').querySelectorAll('.pl-row').forEach(r=>r.onclick=()=>Admin.player(r.dataset.pid));
+  },
+  // V10.2：管理員帳號（Email＋密碼，各自登入）
+  async admins(){
+    const box = $('#admList'); box.innerHTML = '<p class="sub">讀取中…</p>';
+    let list = []; try{ list = (await DB.list('admins')).sort((a,b)=>(a.created||0)-(b.created||0)); }catch(e){ box.innerHTML = '<p class="sub">讀取失敗：請確認 Firestore 規則已更新到 V4.0</p>'; return; }
+    const me = Login.uid;
+    box.innerHTML = list.map(a=>`<div class="adm-row"><div><b>${esc(a.name||a.email||'管理員')}</b><small>${esc(a.email||'')}${a.id===me?'・你自己':''}</small></div>${a.id===me?'':`<button class="chip" data-rm="${a.id}">移除</button>`}</div>`).join('') || '<p class="sub">沒有資料</p>';
+    box.querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{ const a = list.find(x=>x.id===b.dataset.rm); if(!confirm(`確定移除「${a.name||a.email}」的管理權限？`)) return;
+      try{ await DB.del('admins/'+a.id); toast('已移除管理權限'); Admin.admins(); }catch(e){ toast('移除失敗'); } });
+  },
+  async addAdmin(){
+    const email = ($('#aEmail').value||'').trim(), pw = $('#aPw').value||'', name = ($('#aName').value||'').trim(), btn = $('#btnAddAdm');
+    if(!/^\S+@\S+\.\S+$/.test(email)){ toast('請輸入正確的 Email'); return; }
+    if(pw.length<6){ toast('密碼至少 6 個字元'); return; }
+    btn.disabled = true; btn.textContent = '建立中…';
+    try{
+      const base = `https://www.gstatic.com/firebasejs/${FB_VER}/`, appM = await import(base+'firebase-app.js');
+      const app2 = appM.getApps().find(a=>a.name==='adm2') || appM.initializeApp(FIREBASE_CONFIG, 'adm2'), A2 = fb.auth.getAuth(app2);
+      let uid;
+      try{ uid = (await fb.auth.createUserWithEmailAndPassword(A2, email, pw)).user.uid; }
+      catch(e){ if(e.code!=='auth/email-already-in-use') throw e; uid = (await fb.auth.signInWithEmailAndPassword(A2, email, pw)).user.uid; }
+      await fb.auth.signOut(A2);
+      await DB.set('admins/'+uid, {email, name:name||email.split('@')[0], created:Date.now(), by:Login.uid});
+      $('#aEmail').value=''; $('#aPw').value=''; $('#aName').value=''; toast(`已新增管理員 ${email}`); Admin.admins();
+    }catch(e){ console.error(e); toast({'auth/wrong-password':'這個 Email 已有帳號，密碼不對','auth/invalid-credential':'這個 Email 已有帳號，密碼不對','auth/weak-password':'密碼太簡單，至少 6 個字元','auth/invalid-email':'Email 格式不對','permission-denied':'權限不足：請先更新 Firestore 規則到 V4.0'}[e.code] || ('新增失敗：'+(e.code||e.message)), 4000); }
+    btn.disabled = false; btn.textContent = '新增管理員';
   },
   async exportAll(fmt){
     const msg = $('#expMsg'), btns = [$('#btnExpJson'), $('#btnExpCsv')]; btns.forEach(b=>b.disabled = true);
@@ -2592,6 +2646,7 @@ $('#btnResetDay').onclick = ()=>{ P.daily.ch={}; P.daily.knightMet=false; P.dail
 $('#btnResetDiff').onclick = ()=>{ P.diff={}; Auth.save(); renderAll(); toast('難度都重設為低'); };
 $('#btnSkip').onclick = ()=>{ const T=treeObj(); T.lastDay=shiftDate(T.lastDay,-1); CARE_TASKS.forEach(c=>T.care[c.id]=shiftDate(T.care[c.id],-1)); Auth.save(); renderAll(); toast('樹的時間往前過了 1 天'); };
 $('#btnSkipOld').onclick = ()=>{ if(P.tree){ P.tree.last=0; } P.daily.cares=0; Auth.save(); renderAll(); toast('已跳過等待時間'); };
+$('#btnAddAdm').onclick = ()=>Admin.addAdmin();
 $('#btnExpJson').onclick = ()=>Admin.exportAll('json');
 $('#btnExpCsv').onclick = ()=>Admin.exportAll('csv');
 $('#btnNotice').onclick = async()=>{ const v = $('#ntText').value.trim(); if(!v){ toast('請輸入公告內容'); return; }
