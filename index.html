@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V10.4</title>
+<title>今天在隱花王國尋寶 V10.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -290,6 +290,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .mem-c.ok .mf{box-shadow:0 0 0 3px #3E9A3A inset}.mem-c.bonus .mf{background:#E7F2DD}.mem-c.bonus b{font-size:26px}.mem-c.bonus small{font-size:11px;color:#3E6B3A}
 .mem-f{display:flex;gap:14px;margin-top:10px;font-weight:700;color:#3B2A1E;font-size:14px}
 .gift-box{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--gold) 12%,var(--card))}.gift-box svg{width:110px}.gift-ok{text-align:center;margin:0}.gift-ok small{color:var(--muted)}
+.pl-row.picked{background:var(--fig);color:#fff;border-color:var(--fig)}.pl-row.picked .pid-tag{color:#fff}
 .gift-sel{margin:8px 0}.gift-sel .field{margin:4px 0}
 .prac-d{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.prac-d button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;gap:4px;align-items:center;font:inherit;color:var(--ink);cursor:pointer}.prac-d button b{font-size:17px}.prac-d small{font-size:11px;color:var(--muted);line-height:1.4}.prac-d button.cur{border-color:var(--fig)}
 .prac-sc{display:flex;flex-direction:column;align-items:center;margin:4px 0 6px}.prac-sc b{font-size:44px;color:var(--fig);line-height:1.1}.prac-sc small{color:var(--muted)}
@@ -914,7 +915,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V10.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V10.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1165,16 +1166,16 @@ const rnd = n=>Math.floor(Math.random()*n);
 function toast(t, ms=2200){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.h);toast.h=setTimeout(()=>el.classList.remove('on'),ms);}
 /* ---------- V10.3：果盒記憶（3×3／4×4／5×5，記住每盒顆數、排列、內外層包裝顏色，兩兩配對） ---------- */
 const MEM_WRAP = [{a:'#E0473C', b:'#F2C230', n:'內紅外黃'}, {a:'#F2C230', b:'#E0473C', n:'內黃外紅'}];
-function memPos(n, lay){
-  const cols = lay ? 4 : 3, rows = Math.ceil(n/cols), pts = [], sx = 84/(cols + (lay ? .5 : 0)), sy = 70/Math.max(rows,3), r = Math.min(sx, sy)*.46;
-  for(let i=0;i<n;i++){ const rr = Math.floor(i/cols), inRow = rr===rows-1 ? n - rr*cols : cols, c = i%cols;
-    const off = inRow<cols ? (84 - inRow*sx)/2 : (lay && rr%2 ? sx/2 : 0);
-    pts.push([8 + off + sx*(c+.5), 22 + (70 - rows*sy)/2 + sy*(rr+.5), r]); }
+// V10.5：固定水平排列 6=3+3、7=3+4、8=4+4、9=3+3+3、10=3+4+3、11=4+3+4、12=4+4+4，果實大小一致
+const MEM_ROWS = {6:[3,3], 7:[3,4], 8:[4,4], 9:[3,3,3], 10:[3,4,3], 11:[4,3,4], 12:[4,4,4]};
+function memPos(n){
+  const rows = MEM_ROWS[n] || [n], sx = 21, sy = 23, r = 9.4, top = 22 + (70 - rows.length*sy)/2, pts = [];
+  rows.forEach((k, ri)=>{ const x0 = 50 - k*sx/2; for(let c=0;c<k;c++) pts.push([x0 + sx*(c+.5), top + sy*(ri+.5), r]); });
   return pts;
 }
 function memBox(card, small){
   const W = MEM_WRAP[card.w];
-  const figs = memPos(card.n, card.l).map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${W.b}" stroke="${shade(W.b,-.25)}" stroke-width="${r*.18}" stroke-dasharray="${r*.22} ${r*.16}"/>
+  const figs = memPos(card.n).map(([x,y,r])=>`<circle cx="${x}" cy="${y}" r="${r}" fill="${W.b}" stroke="${shade(W.b,-.25)}" stroke-width="${r*.18}" stroke-dasharray="${r*.22} ${r*.16}"/>
     <circle cx="${x}" cy="${y}" r="${r*.74}" fill="${W.a}"/><circle cx="${x}" cy="${y}" r="${r*.52}" fill="#6E2A4E"/><circle cx="${x-r*.16}" cy="${y-r*.18}" r="${r*.14}" fill="#B9668E"/><circle cx="${x}" cy="${y}" r="${r*.08}" fill="#F3C2B8"/>`).join('');
   return `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="3" y="14" width="94" height="82" rx="6" fill="#C9A06A" stroke="#9C7643" stroke-width="2"/><rect x="7" y="18" width="86" height="74" rx="4" fill="#E9DCC6"/>
     <rect x="3" y="4" width="94" height="14" rx="4" fill="#B88A52"/><text x="50" y="14" text-anchor="middle" font-size="8" font-weight="700" fill="#5B2346">隱花王國</text>${figs}</svg>`;
@@ -1183,18 +1184,20 @@ const MEM_BACK = `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="3" y="4
   <circle cx="50" cy="50" r="17" fill="#F3E6CF"/><path d="M50 37c-7 8-12 11-12 18 0 6 5 9 12 9s12-3 12-9c0-7-5-10-12-18z" fill="#7A2E52"/><path d="M50 37c0-4 2-6 5-7" stroke="#5E9A4E" stroke-width="2.4" fill="none"/></svg>`;
 function memoryGame(done){
   const d = diffOf('memory'), C = [3,4,4][d], R = [4,4,5][d], pairs = C*R/2, peek = [4,6,8][d];   // V10.4：3×4、4×4、4×5，全部偶數，不留空格
-  const pool = []; for(let n=6;n<=12;n++) for(let w=0;w<2;w++) for(let l=0;l<(d===0?1:2);l++) pool.push({n, w, l});
+  // 一盒＝顆數（6～12）×包裝顏色（內紅外黃／內黃外紅），共 14 種；難度越高越常出現相近顆數
+  let pool = []; for(let n=6;n<=12;n++) for(let w=0;w<2;w++) pool.push({n, w});
   pool.sort(()=>Math.random()-.5);
+  if(d>0){ const lo = 6 + rnd(d===1 ? 3 : 2), hi = lo + (d===1 ? 4 : 5); pool.sort((a,b)=>((a.n<lo||a.n>hi)?1:0)-((b.n<lo||b.n>hi)?1:0)); }
   let deck = []; pool.slice(0,pairs).forEach((c,i)=>{ deck.push({...c, k:i}, {...c, k:i}); }); deck.sort(()=>Math.random()-.5);
   const ov = document.createElement('div'); ov.id = 'memOv';
-  ov.innerHTML = `<button class="wo-x" id="memX">離開</button><div class="mem-h"><b>🧠 果盒記憶・${DIFF_N[d]}</b><span id="memInfo">先記住每一盒：顆數、排列、包裝顏色</span></div>
+  ov.innerHTML = `<button class="wo-x" id="memX">離開</button><div class="mem-h"><b>🧠 果盒記憶・${DIFF_N[d]}</b><span id="memInfo">先記住每一盒：顆數和包裝顏色</span></div>
     <div class="mem-g" id="memG" style="grid-template-columns:repeat(${C},1fr);width:min(96vw,${C*120}px)">${deck.map((c,i)=>`<button class="mem-c ${c.bonus?'bonus':''}" data-i="${i}"><span class="mf">${c.bonus?`<b>🌱</b><small>阿無</small>`:memBox(c)}</span><span class="mb">${MEM_BACK}</span></button>`).join('')}</div>
     <div class="mem-f"><span id="memT">預覽 ${peek}</span><span id="memM">翻 0 次</span><span id="memP">配對 0/${pairs}</span></div>`;
   document.body.appendChild(ov); MUSIC.start();
   const cards = [...ov.querySelectorAll('.mem-c')]; let open = [], lock = true, moves = 0, got = 0, t0 = 0, tm = null, over = false;
   cards.forEach(c=>c.classList.add('up'));
   let left = peek; const pk = setInterval(()=>{ left--; $('#memT').textContent = left>0 ? `預覽 ${left}` : '開始！'; if(left<=0){ clearInterval(pk); cards.forEach((c,i)=>{ if(!deck[i].bonus) c.classList.remove('up'); }); lock = false; t0 = Date.now();
-    tm = setInterval(()=>{ $('#memT').textContent = `⏱ ${Math.round((Date.now()-t0)/1000)} 秒`; }, 500); $('#memInfo').textContent = '翻兩盒，顆數、排列、顏色都一樣才算一對'; } }, 1000);
+    tm = setInterval(()=>{ $('#memT').textContent = `⏱ ${Math.round((Date.now()-t0)/1000)} 秒`; }, 500); $('#memInfo').textContent = '翻兩盒，顆數和顏色都一樣才算一對'; } }, 1000);
   const end = (quit)=>{ if(over) return; over = true; clearInterval(pk); clearInterval(tm); MUSIC.stop(); ov.remove();
     if(quit) return closeSheet();
     const secs = Math.round((Date.now()-t0)/1000), extra = Math.max(0, moves - pairs), score = Math.max(10, Math.min(100, Math.round(100 - extra*[5,4,3][d] - Math.max(0, secs - pairs*[6,5,5][d]))));
@@ -1639,9 +1642,9 @@ function giftGrant(g, src){
   logChest(src, txt); Auth.save(); renderAll(); return txt;
 }
 // V10.2：寶箱紀錄依年 → 月 → 日收攏（最新的一天預設展開）
-function logTree(logs, tm, nm){
+function logTree(logs, tm, nm, noName){
   const ym = {}; logs.forEach(l=>{ const d = new Date(l.t), y = d.getFullYear(), m = d.getMonth()+1, day = d.getDate(); ((ym[y] = ym[y]||{})[m] = ym[y][m]||{})[day] = [...((ym[y][m]||{})[day]||[]), l]; });
-  let first = true; const row = l=>`<tr class="pl-row" data-pid="${l.pid}"><td>${tm(l.t).split(' ')[1]}<br><b>${nm(l.name, l.pid)}</b></td><td>${esc(l.s)}<br>${esc(l.r)}</td></tr>`;
+  let first = true; const row = l=>`<tr class="${noName?'':'pl-row'}" data-pid="${l.pid||''}"><td>${tm(l.t).split(' ')[1]}${noName?'':`<br><b>${nm(l.name, l.pid)}</b>`}</td><td>${esc(l.s)}<br>${esc(l.r)}</td></tr>`;
   return Object.keys(ym).sort((a,b)=>b-a).map(y=>`<details class="lg-y" open><summary>${y} 年</summary>${Object.keys(ym[y]).sort((a,b)=>b-a).map(m=>{ const days = ym[y][m], cnt = Object.values(days).reduce((a,b)=>a+b.length,0);
     return `<details class="lg-m" ${first?'open':''}><summary>${m} 月（${cnt} 筆）</summary>${Object.keys(days).sort((a,b)=>b-a).map(d=>{ const o = first; first = false;
       return `<details class="lg-d" ${o?'open':''}><summary>${m}/${d}（${days[d].length} 筆）</summary><table class="ladder chlog">${days[d].map(row).join('')}</table></details>`; }).join('')}</details>`; }).join('')}</details>`).join('');
@@ -2639,10 +2642,26 @@ const Admin = {
       <details class="card fold-c"><summary><b>🎁 寶箱紀錄（${logs.length} 筆）</b><small>依年月日整理，點開查看</small></summary>${logs.length ? logTree(logs, tm, nm) : '<p class="sub">還沒有紀錄</p>'}</details>
       <details class="card fold-c"><summary><b>👥 全部玩家（${players.length} 位）</b><small>點開後可搜尋，點名字看寶箱、私訊</small></summary>
         <input id="plQ" class="field" placeholder="搜尋暱稱或會員編號" style="margin:8px 0">
+        <div class="seg" style="margin:0 0 8px"><button class="chip" id="plMulti">✉️ 勾選多人發訊</button><button class="chip hide" id="plAllSel">全選目前顯示</button><button class="chip hide" id="plClr">清除勾選</button></div>
+        <div class="card hide" id="mcBox" style="text-align:left"><b>💬 發訊給 <span id="mcN">0</span> 位玩家</b><textarea id="mcText" class="field" rows="3" maxlength="200" placeholder="例如：感謝支持，送你一個寶箱！"></textarea>${giftSel('mg')}<button id="mcSend" class="btn main">送出</button></div>
         <div class="pl-all" id="plAll">${players.map(p=>`<button class="chip pl-row" data-pid="${p.id}" data-q="${esc((p.name||'')+' '+p.id).toLowerCase()}">${LEVELS[lvIndex(p.points)].icon} ${nm(p.name, p.id)}</button>`).join('') || '<p class="sub">還沒有玩家</p>'}</div><p class="lvtxt hide" id="plNone">找不到符合的玩家</p></details>`;
+    // V10.5：勾選多人一起發訊（可附寶箱）
+    const picked = new Set(); let multi = false;
+    const upd = ()=>{ $('#mcN').textContent = picked.size; document.querySelectorAll('#plAll .pl-row').forEach(b=>b.classList.toggle('picked', picked.has(b.dataset.pid))); };
+    document.querySelectorAll('#plAll .pl-row').forEach(b=>b.onclick=e=>{ e.stopPropagation(); if(!multi) return Admin.player(b.dataset.pid); picked.has(b.dataset.pid) ? picked.delete(b.dataset.pid) : picked.add(b.dataset.pid); upd(); });
+    $('#plMulti').onclick = ()=>{ multi = !multi; $('#plMulti').textContent = multi ? '✖ 結束多選' : '✉️ 勾選多人發訊'; ['#plAllSel','#plClr','#mcBox'].forEach(x=>$(x).classList.toggle('hide', !multi)); if(!multi){ picked.clear(); upd(); } };
+    $('#plAllSel').onclick = ()=>{ document.querySelectorAll('#plAll .pl-row:not(.hide)').forEach(b=>picked.add(b.dataset.pid)); upd(); };
+    $('#plClr').onclick = ()=>{ picked.clear(); upd(); };
+    $('#mcSend').onclick = async()=>{ const v = $('#mcText').value.trim(), gift = readGift('mg'); if(!v){ toast('請輸入內容'); return; } if(!picked.size){ toast('請先勾選玩家'); return; }
+      if(!confirm(`確定發訊給 ${picked.size} 位玩家${gift?`，每人附 ${giftText(gift)}`:''}？`)) return;
+      const btn = $('#mcSend'); btn.disabled = true; const ids = [...picked], t = Date.now();
+      try{ for(let i=0;i<ids.length;i+=400) await DB.batch(ids.slice(i,i+400).map((pid,k)=>({op:'set', path:`players/${pid}/inbox/M${(t+i+k).toString(36)}`, data:{text:v, created:t, read:false, ...(gift?{gift, claimed:false}:{})}})));
+        toast(`已發訊給 ${ids.length} 位玩家`); $('#mcText').value=''; giftReset('mg'); picked.clear(); upd(); }
+      catch(e){ console.error(e); toast('發送失敗：'+(e.code||e.message)); }
+      btn.disabled = false; };
     const q = $('#plQ'); if(q) q.oninput = ()=>{ const v = q.value.trim().toLowerCase(); let n = 0;
       document.querySelectorAll('#plAll .pl-row').forEach(b=>{ const ok = !v || b.dataset.q.includes(v); b.classList.toggle('hide', !ok); if(ok) n++; }); $('#plNone').classList.toggle('hide', n>0); };
-    $('#statBox').querySelectorAll('.pl-row').forEach(r=>r.onclick=()=>Admin.player(r.dataset.pid));
+    $('#statBox').querySelectorAll('.pl-row').forEach(r=>{ if(!r.onclick) r.onclick=()=>Admin.player(r.dataset.pid); });
   },
   // V10.2：管理員帳號（Email＋密碼，各自登入）
   async admins(){
@@ -2701,7 +2720,7 @@ const Admin = {
       <p class="sub">${LEVELS[lvIndex(p.points)].n}・${p.points} 分・${p.boxes||0} 盒・寶箱追逐賽贏 ${p.chaseWins||0} 次</p>
       <div class="card" style="text-align:left"><b>💬 對這位玩家發言</b><textarea id="pmText" class="field" rows="3" maxlength="200" placeholder="例如：謝謝你常來巡園，下次來農場送你一顆！"></textarea>${giftSel('pg')}<button id="btnPm" class="btn main">送出私訊</button>
         ${inbox.length ? `<div class="lvtxt">最近私訊：${inbox.map(m=>`<br>・${tm(m.created)} ${esc(m.text)}${m.gift?`【🎁 ${esc(giftText(m.gift))}・${m.claimed?'已領':'未領'}】`:''}（${m.read?'已讀':'未讀'}）`).join('')}</div>` : ''}</div>
-      <div class="card" style="text-align:left"><b>🎁 寶箱紀錄（最近 ${log.length} 筆）</b>${log.length ? `<table class="ladder chlog">${log.map(l=>`<tr><td>${tm(l.t)}</td><td>${esc(l.s)}<br>${esc(l.r)}</td></tr>`).join('')}</table>` : '<p class="sub">還沒有紀錄</p>'}</div>
+      <details class="card fold-c" style="text-align:left"><summary><b>🎁 寶箱紀錄（最近 ${log.length} 筆）</b><small>依年月日整理，點開查看</small></summary>${log.length ? logTree(log, t=>{ const d = new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }, null, true) : '<p class="sub">還沒有紀錄</p>'}</details>
       <button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
     $('#btnPm').onclick = async()=>{ const v = $('#pmText').value.trim(); if(!v){ toast('請輸入內容'); return; }
       const gift = readGift('pg');
@@ -3490,7 +3509,7 @@ const TASK_SLOTS = [[6,10],[10,14],[14,18],[18,23]];
 const TASKS = [
   {id:'wood', n:'碎木工作', i:'🪵', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
   // 之後的新小遊戲加在這裡，就會自動輪流出現
-  ,{id:'memory', n:'果盒記憶', i:'🧠', d:'出貨時每盒無花果都用內外兩層網套保護，顆數和排法依果實大小調整。記住每一盒的樣子，就像出貨前的核對。', rules:'先看幾秒鐘，記住每一盒的顆數（6～12 顆）、排列方式、網套顏色（內紅外黃或內黃外紅）。蓋起來後翻兩盒，完全一樣才算一對。翻的次數越少、越快完成，分數越高。簡單 3×4、中級 4×4、高級 4×5。', play:memoryGame}
+  ,{id:'memory', n:'果盒記憶', i:'🧠', d:'出貨時每盒無花果都用內外兩層網套保護，顆數和排法依果實大小調整。記住每一盒的樣子，就像出貨前的核對。', rules:'先看幾秒鐘，記住每一盒的顆數（6～12 顆，一律水平排列）和網套顏色（內紅外黃或內黃外紅）。蓋起來後翻兩盒，顆數和顏色都一樣才算一對。翻的次數越少、越快完成，分數越高。簡單 3×4、中級 4×4、高級 4×5。', play:memoryGame}
 ];
 function taskSlot(){ const h = new Date().getHours(); return TASK_SLOTS.findIndex(([a,b])=>h>=a && h<b); }
 function taskInfo(force){
