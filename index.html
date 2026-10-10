@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V10.5</title>
+<title>今天在隱花王國尋寶 V10.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -292,6 +292,18 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .gift-box{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:8px;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--gold) 12%,var(--card))}.gift-box svg{width:110px}.gift-ok{text-align:center;margin:0}.gift-ok small{color:var(--muted)}
 .pl-row.picked{background:var(--fig);color:#fff;border-color:var(--fig)}.pl-row.picked .pid-tag{color:#fff}
 .gift-sel{margin:8px 0}.gift-sel .field{margin:4px 0}
+#packOv{position:fixed;inset:0;z-index:40;background:#EFE4CF;display:flex;flex-direction:column;align-items:center;padding:calc(48px + env(safe-area-inset-top,0px)) 12px 16px;overflow:auto;touch-action:manipulation}
+.mem-bar{width:min(92vw,440px);height:8px;border-radius:4px;background:#0001;overflow:hidden;margin:4px 0 6px}.mem-bar i{display:block;height:100%;width:100%;background:#3E9A3A;transition:width .2s}.mem-bar i.low{background:#E0473C}
+.mem-combo{height:22px;font-weight:900;color:#C9566E}.mem-combo.pop{animation:cmIn .4s}
+.mem-c .me{font-size:clamp(26px,9vw,44px);line-height:1}.mem-c .mf small{font-size:11px;color:#6E5A48;margin-top:2px}.mem-g.shuf{animation:shuf .5s}
+@keyframes shuf{30%{transform:rotate(-2deg) scale(.97)}60%{transform:rotate(2deg) scale(.97)}}
+.pk-order{min-height:78px;width:min(92vw,440px);display:flex;justify-content:center}.pk-card{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 18px;border-radius:14px;background:#fff;box-shadow:0 2px 6px #0002;transition:transform .3s}
+.pk-card.show{transform:scale(1.06);box-shadow:0 0 0 3px #C99A2E}.pk-n{font-size:26px;font-weight:900;color:#5B2346}.pk-wr{display:flex;align-items:center;gap:4px;font-size:13px;font-weight:700}.pk-wr i{width:12px;height:12px;border-radius:50%;display:inline-block}
+.pk-box{width:min(52vw,210px);margin:6px 0}.pk-box svg{width:100%}.pk-box.nowrap{opacity:.85}
+.pk-ctl{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}.pk-w,.pk-u{border:1.5px solid #9C7643;background:#fff;border-radius:99px;padding:7px 12px;font:inherit;font-size:13px;font-weight:700}.pk-w.on{background:#5B2346;color:#fff;border-color:#5B2346}
+.pk-belt{position:relative;width:min(96vw,460px);height:64px;margin:10px 0;border-radius:12px;background:repeating-linear-gradient(90deg,#6E747A 0 18px,#5E646A 18px 36px);overflow:hidden;box-shadow:inset 0 3px 6px #0004}
+.pk-fig{position:absolute;left:0;top:12px;width:40px;height:40px;border-radius:50%;border:4px dashed #F2C230;background:radial-gradient(circle at 40% 35%,#B9668E 0 18%,#6E2A4E 19% 55%,#E0473C 56%);cursor:pointer;padding:0;font-size:18px}
+.pk-fig.bad{background:radial-gradient(circle at 40% 35%,#8A6A4E 0 30%,#4E3A2E 31% 55%,#E0473C 56%)}.pk-ship{width:min(92vw,440px)}
 .prac-d{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.prac-d button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;gap:4px;align-items:center;font:inherit;color:var(--ink);cursor:pointer}.prac-d button b{font-size:17px}.prac-d small{font-size:11px;color:var(--muted);line-height:1.4}.prac-d button.cur{border-color:var(--fig)}
 .prac-sc{display:flex;flex-direction:column;align-items:center;margin:4px 0 6px}.prac-sc b{font-size:44px;color:var(--fig);line-height:1.1}.prac-sc small{color:var(--muted)}
 .rd-box{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);text-align:left}
@@ -915,7 +927,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V10.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V10.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1167,7 +1179,7 @@ function toast(t, ms=2200){const el=$('#toast');el.textContent=t;el.classList.ad
 /* ---------- V10.3：果盒記憶（3×3／4×4／5×5，記住每盒顆數、排列、內外層包裝顏色，兩兩配對） ---------- */
 const MEM_WRAP = [{a:'#E0473C', b:'#F2C230', n:'內紅外黃'}, {a:'#F2C230', b:'#E0473C', n:'內黃外紅'}];
 // V10.5：固定水平排列 6=3+3、7=3+4、8=4+4、9=3+3+3、10=3+4+3、11=4+3+4、12=4+4+4，果實大小一致
-const MEM_ROWS = {6:[3,3], 7:[3,4], 8:[4,4], 9:[3,3,3], 10:[3,4,3], 11:[4,3,4], 12:[4,4,4]};
+const MEM_ROWS = {1:[1], 2:[2], 3:[3], 4:[4], 5:[3,2], 6:[3,3], 7:[3,4], 8:[4,4], 9:[3,3,3], 10:[3,4,3], 11:[4,3,4], 12:[4,4,4]};
 function memPos(n){
   const rows = MEM_ROWS[n] || [n], sx = 21, sy = 23, r = 9.4, top = 22 + (70 - rows.length*sy)/2, pts = [];
   rows.forEach((k, ri)=>{ const x0 = 50 - k*sx/2; for(let c=0;c<k;c++) pts.push([x0 + sx*(c+.5), top + sy*(ri+.5), r]); });
@@ -1182,35 +1194,84 @@ function memBox(card, small){
 }
 const MEM_BACK = `<svg viewBox="0 0 100 100" aria-hidden="true"><rect x="3" y="4" width="94" height="92" rx="7" fill="#B88A52" stroke="#8C6430" stroke-width="2"/><path d="M3 50h94" stroke="#8C6430" stroke-width="2" stroke-dasharray="4 3"/>
   <circle cx="50" cy="50" r="17" fill="#F3E6CF"/><path d="M50 37c-7 8-12 11-12 18 0 6 5 9 12 9s12-3 12-9c0-7-5-10-12-18z" fill="#7A2E52"/><path d="M50 37c0-4 2-6 5-7" stroke="#5E9A4E" stroke-width="2.4" fill="none"/></svg>`;
+/* ---------- V10.6：農場翻牌（角色配對＋計時條＋連擊＋中途洗牌） ---------- */
+const MEM_CHARS = [['🍇','阿無'],['🐱','小呱'],['🐿️','碰氣'],['🐕','黑熊'],['🐈‍⬛','奇奇'],['🐢','小葵'],['🐔','一虎'],['🦜','英雄'],['👽','外星人'],['🛡️','黑騎士'],['🎁','禮盒'],['🌿','無花果葉']];
 function memoryGame(done){
-  const d = diffOf('memory'), C = [3,4,4][d], R = [4,4,5][d], pairs = C*R/2, peek = [4,6,8][d];   // V10.4：3×4、4×4、4×5，全部偶數，不留空格
-  // 一盒＝顆數（6～12）×包裝顏色（內紅外黃／內黃外紅），共 14 種；難度越高越常出現相近顆數
-  let pool = []; for(let n=6;n<=12;n++) for(let w=0;w<2;w++) pool.push({n, w});
-  pool.sort(()=>Math.random()-.5);
-  if(d>0){ const lo = 6 + rnd(d===1 ? 3 : 2), hi = lo + (d===1 ? 4 : 5); pool.sort((a,b)=>((a.n<lo||a.n>hi)?1:0)-((b.n<lo||b.n>hi)?1:0)); }
-  let deck = []; pool.slice(0,pairs).forEach((c,i)=>{ deck.push({...c, k:i}, {...c, k:i}); }); deck.sort(()=>Math.random()-.5);
+  const d = diffOf('memory'), C = [3,4,4][d], R = [4,4,5][d], pairs = C*R/2, LIMIT = [60,70,80][d], peek = [3,2,2][d];
+  const pick = [...MEM_CHARS].sort(()=>Math.random()-.5).slice(0,pairs);
+  let deck = []; pick.forEach((c,i)=>deck.push({e:c[0], n:c[1], k:i}, {e:c[0], n:c[1], k:i})); deck.sort(()=>Math.random()-.5);
   const ov = document.createElement('div'); ov.id = 'memOv';
-  ov.innerHTML = `<button class="wo-x" id="memX">離開</button><div class="mem-h"><b>🧠 果盒記憶・${DIFF_N[d]}</b><span id="memInfo">先記住每一盒：顆數和包裝顏色</span></div>
-    <div class="mem-g" id="memG" style="grid-template-columns:repeat(${C},1fr);width:min(96vw,${C*120}px)">${deck.map((c,i)=>`<button class="mem-c ${c.bonus?'bonus':''}" data-i="${i}"><span class="mf">${c.bonus?`<b>🌱</b><small>阿無</small>`:memBox(c)}</span><span class="mb">${MEM_BACK}</span></button>`).join('')}</div>
-    <div class="mem-f"><span id="memT">預覽 ${peek}</span><span id="memM">翻 0 次</span><span id="memP">配對 0/${pairs}</span></div>`;
+  ov.innerHTML = `<button class="wo-x" id="memX">離開</button><div class="mem-h"><b>🃏 農場翻牌・${DIFF_N[d]}</b><span id="memInfo">記住王國夥伴的位置！</span></div>
+    <div class="mem-bar"><i id="memBar"></i></div><div class="mem-combo" id="memCombo"></div>
+    <div class="mem-g" id="memG" style="grid-template-columns:repeat(${C},1fr);width:min(96vw,${C*110}px)"></div>
+    <div class="mem-f"><span id="memS">0 分</span><span id="memP">配對 0/${pairs}</span></div>`;
   document.body.appendChild(ov); MUSIC.start();
-  const cards = [...ov.querySelectorAll('.mem-c')]; let open = [], lock = true, moves = 0, got = 0, t0 = 0, tm = null, over = false;
-  cards.forEach(c=>c.classList.add('up'));
-  let left = peek; const pk = setInterval(()=>{ left--; $('#memT').textContent = left>0 ? `預覽 ${left}` : '開始！'; if(left<=0){ clearInterval(pk); cards.forEach((c,i)=>{ if(!deck[i].bonus) c.classList.remove('up'); }); lock = false; t0 = Date.now();
-    tm = setInterval(()=>{ $('#memT').textContent = `⏱ ${Math.round((Date.now()-t0)/1000)} 秒`; }, 500); $('#memInfo').textContent = '翻兩盒，顆數和顏色都一樣才算一對'; } }, 1000);
-  const end = (quit)=>{ if(over) return; over = true; clearInterval(pk); clearInterval(tm); MUSIC.stop(); ov.remove();
-    if(quit) return closeSheet();
-    const secs = Math.round((Date.now()-t0)/1000), extra = Math.max(0, moves - pairs), score = Math.max(10, Math.min(100, Math.round(100 - extra*[5,4,3][d] - Math.max(0, secs - pairs*[6,5,5][d]))));
-    SND.win(); done({score, detail:`${C}×${R} 配對 ${pairs} 組・翻了 ${moves} 次・${secs} 秒`}); };
-  $('#memX').onclick = ()=>end(true);
-  ov.addEventListener('click', e=>{ const b = e.target.closest('.mem-c'); if(!b || lock || over) return; const i = +b.dataset.i, c = deck[i];
-    if(c.bonus || b.classList.contains('up')) return;
-    b.classList.add('up'); SND.pop(); open.push(i);
-    if(open.length<2) return;
-    moves++; $('#memM').textContent = `翻 ${moves} 次`; const [x, y] = open; open = [];
-    if(deck[x].k===deck[y].k){ got++; cards[x].classList.add('ok'); cards[y].classList.add('ok'); SND.good(got); $('#memP').textContent = `配對 ${got}/${pairs}`; if(got===pairs) setTimeout(()=>end(false), 600); }
-    else { lock = true; SND.bad(); setTimeout(()=>{ cards[x].classList.remove('up'); cards[y].classList.remove('up'); lock = false; }, 900); }
+  const G = $('#memG'); let open = [], lock = true, got = 0, combo = 0, score = 0, over = false, shuffled = false, t0 = 0, raf = 0;
+  const draw = ()=>{ G.innerHTML = deck.map((c,i)=>`<button class="mem-c ${c.up?'up':''} ${c.ok?'ok':''}" data-i="${i}"><span class="mf"><b class="me">${c.e}</b><small>${c.n}</small></span><span class="mb">${MEM_BACK}</span></button>`).join(''); };
+  deck.forEach(c=>c.up=true); draw();
+  setTimeout(()=>{ deck.forEach(c=>c.up=false); draw(); lock = false; t0 = performance.now(); $('#memInfo').textContent = '翻兩張一樣的夥伴，連續配對分數加倍！'; tick(); }, peek*1000);
+  const tick = ()=>{ if(over) return; const left = LIMIT - (performance.now()-t0)/1000; $('#memBar').style.width = Math.max(0, left/LIMIT*100)+'%'; $('#memBar').classList.toggle('low', left<10); if(left<=0) return end(false); raf = requestAnimationFrame(tick); };
+  const end = (allDone, quit)=>{ if(over) return; over = true; cancelAnimationFrame(raf); MUSIC.stop(); ov.remove(); if(quit) return closeSheet();
+    const secs = Math.round((performance.now()-t0)/1000), bonus = allDone ? Math.max(0, LIMIT-secs) : 0, total = score + bonus;
+    const max = pairs*10*2.2 + LIMIT*.6, pct = Math.max(5, Math.min(100, Math.round(total/max*100)));
+    allDone ? SND.win() : SND.lose(); done({score:pct, detail:`配對 ${got}/${pairs}・最高連擊 ${MEM_MAX}・${allDone?`剩 ${Math.max(0,LIMIT-secs)} 秒`:'時間到'}`}); };
+  let MEM_MAX = 0;
+  $('#memX').onclick = ()=>end(false, true);
+  G.addEventListener('click', e=>{ const b = e.target.closest('.mem-c'); if(!b || lock || over) return; const i = +b.dataset.i, c = deck[i]; if(c.up || c.ok) return;
+    c.up = true; b.classList.add('up'); SND.pop(); open.push(i); if(open.length<2) return;
+    const [x, y] = open; open = [];
+    if(deck[x].k===deck[y].k){ got++; combo++; MEM_MAX = Math.max(MEM_MAX, combo); const gain = 10*Math.min(combo,4); score += gain; deck[x].ok = deck[y].ok = true;
+      G.querySelector(`[data-i="${x}"]`).classList.add('ok'); G.querySelector(`[data-i="${y}"]`).classList.add('ok'); SND.good(Math.min(combo,6));
+      $('#memS').textContent = `${score} 分`; $('#memP').textContent = `配對 ${got}/${pairs}`;
+      const cb = $('#memCombo'); cb.textContent = combo>1 ? `🔥 ${combo} 連擊 +${gain}` : `+${gain}`; cb.classList.remove('pop'); void cb.offsetWidth; cb.classList.add('pop');
+      if(got===pairs) return setTimeout(()=>end(true), 500);
+      if(!shuffled && got>=Math.ceil(pairs/2) && d>0){ shuffled = true; lock = true; $('#memInfo').textContent = '🌪️ 一陣風吹來，卡片洗牌了！';
+        setTimeout(()=>{ const idx = deck.map((c,i)=>c.ok?null:i).filter(v=>v!==null), vals = idx.map(i=>deck[i]).sort(()=>Math.random()-.5); idx.forEach((i,k)=>deck[i]=vals[k]);
+          G.classList.add('shuf'); draw(); setTimeout(()=>{ G.classList.remove('shuf'); lock = false; $('#memInfo').textContent = '繼續找！'; }, 500); }, 600); }
+    } else { combo = 0; lock = true; SND.bad(); setTimeout(()=>{ deck[x].up = deck[y].up = false; G.querySelector(`[data-i="${x}"]`).classList.remove('up'); G.querySelector(`[data-i="${y}"]`).classList.remove('up'); lock = false; }, 750); }
   });
+}
+
+/* ---------- V10.6：裝箱出貨（看訂單 → 從輸送帶點無花果裝箱 → 選網套顏色 → 出貨） ---------- */
+function packGame(done){
+  const d = diffOf('pack'), LIMIT = [75,65,60][d], peek = [3,2,1.5][d], speed = [70,95,120][d], spawnIv = [700,560,460][d], badP = [0,.12,.2][d];
+  const ov = document.createElement('div'); ov.id = 'packOv';
+  ov.innerHTML = `<button class="wo-x" id="pkX2">離開</button><div class="mem-h"><b>📦 裝箱出貨・${DIFF_N[d]}</b><span id="pkInfo">看清楚訂單，蓋起來後照著裝箱！</span></div>
+    <div class="mem-bar"><i id="pkBar"></i></div>
+    <div class="pk-order" id="pkOrder"></div>
+    <div class="pk-box" id="pkBox"></div>
+    <div class="pk-ctl"><button class="pk-w" data-w="0">內紅外黃</button><button class="pk-w" data-w="1">內黃外紅</button><button class="pk-u" id="pkUndo">↩ 拿出一顆</button></div>
+    <div class="pk-belt" id="pkBelt"><div class="pk-lane"></div></div>
+    <button class="btn main pk-ship" id="pkShip">🚚 出貨</button>
+    <div class="mem-f"><span id="pkS">完成 0 單</span><span id="pkC"></span></div>`;
+  document.body.appendChild(ov); MUSIC.start();
+  const belt = $('#pkBelt'); let order = null, packed = 0, bad = 0, w = null, okN = 0, combo = 0, maxC = 0, wrong = 0, over = false, t0 = performance.now(), last = t0, spawnT = 0, items = [], raf = 0, hideT = null;
+  const drawBox = ()=>{ $('#pkBox').innerHTML = packed ? memBox({n:packed, w:w==null?0:w}) : memBox({n:0, w:0}); $('#pkBox').classList.toggle('nowrap', w==null);
+    document.querySelectorAll('.pk-w').forEach(b=>b.classList.toggle('on', +b.dataset.w===w)); };
+  const newOrder = ()=>{ order = {n:6+rnd(7), w:rnd(2)}; packed = 0; bad = 0; w = null; drawBox(); const W = MEM_WRAP[order.w];
+    $('#pkOrder').innerHTML = `<div class="pk-card show"><b>🧾 訂單</b><span class="pk-n">${order.n} 顆</span><span class="pk-wr"><i style="background:${W.a}"></i>內${W.a==='#E0473C'?'紅':'黃'}<i style="background:${W.b}"></i>外${W.b==='#F2C230'?'黃':'紅'}</span></div>`;
+    clearTimeout(hideT); hideT = setTimeout(()=>{ const c = $('#pkOrder .pk-card'); if(c){ c.classList.remove('show'); c.innerHTML = '<b>🧾 訂單已蓋起來</b><span class="lvtxt">憑記憶裝箱</span>'; } }, peek*1000); };
+  const spawn = ()=>{ const el = document.createElement('button'); const isBad = Math.random()<badP; el.className = 'pk-fig'+(isBad?' bad':''); el.innerHTML = isBad ? '💥' : '';
+    el.dataset.bad = isBad?'1':''; belt.appendChild(el); items.push({el, x:-40}); };
+  belt.addEventListener('pointerdown', e=>{ const f = e.target.closest('.pk-fig'); if(!f || over) return; if(packed>=12){ toast('盒子滿了（最多 12 顆）'); return; }
+    packed++; if(f.dataset.bad) bad++; SND.pop(); items = items.filter(it=>it.el!==f); f.remove(); drawBox(); });
+  document.querySelectorAll('.pk-w').forEach(b=>b.onclick=()=>{ w = +b.dataset.w; drawBox(); });
+  $('#pkUndo').onclick = ()=>{ if(packed>0){ packed--; if(bad>packed) bad = packed; drawBox(); } };
+  $('#pkShip').onclick = ()=>{ if(over || !order) return; if(!packed){ toast('盒子還是空的'); return; } if(w==null){ toast('先選網套顏色'); return; }
+    const ok = packed===order.n && w===order.w && !bad;
+    if(ok){ okN++; combo++; maxC = Math.max(maxC, combo); SND.good(Math.min(combo,6)); $('#pkInfo').textContent = combo>1 ? `🔥 ${combo} 連續出貨成功！` : '✅ 客人很滿意！'; }
+    else { wrong++; combo = 0; SND.bad(); $('#pkInfo').textContent = bad ? '❌ 裝到裂果，被退貨了！' : `❌ 退貨！訂單是 ${order.n} 顆・${MEM_WRAP[order.w].n}`; }
+    $('#pkS').textContent = `完成 ${okN} 單`; $('#pkC').textContent = combo>1 ? `連擊 ${combo}` : ''; newOrder(); };
+  const end = quit=>{ if(over) return; over = true; cancelAnimationFrame(raf); clearTimeout(hideT); MUSIC.stop(); ov.remove(); if(quit) return closeSheet();
+    const target = [5,7,9][d], pct = Math.max(5, Math.min(100, Math.round((okN/target)*85 + maxC*3 - wrong*4)));
+    okN ? SND.win() : SND.lose(); done({score:pct, detail:`成功出貨 ${okN} 單・退貨 ${wrong} 單・最高連擊 ${maxC}`}); };
+  $('#pkX2').onclick = ()=>end(true);
+  const loop = now=>{ if(over) return; const dt = Math.min(.05, (now-last)/1000); last = now; const left = LIMIT - (now-t0)/1000;
+    $('#pkBar').style.width = Math.max(0,left/LIMIT*100)+'%'; $('#pkBar').classList.toggle('low', left<10); if(left<=0) return end(false);
+    spawnT += dt*1000; if(spawnT>=spawnIv){ spawnT = 0; spawn(); }
+    const bw = belt.clientWidth; items = items.filter(it=>{ it.x += speed*dt; if(it.x>bw+10){ it.el.remove(); return false; } it.el.style.transform = `translateX(${it.x}px)`; return true; });
+    raf = requestAnimationFrame(loop); };
+  newOrder(); raf = requestAnimationFrame(loop);
 }
 function shade(hex, amt){ // amt -1..1
   let n=parseInt(hex.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;
@@ -3509,7 +3570,8 @@ const TASK_SLOTS = [[6,10],[10,14],[14,18],[18,23]];
 const TASKS = [
   {id:'wood', n:'碎木工作', i:'🪵', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
   // 之後的新小遊戲加在這裡，就會自動輪流出現
-  ,{id:'memory', n:'果盒記憶', i:'🧠', d:'出貨時每盒無花果都用內外兩層網套保護，顆數和排法依果實大小調整。記住每一盒的樣子，就像出貨前的核對。', rules:'先看幾秒鐘，記住每一盒的顆數（6～12 顆，一律水平排列）和網套顏色（內紅外黃或內黃外紅）。蓋起來後翻兩盒，顆數和顏色都一樣才算一對。翻的次數越少、越快完成，分數越高。簡單 3×4、中級 4×4、高級 4×5。', play:memoryGame}
+  ,{id:'pack', n:'裝箱出貨', i:'📦', d:'出貨前每一盒都要核對顆數和網套顏色，裂果不能出貨。正確的包裝讓無花果平安送到客人手上。', rules:'訂單只會亮幾秒：記住要幾顆（6～12）和網套顏色。從輸送帶點無花果裝進盒子，選好內紅外黃或內黃外紅，按「出貨」。顆數、顏色都對才算成功，裝到 💥 裂果會被退貨。連續成功有連擊加分。', play:packGame}
+  ,{id:'memory', n:'農場翻牌', i:'🃏', d:'王國夥伴們躲在卡片後面，一起來找找看！', rules:'開始前先看 2～3 秒，記住夥伴的位置。翻兩張一樣的就配對成功，連續配對分數加倍（最多 4 倍）。中級以上配對過半時，一陣風會把剩下的卡片洗牌。計時條歸零前全部配完，剩餘時間也會加分。', play:memoryGame}
 ];
 function taskSlot(){ const h = new Date().getHours(); return TASK_SLOTS.findIndex(([a,b])=>h>=a && h<b); }
 function taskInfo(force){
@@ -4619,7 +4681,7 @@ let PRACTICE = false, PRACTICE_D = null, PRAC_T0 = 0;
 const PRACTICE_LIST = [
   {k:'whitefly', i:'🦟', n:'銀葉粉蝨'}, {k:'rust', i:'🍂', n:'銹病三輪'}, {k:'rain', i:'🌧️', n:'豪雨垃圾分類'},
   {k:'drought', i:'💧', n:'乾旱澆水'}, {k:'heat', i:'☀️', n:'高溫撐陽傘'}, {k:'wind', i:'🌪️', n:'強風夾枝'},
-  {k:'myna', i:'🐦', n:'趕走八哥'}, {k:'wood', i:'🪵', n:'碎木工作'}, {k:'pick', i:'🧺', n:'摘果挑戰賽'}, {k:'memory', i:'🧠', n:'果盒記憶'}
+  {k:'myna', i:'🐦', n:'趕走八哥'}, {k:'wood', i:'🪵', n:'碎木工作'}, {k:'pick', i:'🧺', n:'摘果挑戰賽'}, {k:'pack', i:'📦', n:'裝箱出貨'}, {k:'memory', i:'🃏', n:'農場翻牌'}
 ];
 function playMenu(){
   const tired = stamina()<=0;
@@ -4643,6 +4705,7 @@ function practice(k, d){
   if(d==null) d = PRACTICE_D!=null ? PRACTICE_D : diffOf(k);
   PRACTICE = true; PRACTICE_D = d; PRAC_T0 = Date.now();
   if(k==='wood'){ closeSheet(); return woodGame(res=>practiceEnd(k, res.score>=50, res.detail, res.score)); }
+  if(k==='pack'){ closeSheet(); return packGame(res=>practiceEnd(k, res.score>=50, res.detail, res.score)); }
   if(k==='memory'){ closeSheet(); return memoryGame(res=>practiceEnd(k, res.score>=50, res.detail, res.score)); }
   if(k==='pick'){ closeSheet(); return pickGame(res=>practiceEnd(k, res.score>=50, res.detail, res.score)); }
   runChallenge(k);
