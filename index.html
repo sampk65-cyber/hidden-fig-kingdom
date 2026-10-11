@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V11.2</title>
+<title>今天在隱花王國尋寶 V11.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -282,6 +282,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .lg-y>summary,.lg-m>summary,.lg-d>summary{cursor:pointer;font-weight:700;padding:6px 0}.lg-m{margin-left:8px}.lg-d{margin-left:16px}.lg-d>summary{font-weight:600;color:var(--fig)}
 .adm-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)}.adm-row small{display:block;color:var(--muted);font-size:12px}
 #memOv{position:fixed;inset:0;z-index:40;background:#EFE4CF;display:flex;flex-direction:column;align-items:center;padding:calc(48px + env(safe-area-inset-top,0px)) 10px 16px;overflow:auto}
+.cp-fold{margin:10px 0 0;background:#fff8;border-radius:12px;padding:10px 14px;color:#6E5A48;font-size:14px}.cp-fold summary{cursor:pointer;font-weight:700}.cp-old{display:flex;justify-content:space-between;padding:6px 0;border-top:1px dashed #0001;opacity:.7}.cp-old small{color:#8A7764}
 .mem-h{text-align:center;color:#3B2A1E;margin-bottom:8px}.mem-h b{display:block;font-size:17px}.mem-h span{font-size:12px;color:#6E5A48}
 .mem-g{display:grid;gap:6px;width:min(96vw,480px)}.mem-c{position:relative;aspect-ratio:1;border:0;padding:0;background:none;cursor:pointer;perspective:600px}
 .mem-c .mf,.mem-c .mb{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;border-radius:8px;backface-visibility:hidden;transition:transform .35s}
@@ -941,7 +942,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V11.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V11.3';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1801,7 +1802,7 @@ async function loadMine(){
   return true;
 }
 async function loadCoupons(){
-  try{ MY_COUPONS = (await DB.list('players/'+PID+'/coupons')).filter(c=>!c.used && c.exp>Date.now()); }catch(e){ MY_COUPONS = []; }
+  try{ MY_COUPONS = await DB.list('players/'+PID+'/coupons'); /* V11.3：已用、過期也載入，收合顯示 */ }catch(e){ MY_COUPONS = []; }
 }
 function shareOps(pid){
   const ops=[], ids=[];
@@ -2499,6 +2500,13 @@ function renderBag(){
         return `<div class="coupon" data-cp="${c.id}" role="button" tabindex="0"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div>
           <div class="cright"><b>${nm}</b>剩 ${d} 天・券號 <b style="display:inline;font-size:13px">${PID}-${c.id}</b><br><span class="cpqr">📱 點這裡出示核銷 QR</span></div></div>`;
       }).join('');
+  const mdOf = ts=>{ const x = new Date(ts); return `${x.getFullYear()}/${x.getMonth()+1}/${x.getDate()}`; };
+  /* V11.3：已使用、已過期的券收合起來，只顯示張數，點開才看明細 */
+  const now = Date.now(), cpName = c=>{ const t = cpT(c); return t.id==='sp'?`${c.spI||'🎁'} ${t.big}`:t.id==='ship'?'冷藏宅配免運':t.id==='free'?'免單券':t.id==='half'?'半價券':t.id==='c200'?'折 200 元':t.big+'鮮果券'; };
+  const fold = (arr, title, when)=> !arr.length ? '' : `<details class="cp-fold"><summary>${title} ${arr.length} 張</summary>${arr.slice(0,50).map(c=>`<div class="cp-old"><span>${esc(cpName(c))}</span><small>${when(c)}</small></div>`).join('')}${arr.length>50?`<p class="lvtxt">只列出最近 50 張</p>`:''}</details>`;
+  const used = MY_COUPONS.filter(c=>c.used).sort((a,b)=>(b.usedAt||b.exp)-(a.usedAt||a.exp));
+  const expd = MY_COUPONS.filter(c=>!c.used && c.exp<=now).sort((a,b)=>b.exp-a.exp);
+  $('#couponList').insertAdjacentHTML('beforeend', fold(used, '✅ 已使用', c=>c.usedAt?mdOf(c.usedAt)+' 使用':'已使用') + fold(expd, '⌛ 已過期', c=>mdOf(c.exp)+' 到期'));
   $('#couponList').querySelectorAll('[data-cp]').forEach(el=>el.onclick=()=>showCouponQR(el.dataset.cp));
   renderShares();
 }
