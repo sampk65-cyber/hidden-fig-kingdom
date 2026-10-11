@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V11.1</title>
+<title>今天在隱花王國尋寶 V11.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -889,7 +889,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <div class="admpane hide" id="ap-feed">
       <h2 class="h2 wk">農場留言板貼文</h2>
       <div class="card"><label class="lbl" for="fdText" style="margin-top:0">新貼文</label><textarea id="fdText" class="field" rows="3" maxlength="120" placeholder="今天溫室發生了什麼事？"></textarea><button id="btnFd" class="btn main">發布貼文</button></div>
-      <div class="card"><label class="lbl" for="scCode" style="margin-top:0">本週粉專通關密語</label><p class="lvtxt">貼在 FB／IG 粉專貼文裡，顧客輸入後我的樹加速 3 天（運動路線換果友值）。每週換一次。</p><input id="scCode" class="field" maxlength="20" placeholder="例如：小呱夜巡"><button id="btnScSave" class="btn main">儲存密語</button></div>
+      <div class="card"><label class="lbl" for="scCode" style="margin-top:0">本週粉專通關密語</label><p class="lvtxt">貼在 FB／IG 粉專貼文裡，顧客輸入後我的樹加速 3 天（不占每日上限；運動路線換果友值）。每週一要換新的，舊密語會自動失效。建議至少 6 個字；全形半形、大小寫、空格都不影響。系統只存加密後的雜湊碼，看不到原文，請自己記好。</p><p class="lvtxt" id="scStat" style="font-weight:700"></p><input id="scCode" class="field" maxlength="20" placeholder="例如：小呱夜巡無花果"><button id="btnScSave" class="btn main">儲存密語</button></div>
     </div>
     <div class="admpane hide" id="ap-admins">
       <h2 class="h2 wk">管理員</h2>
@@ -941,7 +941,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V11.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V11.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2762,6 +2762,7 @@ const Admin = {
     document.querySelectorAll('#wxPests input').forEach(x=>x.checked=(s.pests||[]).includes(x.value));
   },
   async stats(){
+    scStatus();
     $('#statBox').innerHTML = '<p class="sub">讀取中…</p>';
     try{ const n = await DB.get('config/notice'); $('#ntNow').textContent = n && n.text ? `目前公告（${new Date(n.created).toLocaleString('zh-TW')}）：${n.text}${n.gift?`・附 ${giftText(n.gift)}`:''}` : '目前沒有公告'; }catch(e){}
     const [ps, cs] = await Promise.all([DB.list('players'), DB.list('codes')]);
@@ -2895,7 +2896,12 @@ $('#btnNotice').onclick = async()=>{ const v = $('#ntText').value.trim(); if(!v)
   const gift = readGift('ng'); if(gift && !confirm(`這則公告會送給「每一位玩家」：${giftText(gift)}。確定發布？`)) return;
   await DB.set('config/notice', {id:'N'+Date.now().toString(36), text:v, created:Date.now(), ...(gift?{gift}:{})}); $('#ntText').value=''; giftReset('ng'); toast(gift?'公告和寶箱已發布':'公告已發布'); Admin.stats(); };
 $('#btnFd').onclick = async()=>{ const v=$('#fdText').value.trim(); if(!v){ toast('請輸入貼文內容'); return; } await DB.set('feed/'+'P'+Date.now().toString(36), {text:v, created:Date.now()}); $('#fdText').value=''; toast('貼文已發布'); };
-$('#btnScSave').onclick = async()=>{ const v=$('#scCode').value.trim(); if(!v){ toast('請輸入密語'); return; } await DB.set('config/social', {code:v, wk:weekKey(), updated:Date.now()}); toast('通關密語已更新'); };
+$('#btnScSave').onclick = async()=>{ const v = normSecret($('#scCode').value); if(!v){ toast('請輸入密語'); return; }
+  if(v.length<6 && !confirm(`密語只有 ${v.length} 個字，太短容易被猜到，建議 6 個字以上。仍要儲存？`)) return;
+  await DB.set('config/social', {h:await hashSecret(v), wk:weekKey(), updated:Date.now()}); $('#scCode').value=''; toast('通關密語已更新'); scStatus(); };
+/* V11.2：後台顯示本週密語是否已設定 */
+async function scStatus(){ const el = $('#scStat'); if(!el) return; let s = null; try{ s = await DB.get('config/social'); }catch(e){}
+  el.textContent = s && s.wk===weekKey() && (s.h||s.code) ? `✅ 本週已設定（${new Date(s.updated).toLocaleString('zh-TW')}）` : '⚠️ 本週還沒設定，顧客目前無法兌換'; el.style.color = s && s.wk===weekKey() ? '#3C8D4F' : '#C0392B'; }
 $('#btnPh').onclick = async()=>{
   const files = [...$('#phFile').files], zid = $('#phZone').value, ym = $('#phYm').value || ymOf(Date.now()); if(!files.length){ toast('先選照片'); return; }
   const cap = ($('#phCap').value||'').trim(), btn = $('#btnPh'); btn.disabled = true; let ok = 0;
@@ -3533,7 +3539,7 @@ function renderTree(){
       ${row('💬','農場留言板留言', '+1 天（每天 1 次）', P.daily.cmt)}
       ${row('👍','按讚貼文', `+0.5 天（${P.daily.likes||0}/3）`, (P.daily.likes||0)>=3)}
       ${row('📣','分享給朋友', '+1 天（每天 1 次）', P.daily.shared)}
-      ${row('🔑','粉專通關密語', '+3 天（每週 1 次）', P.socialWk===weekKey())}
+      ${row('🔑','粉專通關密語', '+3 天（每週 1 次，不占上限）', P.socialWk===weekKey())}
     </table>
     <div style="display:flex;gap:8px;margin-top:10px"><input id="scIn" class="field" style="margin:0" placeholder="輸入粉專貼文裡的通關密語"><button class="tbtn" id="btnSc" style="padding:0 14px">兌換</button></div>
   </div>`;
@@ -3552,13 +3558,20 @@ function harvestTree(){
   const pts = addPts(10,'buy'); const c = makeCoupon(); SND.win(); Auth.save(); renderAll(); chestOpen(c, pts, true);
 }
 
+/* V11.2：通關密語——統一全形半形、大小寫、去空格；只比對雜湊碼；只接受本週設定的密語；加速不占每日上限 */
+function normSecret(v){ return String(v||'').normalize('NFKC').replace(/\s+/g,'').toLowerCase(); }
+async function hashSecret(v){ const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('hfk-secret:'+normSecret(v))); return [...new Uint8Array(buf)].map(b=>b.toString(16).padStart(2,'0')).join(''); }
 async function redeemSecret(){
-  const v = ($('#scIn').value||'').trim(); if(!v){ toast('請輸入通關密語'); return; }
+  const v = normSecret($('#scIn').value); if(!v){ toast('請輸入通關密語'); return; }
   if(P.socialWk===weekKey()){ toast('這週已經兌換過了，下週粉專會公布新的密語'); return; }
   let s = null; try{ s = await DB.get('config/social'); }catch(e){}
-  if(!s || !s.code || s.code.trim().toLowerCase()!==v.toLowerCase()){ toast('密語不對喔，到農場粉專看看最新貼文'); return; }
+  if(!s || s.wk!==weekKey() || !(s.h||s.code)){ toast('本週密語還沒公布，請留意農場粉專'); return; }
+  const ok = s.h ? (await hashSecret(v))===s.h : normSecret(s.code)===v;   // s.code：相容舊版明文密語
+  if(!ok){ toast('密語不對喔，到農場粉專看看最新貼文'); return; }
   P.socialWk = weekKey(); $('#scIn').value='';
-  socialReward(3, '通關密語正確');
+  if(P.route==='relax'){ const T = treeObj(); const before = T.days; T.days = Math.min(TREE_DAYS, Math.round((T.days+3)*10)/10); const g = Math.round((T.days-before)*10)/10;
+    toast(g ? `通關密語正確，我的樹加速 ${g} 天 🌱（不占每日上限）` : '通關密語正確！你的樹已經長滿了'); Auth.save(); renderAll(); }
+  else socialReward(3, '通關密語正確');
 }
 
 /* ---------- 農場留言板：按讚、留言、分享都有回饋，留言一樣要友善 ---------- */
