@@ -3,13 +3,19 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V11.9</title>
+<title>今天在隱花王國尋寶 V12.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
+/* V12.0：iOS／Android 觸控一致性——按鈕不雙擊放大、不出長按選單；遊戲進行中禁止下拉重整與橡皮筋回彈 */
+button,[role=button],.coupon,.my-c,.mem-c,.rh-lane{touch-action:manipulation;-webkit-touch-callout:none}
+html.gaming,html.gaming body{overscroll-behavior:none}
+[id$="Ov"],#mg{overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+[id$="Ov"] img,#mg img,[id$="Ov"] svg,#mg svg{-webkit-touch-callout:none;-webkit-user-drag:none}
+
 /* ===== 色彩：取自無花果果皮、果肉、葉片、翡翠溫室 ===== */
 :root{
   --bg:#EDF1E2; --card:#FFFFFF; --ink:#2A1F2D; --muted:#6E6470; --line:#D8DCC8;
@@ -942,7 +948,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V11.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V12.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2583,7 +2589,7 @@ async function renderShares(){
   });
 }
 async function shareCode(id){
-  const url = BASE_URL()+'?c='+id, text = `我在「今天在隱花王國尋寶」送你一張分享券，點連結就能加入：`;
+  const url = BASE_URL()+'?c='+id+'&openExternalBrowser=1', text = `我在「今天在隱花王國尋寶」送你一張分享券，點連結就能加入：`;
   try{
     if(navigator.share){ await navigator.share({title:'隱花王國分享券', text, url}); return; }
     await navigator.clipboard.writeText(text+' '+url); toast('連結已複製，貼給親友就可以');
@@ -2893,7 +2899,7 @@ const Admin = {
       } else {
         const d = t=>t ? new Date(t).toLocaleDateString('zh-TW') : '';
         const head = ['會員編號','名字','角色','等級','果友值','兌換盒數','連續登入','最後登入','建立日期','可用優惠券','已用優惠券','寶箱追逐賽勝場','最近寶箱'];
-        const rows = ps.map(p=>{ const c = cps[p.id]||[], last = (p.chestLog||[]).at(-1);
+        const rows = ps.map(p=>{ const c = cps[p.id]||[], last = (p.chestLog||[]).slice(-1)[0];
           return [p.id, p.name||'', p.role ? roleName(p.role) : '', LEVELS[lvIndex(p.points||0)].n, p.points||0, p.boxes||0, p.streak||0, p.lastDay||'', d(p.created), c.filter(x=>!x.used && x.exp>Date.now()).length, c.filter(x=>x.used).length, p.chaseWins||0, last ? `${d(last.t)} ${last.s} ${last.r}` : '']; });
         const csv = [head, ...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\r\n');
         saveBlob(new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8'}), `隱花王國_玩家摘要_${stamp}.csv`);
@@ -3061,7 +3067,7 @@ function activeCh(){
   const w = pr.filter(k=>CH[k].when(WX)).find(k=>!tried.includes(k) && !chDone(k)); if(w) return [w];
   const D = Math.floor(Date.parse(today())/864e5), start = (D*3 + chSlot() + n) % pr.length;
   for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!tried.includes(k) && !chDone(k)) return [k]; }
-  for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!chDone(k) && k!==tried.at(-1)) return [k]; }
+  for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!chDone(k) && k!==tried[tried.length-1]) return [k]; }
   return [];
 }
 function chDone(k){ return P.daily && P.daily.ch && P.daily.ch[k]==='ok'; }
@@ -3672,7 +3678,7 @@ function renderFeed(){
 async function sharePost(p){
   let url = BASE_URL(), extra = '';
   const ids = P.shares||[];
-  for(const id of ids){ let s = SHARE_ST[id]; if(!s){ try{ s = SHARE_ST[id] = await DB.get('codes/'+id) || {}; }catch(e){ s = {}; } } if(!s.used){ url = BASE_URL()+'?c='+id; extra = '點連結就能用我的分享券一起加入尋寶！'; break; } }
+  for(const id of ids){ let s = SHARE_ST[id]; if(!s){ try{ s = SHARE_ST[id] = await DB.get('codes/'+id) || {}; }catch(e){ s = {}; } } if(!s.used){ url = BASE_URL()+'?c='+id+'&openExternalBrowser=1'; extra = '點連結就能用我的分享券一起加入尋寶！'; break; } }
   const text = `隱花王國農場：${p.text}${extra?'\n'+extra:''}`;
   try{ if(navigator.share) await navigator.share({title:'今天在隱花王國尋寶', text, url}); else { await navigator.clipboard.writeText(text+' '+url); toast('已複製，貼給朋友就可以'); } }
   catch(e){ if(e && e.name==='AbortError') return; }
@@ -4778,11 +4784,16 @@ const AUD = {
   unlock(){ if(!this.on) return; try{ if(!this.ctx){ const C = window.AudioContext||window.webkitAudioContext; if(!C) return; this.ctx = new C();
       this.mus = this.ctx.createGain(); this.mus.gain.value = .11; this.mus.connect(this.ctx.destination);
       this.sfx = this.ctx.createGain(); this.sfx.gain.value = .28; this.sfx.connect(this.ctx.destination); }
-    if(this.ctx.state==='suspended') this.ctx.resume(); }catch(e){} },
+    if(this.ctx.state!=='running') this.ctx.resume();   // V12.0：iOS 來電、切背景後是 interrupted，也要恢復
+    if(!this.primed){ this.primed = true; const b = this.ctx.createBuffer(1, 1, 22050), n = this.ctx.createBufferSource(); n.buffer = b; n.connect(this.ctx.destination); n.start(0); }   // 舊版 iOS 要先播一段無聲音訊才真正解鎖
+  }catch(e){} },
   set(v){ this.on = v; try{ localStorage.setItem('hfk_sound', v?'1':'0'); }catch(e){} if(!v){ MUSIC.stop(); THEME.stop(); } else this.unlock(); }
 };
 AUD.init();
 document.addEventListener('pointerdown', ()=>AUD.unlock(), {passive:true});
+document.addEventListener('touchend', ()=>AUD.unlock(), {passive:true});
+document.addEventListener('focusin', e=>{ const t = e.target; if(t && /^(INPUT|TEXTAREA)$/.test(t.tagName) && t.type!=='checkbox' && t.closest('#sheet')) setTimeout(()=>{ try{ t.scrollIntoView({block:'center', behavior:'smooth'}); }catch(err){} }, 320); });   // V12.0：鍵盤彈出後把輸入框捲到看得到的位置   // V12.0：iOS 有時只認 touchend 當作使用者手勢
+document.addEventListener('visibilitychange', ()=>{ if(!document.hidden && AUD.ctx && AUD.ctx.state!=='running') AUD.ctx.resume().catch(()=>{}); });
 const mf = m=>440*Math.pow(2,(m-69)/12);
 function tone(dest, m, t, dur, type, vol, glide){
   const c=AUD.ctx, o=c.createOscillator(), g=c.createGain(); o.type=type||'triangle'; o.frequency.setValueAtTime(mf(m), t);
@@ -4878,7 +4889,7 @@ const THEME = {
 };
 try{ THEME.off = localStorage.getItem('hfk_theme')==='0'; }catch(e){}
 document.addEventListener('pointerdown', ()=>{ if(THEME.pending && THEME.want()) setTimeout(()=>THEME.play(), 60); }, {passive:true});   // 瀏覽器規定要先點畫面才能出聲
-setInterval(()=>THEME.sync(), 800);   // 隨時檢查：在地圖／我頁就播，進遊戲或換頁就停
+setInterval(()=>{ THEME.sync(); document.documentElement.classList.toggle('gaming', !!document.querySelector('[id$="Ov"], #mg')); }, 800);   // 隨時檢查：在地圖／我頁就播，進遊戲或換頁就停
 document.addEventListener('visibilitychange', ()=>THEME.sync());   // 自動登入時瀏覽器還不能出聲，等第一次點畫面再播
 const SND = {
   ok(){ return AUD.on && AUD.ctx; },
