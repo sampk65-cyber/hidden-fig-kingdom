@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V11.4</title>
+<title>今天在隱花王國尋寶 V11.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -942,7 +942,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V11.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V11.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1272,18 +1272,28 @@ function mycoGame(done){
 }
 
 /* ---------- V11.4：節奏採收（配上同步的歌曲：熟果跟著旋律落下，落到線上時點擊，青果不要點） ---------- */
-// 〈無花果收成歌〉C 大調，8 小節循環，每小節 8 個八分音符（0＝休止）
-const RHY_SONG = {
-  chords:[[48,[60,64,67]],[43,[59,62,67]],[45,[60,64,69]],[41,[60,65,69]],[48,[60,64,67]],[43,[59,62,67]],[41,[60,65,69]],[43,[59,62,65]]],
-  mel:[[72,0,76,0,79,0,76,74],[74,0,71,0,74,0,79,0],[76,0,72,0,69,0,72,76],[77,0,76,0,72,0,69,0],
-       [72,0,76,79,84,0,79,76],[79,0,74,0,71,74,79,0],[77,76,74,72,69,0,72,0],[74,0,79,0,74,71,67,0]]
-};
-function rhyPlayer(bpm){
+// V11.5：三首歌輪流，每首 8 小節循環，每小節 8 個八分音符（0＝休止）
+const RHY_SONGS = [
+  {n:'無花果收成歌', wave:'triangle', vol:.5,
+   chords:[[48,[60,64,67]],[43,[59,62,67]],[45,[60,64,69]],[41,[60,65,69]],[48,[60,64,67]],[43,[59,62,67]],[41,[60,65,69]],[43,[59,62,65]]],
+   mel:[[72,0,76,0,79,0,76,74],[74,0,71,0,74,0,79,0],[76,0,72,0,69,0,72,76],[77,0,76,0,72,0,69,0],
+        [72,0,76,79,84,0,79,76],[79,0,74,0,71,74,79,0],[77,76,74,72,69,0,72,0],[74,0,79,0,74,71,67,0]]},
+  {n:'小呱夜巡', wave:'square', vol:.22,
+   chords:[[45,[57,60,64]],[41,[57,60,65]],[48,[55,60,64]],[43,[55,59,62]],[45,[57,60,64]],[41,[57,60,65]],[43,[55,59,62]],[40,[56,59,64]]],
+   mel:[[69,0,72,0,76,0,74,72],[72,0,69,0,65,0,69,0],[67,0,72,0,76,0,79,0],[74,0,71,0,67,0,0,0],
+        [69,72,76,0,81,0,79,76],[77,0,76,0,72,0,69,0],[71,0,74,0,79,0,74,71],[68,0,71,0,76,0,0,0]]},
+  {n:'溫室晨光', wave:'sine', vol:.6,
+   chords:[[41,[57,60,65]],[48,[55,60,64]],[50,[57,62,65]],[46,[58,62,65]],[41,[57,60,65]],[48,[55,60,64]],[46,[58,62,65]],[48,[58,60,64]]],
+   mel:[[77,0,72,0,69,72,77,0],[76,0,72,0,67,0,72,0],[74,0,77,0,81,0,77,74],[74,0,70,0,74,0,77,0],
+        [81,0,77,0,72,0,77,81],[79,0,76,0,72,0,76,79],[77,0,74,0,70,0,74,77],[76,74,72,0,67,0,72,0]]}
+];
+function rhyPick(){ let k = 0; try{ k = (+localStorage.getItem('hfk_rsong')||0)%3; localStorage.setItem('hfk_rsong', (k+1)%3); }catch(e){ k = rnd(3); } return RHY_SONGS[k]; }
+function rhyPlayer(bpm, SONG){
   const e = 60/bpm/2; let timer = null, step = 0, next = 0, t0 = 0;
   const ok = ()=>AUD.on && AUD.ctx;
   const tickF = ()=>{ const c = AUD.ctx;
-    while(next < c.currentTime+.25){ const bar = Math.floor(step/8), pos = step%8, b8 = bar%8, [root, ch] = RHY_SONG.chords[b8], m = RHY_SONG.mel[b8][pos], t = next, intro = bar===0;
-      if(m && !intro) tone(AUD.mus, m, t, e*1.7, 'triangle', .5);
+    while(next < c.currentTime+.25){ const bar = Math.floor(step/8), pos = step%8, b8 = bar%8, [root, ch] = SONG.chords[b8], m = SONG.mel[b8][pos], t = next, intro = bar===0;
+      if(m && !intro) tone(AUD.mus, m, t, e*1.7, SONG.wave, SONG.vol);
       if(m && !intro && bar>=8) tone(AUD.mus, m-12, t, e*1.5, 'sine', .22);                 // 第二輪加低八度和聲
       if(pos===0 || pos===4) tone(AUD.mus, root, t, e*3.2, 'sine', .75);                      // 貝斯
       if(pos===2 || pos===6) ch.forEach(n=>tone(AUD.mus, n, t, e*1.3, 'sine', .13));          // 和弦反拍
@@ -1299,20 +1309,21 @@ function rhyPlayer(bpm){
 }
 function rhythmGame(done){
   const d = diffOf('rhythm'), BPM = [88,104,120][d], LANES = 3, FALL = [2.2,1.8,1.5][d], greenP = [0,.18,.3][d], offP = [0,.35,.7][d];
+  const SONG = rhyPick(), all = SONG.mel.flat().filter(Boolean), mLo = Math.min(...all), mHi = Math.max(...all), cut1 = mLo+(mHi-mLo)/3, cut2 = mLo+(mHi-mLo)*2/3;
   const e = 60/BPM/2, bars = Math.min(17, Math.floor(36/(e*8))+1), LEN = bars*8*e, notes = [];
   // 從第 2 小節開始，熟果跟著旋律音落下；音高決定落在哪一排（低／中／高）；青果放在休止拍當干擾
-  for(let s = 8; s < bars*8; s++){ const pos = s%8, m = RHY_SONG.mel[Math.floor(s/8)%8][pos], t = s*e;
-    if(m){ if(pos%2===0 ? Math.random()<.9 : Math.random()<offP) notes.push({t, l: m<=72 ? 0 : m<=76 ? 1 : 2, g:false}); }
+  for(let s = 8; s < bars*8; s++){ const pos = s%8, m = SONG.mel[Math.floor(s/8)%8][pos], t = s*e;
+    if(m){ if(pos%2===0 ? Math.random()<.9 : Math.random()<offP) notes.push({t, l: m<cut1 ? 0 : m<cut2 ? 1 : 2, g:false}); }
     else if(pos%2===0 && Math.random()<greenP*2) notes.push({t, l:rnd(LANES), g:true}); }
   const ripe = notes.filter(n=>!n.g).length;
   const ov = document.createElement('div'); ov.id = 'rhyOv';
-  ov.innerHTML = `<button class="wo-x" id="rhyX">離開</button><div class="mem-h"><b>🎵 節奏採收・${DIFF_N[d]}</b><span id="rhInfo">跟著音樂！熟果（紫紅）落到線上時點那一排，青果（綠色）不要點</span></div>
+  ov.innerHTML = `<button class="wo-x" id="rhyX">離開</button><div class="mem-h"><b>🎵 節奏採收・${DIFF_N[d]}</b><span id="rhInfo">♪〈${SONG.n}〉跟著音樂！熟果（紫紅）落到線上時點那一排，青果（綠色）不要點</span></div>
     <div class="mem-bar"><i id="rhBar"></i></div><div class="rh-combo" id="rhCombo"></div>
     <div class="rh-field" id="rhF">${Array.from({length:LANES},(_,i)=>`<div class="rh-lane" data-l="${i}"></div>`).join('')}<div class="rh-line"></div></div>
     <div class="rh-btns">${Array.from({length:LANES},(_,i)=>`<button class="rh-b" data-l="${i}">採</button>`).join('')}</div>
     <div class="mem-f"><span id="rhS">0 分</span><span id="rhJ"></span></div>`;
   document.body.appendChild(ov);
-  const F = $('#rhF'), lanes = [...ov.querySelectorAll('.rh-lane')], player = rhyPlayer(BPM);
+  const F = $('#rhF'), lanes = [...ov.querySelectorAll('.rh-lane')], player = rhyPlayer(BPM, SONG);
   let over = false, raf = 0, started = false, useAudio = false, pt0 = 0, pts = 0, combo = 0, maxC = 0, perfect = 0, good = 0, miss = 0, lastBeat = -1;
   const clock = ()=> useAudio ? player.now() : (performance.now()-pt0)/1000;   // 有聲音時用音訊時鐘，果實和音樂完全同步
   const judge = (txt, cls)=>{ const j = $('#rhJ'); j.textContent = txt; j.className = cls; const c = $('#rhCombo'); c.textContent = combo>2 ? `🔥 ${combo} 連擊` : ''; };
@@ -3702,7 +3713,7 @@ const TASKS = [
   {id:'wood', n:'碎木工作', i:'🪵', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
   // 之後的新小遊戲加在這裡，就會自動輪流出現
   ,{id:'myco', n:'灌溉連線', i:'💧', d:'水分是無花果長大的關鍵，灌溉管路要接到每一棵樹，不能有漏水或沒接上的地方。好的水路配上健康的土壤菌群，樹才長得好。', rules:'點一下格子，水管就會順時針轉 90 度。從最上排的 🚰 水源開始，把水灌到棋盤上每一格，每一棵 🌳 都要喝到水。有水的管子會變藍色；管口沒接好會出現紅色水滴，代表漏水。🪨 石頭不能通過。計時條歸零前全部灌到水就過關，越快、轉越少次分數越高；時間到或按「放棄」會顯示解答。簡單 4×4、中級 5×5、高級 6×6。', play:mycoGame}
-  ,{id:'rhythm', n:'節奏採收', i:'🎵', d:'無花果要在紫紅色的最佳時機採收，太早太生、太晚過熟。跟著節奏採，又快又準！', rules:'跟著〈無花果收成歌〉的旋律，紫紅色熟果會隨著每個音符從上往下掉（低音在左、高音在右），第一小節是前奏。熟果掉到黃色線上時，點那一排的「採」按鈕（或直接點那一排）。剛好在線上是「完美」，差一點是「不錯」。中級以上會有綠色青果，不要點，點了扣分。連續採中有連擊。', play:rhythmGame}
+  ,{id:'rhythm', n:'節奏採收', i:'🎵', d:'無花果要在紫紅色的最佳時機採收，太早太生、太晚過熟。跟著節奏採，又快又準！', rules:'三首歌輪流（〈無花果收成歌〉〈小呱夜巡〉〈溫室晨光〉），跟著旋律，紫紅色熟果會隨著每個音符從上往下掉（低音在左、高音在右），第一小節是前奏。熟果掉到黃色線上時，點那一排的「採」按鈕（或直接點那一排）。剛好在線上是「完美」，差一點是「不錯」。中級以上會有綠色青果，不要點，點了扣分。連續採中有連擊。', play:rhythmGame}
   ,{id:'memory', n:'農場翻牌', i:'🃏', d:'王國夥伴們躲在卡片後面，一起來找找看！', rules:'開始前先看 2～3 秒，記住夥伴的位置。翻兩張一樣的就配對成功，連續配對分數加倍（最多 4 倍）。中級以上配對過半時，一陣風會把剩下的卡片洗牌。計時條歸零前全部配完，剩餘時間也會加分。', play:memoryGame}
 ];
 function taskSlot(){ const h = new Date().getHours(); return TASK_SLOTS.findIndex(([a,b])=>h>=a && h<b); }
