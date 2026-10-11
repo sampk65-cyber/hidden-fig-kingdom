@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V11.5</title>
+<title>今天在隱花王國尋寶 V11.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -942,7 +942,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V11.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V11.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1302,7 +1302,7 @@ function rhyPlayer(bpm, SONG){
       if(pos%2===1) noise(AUD.mus, t, .03, .12, 8000);                                        // 鈸
       step++; next += e; } };
   return {
-    start(){ if(!ok()) return false; AUD.unlock(); MUSIC.stop(); t0 = next = AUD.ctx.currentTime+.1; step = 0; timer = setInterval(tickF, 40); tickF(); return true; },
+    start(){ if(!ok()) return false; AUD.unlock(); MUSIC.stop(); THEME.stop(); THEME.pending = false; t0 = next = AUD.ctx.currentTime+.1; step = 0; timer = setInterval(tickF, 40); tickF(); return true; },
     now(){ return AUD.ctx.currentTime - t0; },
     stop(){ clearInterval(timer); timer = null; }
   };
@@ -2049,6 +2049,7 @@ function stamina(){ return BASE_STAMINA + (roleBase(P.role)==='bunny' ? 1 : 0) +
 function show(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.toggle('on', s.id===id)); window.scrollTo(0,0); }
 function startHome(){
   P.route = P.route || 'active';
+  if(!THEME.played) THEME.play();   // V11.6：進入王國播放主題曲（每次開啟 App 一次）
   const newDay = ensureDay(); show('home'); renderAll(); navGuard(); sessStart().then(()=>{ if(!KICKED){ Auth.save(); ensureNameClaim(); } }); setTimeout(postRank, 3000); if(!newDay) setTimeout(newPhotoToast, 1500); setTimeout(checkMessages, 2200);
   if(newDay){
     const got = addPts(2); Auth.save(); renderHud();
@@ -3330,7 +3331,7 @@ function famSetup(mode){
     <div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">${PICK_TASK && TASKS[0].rules}</p><p class="sub" style="margin:6px 0 0">兩個人輪流各玩一次，比誰推的木屑車比較多；兩人車數加起來算親密值。</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf('wood')]}</b></p></div>
     <button class="btn main" id="fGo">第一棒正式開始</button>`, true); $('#fGo').onclick=()=>{ F.names=[$('#fn1').value.trim()||'我',$('#fn2').value.trim()||'家人']; closeSheet(); famWood(); }; return; }
   if(mode==='hockey'){ const F=P.fam; openSheet(`<h2 class="h2 wk" style="margin-top:0">無花果氣墊球</h2><label class="lbl" for="fn1">上方玩家</label><input id="fn1" class="field" maxlength="8" value="${esc(F.names[0])}"><label class="lbl" for="fn2">下方玩家</label><input id="fn2" class="field" maxlength="8" value="${esc(F.names[1])}">
-    <div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">手機平放在兩人中間，各自用手指按住自己那半邊的圓盤移動，把無花果球打回去，守住自己這端的紅色球門。先進 5 球或 60 秒結束。來回擊球越多次，親密值越高！</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf('hockey')]}</b>（越高球越快、球門越大）</p></div>
+    <div class="card" style="text-align:left"><b>🎮 怎麼玩</b><p class="sub" style="margin:4px 0 0">手機平放在兩人中間，各自用手指按住自己那半邊的圓盤移動，把無花果球打回去，守住自己這端的紅色球門。先進 5 球或 60 秒結束。來回擊球越多次，親密值越高！</p><p class="lvtxt" style="margin:6px 0 0">難度：<b>${DIFF_N[diffOf('hockey')]}</b>（越高球越快、球門越大）<br>🚫 虛線內是禁區，擊錘不能進去擋球門<br>⚡ 最後 30 秒，兩邊球門會左右移動</p></div>
     <button class="btn main" id="fGo">正式開始</button>`, true); $('#fGo').onclick=()=>{ F.names=[$('#fn1').value.trim()||'我',$('#fn2').value.trim()||'家人']; closeSheet(); famHockey(); }; return; }
   if(mode==='weed'){ const F=P.fam; openSheet(`<h2 class="h2 wk" style="margin-top:0">比賽除草</h2><label class="lbl" for="fn1">上方玩家</label><input id="fn1" class="field" maxlength="8" value="${esc(F.names[0])}"><label class="lbl" for="fn2">下方玩家</label><input id="fn2" class="field" maxlength="8" value="${esc(F.names[1])}"><p class="sub">手機平放在兩人中間，各自點自己那半邊冒出來的草，30 秒看誰拔得多。小心鼴鼠，打到扣 3 分！越後面冒得越快，最後鼴鼠會變綠色混在草裡。</p><p class="lvtxt">難度：<b>${DIFF_N[diffOf('weed')]}</b>・兩人合計分數夠高就自動提升</p><button class="btn main" id="fGo">正式開始</button>`, true); $('#fGo').onclick=()=>{ F.names=[$('#fn1').value.trim()||'我',$('#fn2').value.trim()||'家人']; closeSheet(); famWeed(); }; return; }
   const F = P.fam;
@@ -4258,7 +4259,9 @@ function famHockey(){
   ov.innerHTML = `<canvas id="hkCv"></canvas>`; document.body.appendChild(ov);
   const cv = $('#hkCv'), cx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio||1);
   let W, H; const size = ()=>{ W=ov.clientWidth; H=ov.clientHeight; cv.width=W*dpr; cv.height=H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); }; size();
-  const PR = Math.min(38, W*.1), BR = Math.min(20, W*.055), MAXV = [7,9,11][d], GW = W*[.42,.5,.58][d], SEC = 60, WIN = 5;
+  /* V11.6：擊球器改成較小的圓頂擊錘、反彈更快；禁區不能進（不能用擊錘堵住球門）；最後 30 秒兩邊球門會左右移動 */
+  const PR = Math.min(30, W*.08), BR = Math.min(19, W*.052), MAXV = [10,12.5,15][d], MINHIT = [6,7,8][d], GW = W*[.42,.5,.58][d], SEC = 60, WIN = 5, CZ = Math.max(46, H*.09), MOVE_T = 30;
+  let gT = W/2, gB = W/2, slow = 0;
   const pad = {T:{x:W/2, y:H*.16, px:W/2, py:H*.16, vx:0, vy:0, id:null, tx:W/2, ty:H*.16}, B:{x:W/2, y:H*.84, px:W/2, py:H*.84, vx:0, vy:0, id:null, tx:W/2, ty:H*.84}};
   let puck = {x:W/2, y:H/2, vx:0, vy:0}, score = {T:0, B:0}, hits = 0, pause = 0, t0 = performance.now(), done = false, lastHit = 0;
   const reset = to=>{ puck = {x:W/2, y:H/2, vx:(Math.random()-.5)*2, vy: to==='T' ? -2.4 : 2.4}; pause = performance.now()+700; };
@@ -4272,26 +4275,39 @@ function famHockey(){
   function frame(now){
     if(done) return;
     const left = Math.max(0, SEC-(now-t0)/1000);
-    for(const s of ['T','B']){ const p = pad[s], minY = s==='T' ? PR : H/2+PR, maxY = s==='T' ? H/2-PR : H-PR;
+    if(left < MOVE_T){ const k = Math.min(1, (MOVE_T-left)/3), amp = (W-GW)/2 - 6, ph = (now-t0)/1000*[1.1,1.4,1.7][d];   // 最後 30 秒：球門左右滑動（3 秒內慢慢加速）
+      gT = W/2 + Math.sin(ph)*amp*k; gB = W/2 - Math.sin(ph*.9+1)*amp*k; }
+    for(const s of ['T','B']){ const p = pad[s], minY = s==='T' ? CZ+PR : H/2+PR, maxY = s==='T' ? H/2-PR : H-CZ-PR;   // 擊錘不能進自己的禁區
       p.px=p.x; p.py=p.y; p.x = Math.max(PR, Math.min(W-PR, p.tx)); p.y = Math.max(minY, Math.min(maxY, p.ty)); p.vx = p.x-p.px; p.vy = p.y-p.py; }
     if(now>pause){
       puck.x += puck.vx; puck.y += puck.vy; puck.vx *= .996; puck.vy *= .996;
       if(puck.x<BR){ puck.x=BR; puck.vx=Math.abs(puck.vx); } if(puck.x>W-BR){ puck.x=W-BR; puck.vx=-Math.abs(puck.vx); }
-      const inGoal = Math.abs(puck.x-W/2) < GW/2;
-      if(puck.y<BR){ if(inGoal){ score.B++; SND.win(); if(navigator.vibrate) navigator.vibrate(80); reset('T'); } else { puck.y=BR; puck.vy=Math.abs(puck.vy); } }
-      if(puck.y>H-BR){ if(inGoal){ score.T++; SND.win(); if(navigator.vibrate) navigator.vibrate(80); reset('B'); } else { puck.y=H-BR; puck.vy=-Math.abs(puck.vy); } }
+      const inGoalT = Math.abs(puck.x-gT) < GW/2, inGoalB = Math.abs(puck.x-gB) < GW/2;
+      if(puck.y<BR){ if(inGoalT){ score.B++; SND.win(); if(navigator.vibrate) navigator.vibrate(80); reset('T'); } else { puck.y=BR; puck.vy=Math.abs(puck.vy); } }
+      if(puck.y>H-BR){ if(inGoalB){ score.T++; SND.win(); if(navigator.vibrate) navigator.vibrate(80); reset('B'); } else { puck.y=H-BR; puck.vy=-Math.abs(puck.vy); } }
       for(const s of ['T','B']){ const p = pad[s], dx = puck.x-p.x, dy = puck.y-p.y, dd = Math.hypot(dx,dy);
         if(dd < PR+BR && dd>0){ const nx=dx/dd, ny=dy/dd; puck.x = p.x+nx*(PR+BR+1); puck.y = p.y+ny*(PR+BR+1);
           const rvx = puck.vx-p.vx, rvy = puck.vy-p.vy, vn = rvx*nx+rvy*ny;
-          if(vn<0){ SND.pop(); puck.vx -= 1.9*vn*nx; puck.vy -= 1.9*vn*ny; puck.vx += p.vx*.5; puck.vy += p.vy*.5; if(now-lastHit>150){ hits++; lastHit=now; } } } }
+          if(vn<0){ SND.pop(); puck.vx -= 2*vn*nx; puck.vy -= 2*vn*ny; puck.vx += p.vx*.85; puck.vy += p.vy*.85;
+            const hs = Math.hypot(puck.vx, puck.vy); if(hs < MINHIT){ const k = MINHIT/(hs||1); puck.vx = hs ? puck.vx*k : nx*MINHIT; puck.vy = hs ? puck.vy*k : ny*MINHIT; }   // 碰到就有力地彈開
+            if(now-lastHit>150){ hits++; lastHit=now; } }
+          puck.x = Math.max(BR, Math.min(W-BR, puck.x)); puck.y = Math.max(BR, Math.min(H-BR, puck.y)); } }   // 不會被擠出邊界卡住
       const sp = Math.hypot(puck.vx, puck.vy); if(sp>MAXV){ puck.vx*=MAXV/sp; puck.vy*=MAXV/sp; }
+      slow = sp < .6 ? slow+1 : 0; if(slow > 120){ slow = 0; puck.vx += (W/2-puck.x)*.02 + (Math.random()-.5)*2; puck.vy += puck.y<H/2 ? 2.5 : -2.5; }   // 球停住 2 秒就輕推回場中
     }
     cx.fillStyle='#EAF4F7'; cx.fillRect(0,0,W,H);
     cx.strokeStyle='#C9566E55'; cx.lineWidth=3; cx.beginPath(); cx.moveTo(0,H/2); cx.lineTo(W,H/2); cx.stroke(); cx.beginPath(); cx.arc(W/2,H/2,W*.16,0,Math.PI*2); cx.stroke();
-    cx.fillStyle='#E8452C'; cx.fillRect(W/2-GW/2,0,GW,8); cx.fillRect(W/2-GW/2,H-8,GW,8);
+    cx.fillStyle='#C9566E14'; cx.fillRect(0,0,W,CZ); cx.fillRect(0,H-CZ,W,CZ); cx.setLineDash([6,6]); cx.strokeStyle='#C9566E66'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(0,CZ); cx.lineTo(W,CZ); cx.moveTo(0,H-CZ); cx.lineTo(W,H-CZ); cx.stroke(); cx.setLineDash([]);
+    cx.fillStyle='#E8452C'; cx.fillRect(gT-GW/2,0,GW,9); cx.fillRect(gB-GW/2,H-9,GW,9);
+    if(left < MOVE_T && left > MOVE_T-2.5) txt('⚡ 最後 30 秒：球門開始移動！', W/2, H/2+78, 0, 15, '#C0392B');
     txt(`${F.names[0]} ${score.T}`, W/2, H/2-24, Math.PI, 22, '#5B2346'); txt(`${F.names[1]} ${score.B}`, W/2, H/2+40, 0, 22, '#3E6B3A');
     txt(`${Math.ceil(left)} 秒・來回 ${hits}`, W-60, H/2+6, 0, 12, '#6E6470');
-    for(const [s,col] of [['T','#5B2346'],['B','#3E6B3A']]){ const p=pad[s]; cx.fillStyle=col; cx.beginPath(); cx.arc(p.x,p.y,PR,0,Math.PI*2); cx.fill(); cx.fillStyle='#ffffff55'; cx.beginPath(); cx.arc(p.x,p.y,PR*.5,0,Math.PI*2); cx.fill(); }
+    for(const [s,col] of [['T','#5B2346'],['B','#3E6B3A']]){ const p=pad[s];   // 圓頂擊錘：外圈、亮邊、中間握把
+      cx.fillStyle='#0002'; cx.beginPath(); cx.arc(p.x+2,p.y+3,PR,0,Math.PI*2); cx.fill();
+      cx.fillStyle=col; cx.beginPath(); cx.arc(p.x,p.y,PR,0,Math.PI*2); cx.fill();
+      cx.strokeStyle='#ffffffaa'; cx.lineWidth=3; cx.beginPath(); cx.arc(p.x,p.y,PR-3,0,Math.PI*2); cx.stroke();
+      cx.fillStyle='#ffffff40'; cx.beginPath(); cx.arc(p.x,p.y,PR*.62,0,Math.PI*2); cx.fill();
+      cx.fillStyle=col; cx.beginPath(); cx.arc(p.x,p.y,PR*.36,0,Math.PI*2); cx.fill(); cx.fillStyle='#ffffff66'; cx.beginPath(); cx.arc(p.x-PR*.1,p.y-PR*.12,PR*.14,0,Math.PI*2); cx.fill(); }
     figPuck(puck.x, puck.y);
     if(left<=0 || score.T>=WIN || score.B>=WIN) return end();
     requestAnimationFrame(frame);
@@ -4754,7 +4770,7 @@ const AUD = {
       this.mus = this.ctx.createGain(); this.mus.gain.value = .11; this.mus.connect(this.ctx.destination);
       this.sfx = this.ctx.createGain(); this.sfx.gain.value = .28; this.sfx.connect(this.ctx.destination); }
     if(this.ctx.state==='suspended') this.ctx.resume(); }catch(e){} },
-  set(v){ this.on = v; try{ localStorage.setItem('hfk_sound', v?'1':'0'); }catch(e){} if(!v) MUSIC.stop(); else this.unlock(); }
+  set(v){ this.on = v; try{ localStorage.setItem('hfk_sound', v?'1':'0'); }catch(e){} if(!v){ MUSIC.stop(); THEME.stop(); THEME.pending = false; } else this.unlock(); }
 };
 AUD.init();
 document.addEventListener('pointerdown', ()=>AUD.unlock(), {passive:true});
@@ -4786,6 +4802,7 @@ const SONGS = [
 const MUSIC = {
   timer:null, song:null, step:0, next:0,
   start(){
+    THEME.stop(); THEME.pending = false;
     if(!AUD.on) return; AUD.unlock(); if(!AUD.ctx) return; this.stop();
     let k=0; try{ k = (+localStorage.getItem('hfk_song')||0); localStorage.setItem('hfk_song', (k+1)%3); }catch(e){ k = rnd(3); }
     this.song = SONGS[k%3]; this.step = 0; this.next = AUD.ctx.currentTime+.08;
@@ -4805,6 +4822,26 @@ const MUSIC = {
   },
   stop(){ clearInterval(this.timer); this.timer = null; }
 };
+/* V11.6：〈隱花王國主題曲〉進入王國時播放一次（約 17 秒），G 大調進行曲風；開始玩遊戲或關聲音就停 */
+const THEME = {
+  g:null, pending:false, played:false,
+  chords:[[43,[55,59,62]],[38,[54,57,62]],[40,[55,59,64]],[36,[55,60,64]],[43,[55,59,62]],[38,[54,57,62]],[36,[55,60,64]],[38,[54,57,62]],[43,[55,59,62]]],
+  mel:[[67,0,71,74,79,0,78,76],[74,0,69,0,74,0,78,0],[76,0,71,0,67,71,76,79],[79,0,76,0,72,0,76,0],
+       [74,76,79,0,83,0,81,79],[78,0,74,0,81,0,78,74],[76,0,79,0,84,0,83,81],[79,0,78,0,74,0,78,0],[79,0,0,0,0,0,0,0]],
+  play(){ if(!AUD.on){ return; } AUD.unlock(); const c = AUD.ctx; if(!c || c.state!=='running'){ this.pending = true; return; }
+    this.stop(); this.pending = false; this.played = true; const g = this.g = c.createGain(); g.gain.value = 1.3; g.connect(AUD.mus);
+    const e = 60/116/2, T = c.currentTime+.1;
+    this.mel.forEach((bar, b)=>{ const [root, ch] = this.chords[b], last = b===this.mel.length-1;
+      bar.forEach((m, pos)=>{ const t = T+(b*8+pos)*e;
+        if(m) tone(g, m, t, last ? e*8 : e*1.6, 'triangle', .5);
+        if(m && pos%2===0) tone(g, m+12, t, e*.9, 'sine', .12);                               // 鐘琴點綴
+        if(pos===0 || pos===4){ tone(g, root, t, last ? e*8 : e*3.2, 'sine', .7); if(!last) tone(g, 36, t, .16, 'sine', .8, -12); }
+        if(!last && (pos===2 || pos===6)){ ch.forEach(n=>tone(g, n, t, e*1.3, 'sine', .13)); noise(g, t, .08, .2, 1800); }
+        if(!last && pos%2===1) noise(g, t, .03, .1, 8000); });
+      if(last){ ch.forEach(n=>tone(g, n, T+b*8*e, e*8, 'sine', .16)); noise(g, T+b*8*e, .9, .18, 5000); } }); },
+  stop(){ if(!this.g) return; const g = this.g, c = AUD.ctx; this.g = null; try{ g.gain.setTargetAtTime(0, c.currentTime, .15); setTimeout(()=>g.disconnect(), 800); }catch(e){} }
+};
+document.addEventListener('pointerdown', ()=>{ if(THEME.pending) setTimeout(()=>THEME.play(), 60); }, {passive:true});   // 自動登入時瀏覽器還不能出聲，等第一次點畫面再播
 const SND = {
   ok(){ return AUD.on && AUD.ctx; },
   good(n){ if(!this.ok()) return; const t=AUD.ctx.currentTime, b=Math.min(7, n||0); tone(AUD.sfx, 84+b, t, .12, 'triangle', .6); tone(AUD.sfx, 88+b, t+.07, .16, 'triangle', .6); },
@@ -4816,7 +4853,8 @@ const SND = {
 };
 function renderSound(){
   const b = $('#sndRow'); if(!b) return;
-  b.innerHTML = `<button class="chip ${AUD.on?'sel':''}" data-snd="1">🔊 開</button><button class="chip ${!AUD.on?'sel':''}" data-snd="0">🔇 關</button>`;
+  b.innerHTML = `<button class="chip ${AUD.on?'sel':''}" data-snd="1">🔊 開</button><button class="chip ${!AUD.on?'sel':''}" data-snd="0">🔇 關</button><button class="chip" id="thPlay">🎵 主題曲</button>`;
+  $('#thPlay').onclick = ()=>{ if(!AUD.on){ toast('先打開聲音'); return; } THEME.g ? THEME.stop() : THEME.play(); };
   b.querySelectorAll('[data-snd]').forEach(x=>x.onclick=()=>{ AUD.set(x.dataset.snd==='1'); renderSound(); if(AUD.on) SND.good(); });
 }
 
