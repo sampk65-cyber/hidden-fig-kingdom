@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V11.6</title>
+<title>今天在隱花王國尋寶 V11.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -942,7 +942,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V11.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V11.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2844,7 +2844,7 @@ const Admin = {
     $('#plMulti').onclick = ()=>{ multi = !multi; $('#plMulti').textContent = multi ? '✖ 結束多選' : '✉️ 勾選多人發訊'; ['#plAllSel','#plClr','#mcBox'].forEach(x=>$(x).classList.toggle('hide', !multi)); if(!multi){ picked.clear(); upd(); } };
     $('#plAllSel').onclick = ()=>{ document.querySelectorAll('#plAll .pl-row:not(.hide)').forEach(b=>picked.add(b.dataset.pid)); upd(); };
     $('#plClr').onclick = ()=>{ picked.clear(); upd(); };
-    $('#mcSend').onclick = async()=>{ const v = $('#mcText').value.trim(), gift = readGift('mg'); if(!v){ toast('請輸入內容'); return; } if(!picked.size){ toast('請先勾選玩家'); return; }
+    $('#mcSend').onclick = async()=>{ if($('#mcSend').disabled) return; const v = $('#mcText').value.trim(), gift = readGift('mg'); if(!v){ toast('請輸入內容'); return; } if(!picked.size){ toast('請先勾選玩家'); return; }
       if(!confirm(`確定發訊給 ${picked.size} 位玩家${gift?`，每人附 ${giftText(gift)}`:''}？`)) return;
       const btn = $('#mcSend'); btn.disabled = true; const ids = [...picked], t = Date.now();
       try{ for(let i=0;i<ids.length;i+=400) await DB.batch(ids.slice(i,i+400).map((pid,k)=>({op:'set', path:`players/${pid}/inbox/M${(t+i+k).toString(36)}`, data:{text:v, created:t, read:false, ...(gift?{gift, claimed:false}:{})}})));
@@ -2914,10 +2914,10 @@ const Admin = {
         ${inbox.length ? `<div class="lvtxt">最近私訊：${inbox.map(m=>`<br>・${tm(m.created)} ${esc(m.text)}${m.gift?`【🎁 ${esc(giftText(m.gift))}・${m.claimed?'已領':'未領'}】`:''}（${m.read?'已讀':'未讀'}）`).join('')}</div>` : ''}</div>
       <details class="card fold-c" style="text-align:left"><summary><b>🎁 寶箱紀錄（最近 ${log.length} 筆）</b><small>依年月日整理，點開查看</small></summary>${log.length ? logTree(log, t=>{ const d = new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }, null, true) : '<p class="sub">還沒有紀錄</p>'}</details>
       <button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
-    $('#btnPm').onclick = async()=>{ const v = $('#pmText').value.trim(); if(!v){ toast('請輸入內容'); return; }
-      const gift = readGift('pg');
+    $('#btnPm').onclick = async()=>{ const v = $('#pmText').value.trim(), btn = $('#btnPm'); if(!v){ toast('請輸入內容'); return; } if(btn.disabled) return;
+      const gift = readGift('pg'); btn.disabled = true; btn.textContent = '送出中…';
       try{ await DB.set(`players/${pid}/inbox/M${Date.now().toString(36)}`, {text:v, created:Date.now(), read:false, ...(gift?{gift, claimed:false}:{})}); toast(gift?'私訊和寶箱已送出':'私訊已送出，玩家下次打開遊戲會看到'); Admin.player(pid); }
-      catch(e){ console.error(e); toast('送出失敗：請確認 Firestore 規則已加上 inbox'); } };
+      catch(e){ console.error(e); btn.disabled = false; btn.textContent = '送出私訊'; toast('送出失敗：請確認 Firestore 規則已加上 inbox'); } };
   }
 };
 $('#btnAdm').onclick = async()=>{
@@ -2945,10 +2945,12 @@ $('#btnAddAdm').onclick = ()=>Admin.addAdmin();
 $('#btnExpJson').onclick = ()=>Admin.exportAll('json');
 $('#btnExpCsv').onclick = ()=>Admin.exportAll('csv');
 $('#ntGift').innerHTML = giftSel('ng');
-$('#btnNotice').onclick = async()=>{ const v = $('#ntText').value.trim(); if(!v){ toast('請輸入公告內容'); return; }
+/* V11.7：後台送出按鈕防連點——送出中按鈕停用，完成後才恢復 */
+function lockBtn(sel, fn){ const b = $(sel); if(!b) return; b.onclick = async()=>{ if(b.disabled) return; b.disabled = true; try{ await fn(); }catch(e){ console.error(e); toast('送出失敗：'+(e.code||e.message)); } finally{ b.disabled = false; } }; }
+lockBtn('#btnNotice', async()=>{ const v = $('#ntText').value.trim(); if(!v){ toast('請輸入公告內容'); return; }
   const gift = readGift('ng'); if(gift && !confirm(`這則公告會送給「每一位玩家」：${giftText(gift)}。確定發布？`)) return;
-  await DB.set('config/notice', {id:'N'+Date.now().toString(36), text:v, created:Date.now(), ...(gift?{gift}:{})}); $('#ntText').value=''; giftReset('ng'); toast(gift?'公告和寶箱已發布':'公告已發布'); Admin.stats(); };
-$('#btnFd').onclick = async()=>{ const v=$('#fdText').value.trim(); if(!v){ toast('請輸入貼文內容'); return; } await DB.set('feed/'+'P'+Date.now().toString(36), {text:v, created:Date.now()}); $('#fdText').value=''; toast('貼文已發布'); };
+  await DB.set('config/notice', {id:'N'+Date.now().toString(36), text:v, created:Date.now(), ...(gift?{gift}:{})}); $('#ntText').value=''; giftReset('ng'); toast(gift?'公告和寶箱已發布':'公告已發布'); Admin.stats(); });
+lockBtn('#btnFd', async()=>{ const v=$('#fdText').value.trim(); if(!v){ toast('請輸入貼文內容'); return; } await DB.set('feed/'+'P'+Date.now().toString(36), {text:v, created:Date.now()}); $('#fdText').value=''; toast('貼文已發布'); });
 $('#btnScSave').onclick = async()=>{ const v = normSecret($('#scCode').value); if(!v){ toast('請輸入密語'); return; }
   if(v.length<6 && !confirm(`密語只有 ${v.length} 個字，太短容易被猜到，建議 6 個字以上。仍要儲存？`)) return;
   await DB.set('config/social', {h:await hashSecret(v), wk:weekKey(), updated:Date.now()}); $('#scCode').value=''; toast('通關密語已更新'); scStatus(); };
@@ -3678,6 +3680,7 @@ async function sharePost(p){
   if(!P.daily.shared){ P.daily.shared=true; socialReward(P.route==='relax'?1:.5, extra?'謝謝你分享（朋友用分享券加入，再送 20）':'謝謝你分享'); }
   else toast(extra ? '已分享！朋友用你的分享券加入，你會再得 20 果友值' : '謝謝你分享 📣');
 }
+let CM_LAST = 0; const CM_BACK = 10*60*1000;   // V11.7：留言間隔 15 秒；自己的留言 10 分鐘內可收回
 async function openComments(id){
   const p = FEED.find(x=>x.id===id);
   openSheet(`<h2 class="h2 wk" style="margin-top:0">💬 留言</h2><p class="sub">${esc(p?p.text:'')}</p><div id="cmList"><p class="lvtxt">讀取留言…</p></div>
@@ -3686,24 +3689,31 @@ async function openComments(id){
     <button class="btn ghost" onclick="closeSheet()">關閉</button>`);
   let all = []; try{ all = (await DB.list(`feed/${id}/comments`)).sort((a,b)=>a.created-b.created); }catch(e){}
   if(p){ p.cms = [...all].reverse(); if($('#feedBox')) renderFeed(); }
-  const cs = all.slice(-8);
-  $('#cmList').innerHTML = cs.map(c=>`<div class="cm"><b>${esc(c.name)}</b>：${esc(c.text)}</div>`).join('') || '<p class="lvtxt">還沒有留言，來說第一句吧！</p>';
+  const cs = all.slice(-8), canBack = c=>c.pid===PID && PID && Date.now()-(c.created||0) < CM_BACK;
+  $('#cmList').innerHTML = cs.map(c=>`<div class="cm"><b>${esc(c.name)}</b>：${esc(c.text)}${canBack(c)?` <button class="linkbtn" data-back="${c.id}" style="font-size:12px">收回</button>`:''}</div>`).join('') || '<p class="lvtxt">還沒有留言，來說第一句吧！</p>';
+  $('#cmList').querySelectorAll('[data-back]').forEach(b=>b.onclick=async()=>{ if(!confirm('收回這則留言？')) return; b.disabled = true;
+    try{ await DB.del(`feed/${id}/comments/${b.dataset.back}`); toast('留言已收回'); openComments(id); }
+    catch(e){ console.error(e); b.disabled = false; toast(/permission/i.test(e.code||e.message||'') ? '超過 10 分鐘就不能收回了' : '收回失敗，請稍後再試'); } });
+  let sending = false;
   const send = async()=>{
+    if(sending) return;   // V11.7：送出中不能再送（連點、Enter＋按鈕同時觸發）
     const btn = $('#cs'), w = $('#cw'), v = ($('#ci').value||'').trim();
+    if(Date.now()-CM_LAST < 15000){ w.className='kwarn'; w.textContent=`留言太快了，${Math.ceil((15000-(Date.now()-CM_LAST))/1000)} 秒後再送`; return; }
+    if(all.some(c=>c.pid===PID && c.text===v && Date.now()-(c.created||0) < 600000)){ w.className='kwarn'; w.textContent='這句話剛剛已經送出過了'; return; }
     if(!v){ w.className='kwarn'; w.textContent='先輸入一句話再送出喔'; return; }
     if([...v].length > 40){ w.className='kwarn bad'; w.textContent='留言最多 40 個字'; return; }
     if(P.guest || !PID){ w.className='kwarn bad'; w.textContent='訪客模式不能留言，掃果盒 QR 登入後就可以'; return; }
     if(judgeWords(v)==='bad'){ w.className='kwarn bad'; w.textContent='⚠️ 這句話不友善，已被擋下，換句好話試試。'; SND.bad(); return; }
-    btn.disabled = true; btn.textContent = '送出中';
+    sending = true; btn.disabled = true; btn.textContent = '送出中'; $('#ci').disabled = true;
     try{ await DB.set(`feed/${id}/comments/${rid(8)}`, {pid:PID, name:P.name, text:v, created:Date.now()}); }
-    catch(e){ console.error(e); btn.disabled = false; btn.textContent = '送出'; w.className='kwarn bad';
+    catch(e){ console.error(e); sending = false; btn.disabled = false; btn.textContent = '送出'; $('#ci').disabled = false; w.className='kwarn bad';
       w.textContent = /permission/i.test(e.code||e.message||'') ? '留言被系統擋下：請重新整理遊戲後再試；仍不行請告訴農場（權限）' : '留言失敗：網路不穩，請稍後再試'; return; }
-    toast('留言已送出 💬'); SND.good(2);
+    CM_LAST = Date.now(); toast('留言已送出 💬（10 分鐘內可以收回）'); SND.good(2);
     if(!P.daily.cmt){ P.daily.cmt=true; socialReward(1,'謝謝你的留言'); }
     openComments(id);
   };
   $('#cs').onclick = send;
-  $('#ci').onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); send(); } };
+  $('#ci').onkeydown = e=>{ if(e.key==='Enter' && !e.isComposing && e.keyCode!==229){ e.preventDefault(); send(); } };   // 中文輸入法選字的 Enter 不算送出
 }
 
 /* =========================================================
@@ -4822,13 +4832,22 @@ const MUSIC = {
   },
   stop(){ clearInterval(this.timer); this.timer = null; }
 };
-/* V11.6：〈隱花王國主題曲〉進入王國時播放一次（約 17 秒），G 大調進行曲風；開始玩遊戲或關聲音就停 */
+/* 〈隱花王國主題曲〉進入王國時播放一次；開始玩遊戲或關聲音就淡出停止（V11.6 合成版保留作備用） */
 const THEME = {
   g:null, pending:false, played:false,
   chords:[[43,[55,59,62]],[38,[54,57,62]],[40,[55,59,64]],[36,[55,60,64]],[43,[55,59,62]],[38,[54,57,62]],[36,[55,60,64]],[38,[54,57,62]],[43,[55,59,62]]],
   mel:[[67,0,71,74,79,0,78,76],[74,0,69,0,74,0,78,0],[76,0,71,0,67,71,76,79],[79,0,76,0,72,0,76,0],
        [74,76,79,0,83,0,81,79],[78,0,74,0,81,0,78,74],[76,0,79,0,84,0,83,81],[79,0,78,0,74,0,78,0],[79,0,0,0,0,0,0,0]],
-  play(){ if(!AUD.on){ return; } AUD.unlock(); const c = AUD.ctx; if(!c || c.state!=='running'){ this.pending = true; return; }
+  au:null, synth:false, fadeT:null,
+  /* V11.7：主題曲改用真實樂器錄音 theme.mp3（Pixabay〈Hope That Always Remains〉，和 index.html 放同一層）；讀不到才用合成版 */
+  play(){ if(!AUD.on) return; AUD.unlock(); if(this.synth) return this.playSynth();
+    try{ if(!this.au){ this.au = new Audio('theme.mp3'); this.au.preload = 'auto'; this.au.onerror = ()=>{ this.synth = true; }; }
+      clearInterval(this.fadeT); this.au.pause(); this.au.currentTime = 0; this.au.volume = .55;
+      this.au.play().then(()=>{ this.pending = false; this.played = true; })
+        .catch(err=>{ if(err && err.name==='NotAllowedError'){ this.pending = true; } else { this.synth = true; this.playSynth(); } });
+    }catch(e){ this.synth = true; this.playSynth(); } },
+  on(){ return !!this.g || !!(this.au && !this.au.paused); },
+  playSynth(){ const c = AUD.ctx; if(!c || c.state!=='running'){ this.pending = true; return; }
     this.stop(); this.pending = false; this.played = true; const g = this.g = c.createGain(); g.gain.value = 1.3; g.connect(AUD.mus);
     const e = 60/116/2, T = c.currentTime+.1;
     this.mel.forEach((bar, b)=>{ const [root, ch] = this.chords[b], last = b===this.mel.length-1;
@@ -4839,7 +4858,8 @@ const THEME = {
         if(!last && (pos===2 || pos===6)){ ch.forEach(n=>tone(g, n, t, e*1.3, 'sine', .13)); noise(g, t, .08, .2, 1800); }
         if(!last && pos%2===1) noise(g, t, .03, .1, 8000); });
       if(last){ ch.forEach(n=>tone(g, n, T+b*8*e, e*8, 'sine', .16)); noise(g, T+b*8*e, .9, .18, 5000); } }); },
-  stop(){ if(!this.g) return; const g = this.g, c = AUD.ctx; this.g = null; try{ g.gain.setTargetAtTime(0, c.currentTime, .15); setTimeout(()=>g.disconnect(), 800); }catch(e){} }
+  stop(){ const a = this.au; if(a && !a.paused){ clearInterval(this.fadeT); this.fadeT = setInterval(()=>{ a.volume = Math.max(0, a.volume-.05); if(a.volume<=.01){ clearInterval(this.fadeT); a.pause(); } }, 50); }
+    if(!this.g) return; const g = this.g, c = AUD.ctx; this.g = null; try{ g.gain.setTargetAtTime(0, c.currentTime, .15); setTimeout(()=>g.disconnect(), 800); }catch(e){} }
 };
 document.addEventListener('pointerdown', ()=>{ if(THEME.pending) setTimeout(()=>THEME.play(), 60); }, {passive:true});   // 自動登入時瀏覽器還不能出聲，等第一次點畫面再播
 const SND = {
@@ -4854,7 +4874,7 @@ const SND = {
 function renderSound(){
   const b = $('#sndRow'); if(!b) return;
   b.innerHTML = `<button class="chip ${AUD.on?'sel':''}" data-snd="1">🔊 開</button><button class="chip ${!AUD.on?'sel':''}" data-snd="0">🔇 關</button><button class="chip" id="thPlay">🎵 主題曲</button>`;
-  $('#thPlay').onclick = ()=>{ if(!AUD.on){ toast('先打開聲音'); return; } THEME.g ? THEME.stop() : THEME.play(); };
+  $('#thPlay').onclick = ()=>{ if(!AUD.on){ toast('先打開聲音'); return; } THEME.on() ? THEME.stop() : THEME.play(); };
   b.querySelectorAll('[data-snd]').forEach(x=>x.onclick=()=>{ AUD.set(x.dataset.snd==='1'); renderSound(); if(AUD.on) SND.good(); });
 }
 
