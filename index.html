@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V12.4</title>
+<title>今天在隱花王國尋寶 V12.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -948,7 +948,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V12.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V12.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4400,10 +4400,10 @@ const TRASH = [
 ];
 const FISH = {id:'fish', n:'小魚', svg:'<ellipse cx="0" cy="0" rx="13" ry="7" fill="#F29B5A"/><path d="M11 0 L20 -7 L20 7Z" fill="#E07A3A"/><circle cx="-6" cy="-2" r="1.8" fill="#111"/><path d="M-1 -6 Q3 -10 7 -6" stroke="#E07A3A" stroke-width="2" fill="none"/>'};
 const BINS = [{n:'玻璃',c:'#2E9E5B',i:'🍾'},{n:'鐵鋁罐',c:'#6E7780',i:'🥫'},{n:'塑膠類',c:'#2F7FD8',i:'🧴'},{n:'樹枝落葉',c:'#9A6A3A',i:'🍂'}];
-const RS = 1.55;   // V12.1：垃圾放大 1.55 倍，外圈用分類桶顏色標示（V12.3 取消名稱）
+const RS = 1.4;   // V12.1：垃圾放大 1.55 倍，外圈用分類桶顏色標示（V12.3 取消名稱）
 function rainGame(k, d){
   const mg=$('#mg'); mg.style.height='350px'; const W=mg.clientWidth, H=350;
-  const need=[8,10,12][d], rate=[1600,1200,900][d], spd=[.7,.95,1.2][d], rise=[1.6,2.2,2.8][d], ringW=[4,3.5,1.5][d];   // V12.4：漂流更快、出現更密；高級外圈變細
+  const need=[8,10,12][d], rate=[1450,1080,800][d], spd=[.8,1.08,1.35][d], rise=[1.6,2.2,2.8][d], ringW=[3,2,1][d];   // V12.5：再加快一點；外圈 3／2／1
   const binY=H-70, ditchL=W*.12, ditchR=W*.88, ditchB=binY-12, bw=W/4, M=26;   // 水溝加寬，放得下較大的垃圾
   mg.innerHTML = `<svg class="gh" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#DCE8CC"/>
     <rect x="${ditchL}" y="0" width="${ditchR-ditchL}" height="${ditchB}" fill="#7FA9B8"/><rect id="water" x="${ditchL}" y="${ditchB}" width="${ditchR-ditchL}" height="0" fill="#3E7FC4" opacity=".55"/>
@@ -4424,7 +4424,7 @@ function rainGame(k, d){
   };
   mg.onpointerdown = e=>{
     if(done) return; const [x,y]=P2(e);
-    const it = items.find(z=>Math.hypot(z.x-x, z.y-y)<38);
+    const it = items.find(z=>Math.hypot(z.x-x, z.y-y)<34);
     if(it && it.fish){ wl+=6; SND.bad(); it.scared=performance.now(); flash('🐟 不要抓魚！牠們住在水溝裡，水位上升'); upd(); return; }
     if(it){ drag=it; it.held=true; sel=null; mg.setPointerCapture(e.pointerId); return; }
     const bi = binAt(x,y); if(sel && bi>=0){ const s=sel; sel=null; s.el.classList.remove('sel'); drop(s, bi); }
