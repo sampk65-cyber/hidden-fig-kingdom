@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V12.5</title>
+<title>今天在隱花王國尋寶 V12.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -104,6 +104,16 @@ button{cursor:pointer}
 .bar{height:7px;border-radius:9px;background:var(--line);overflow:hidden;margin-top:3px}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--fig))}
 .lvtxt{font-size:11px;color:var(--muted)}
+.snd-btn{flex:none;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:18px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px #0001}
+#sndFab{position:fixed;left:12px;top:calc(8px + env(safe-area-inset-top,0px));z-index:10001;display:none}
+html.gaming #sndFab{display:flex}
+.snd-pop{position:fixed;z-index:10002;background:#fff;border-radius:16px;box-shadow:0 8px 28px #0003;padding:12px;width:230px;color:#2A1F2D}
+.snd-pop .sp-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 2px;font-weight:700;font-size:14px}
+.snd-pop .sp-r+.sp-r{border-top:1px solid #0001}
+.snd-pop .tg{width:52px;height:30px;border-radius:99px;border:0;background:#D8D2C8;position:relative;padding:0;flex:none}
+.snd-pop .tg::after{content:'';position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;box-shadow:0 1px 3px #0003;transition:left .15s}
+.snd-pop .tg.on{background:var(--fig)}.snd-pop .tg.on::after{left:25px}
+.snd-pop .tg:disabled{opacity:.4}
 .stat{display:flex;flex-direction:column;align-items:flex-end;font-size:13px;font-weight:700;line-height:1.3}
 .tab{display:none;padding:0 14px}
 .tab.on{display:block}
@@ -661,6 +671,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div class="lvtxt" id="hudLv"></div>
     </div>
     <div class="stat"><span id="hudSt">⚡5</span><span id="hudLeaf">🍃0</span></div>
+    <button class="snd-btn" id="sndBtn" aria-label="聲音設定">🔊</button>
   </div>
 
   <!-- 王國 -->
@@ -740,10 +751,6 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <table class="ladder" id="ladder"></table>
     </details>
     <div class="card" id="guardBox"></div>
-    <div class="card">
-      <div class="lbl" style="margin-top:0">🎵 遊戲音樂與音效</div>
-      <div class="seg" id="sndRow" style="margin-bottom:0"></div>
-    </div>
     <div class="card" id="testCard">
       <div class="lbl" style="margin-top:0">測試工具</div>
       <div class="lbl">切換天氣（測試挑戰）</div>
@@ -948,7 +955,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V12.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V12.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4895,7 +4902,8 @@ const THEME = {
 try{ THEME.off = localStorage.getItem('hfk_theme')==='0'; }catch(e){}
 document.addEventListener('pointerdown', ()=>{ if(THEME.pending && THEME.want()) setTimeout(()=>THEME.play(), 60); }, {passive:true});   // 瀏覽器規定要先點畫面才能出聲
 setInterval(()=>{ THEME.sync(); document.documentElement.classList.toggle('gaming', !!document.querySelector('[id$="Ov"], #mg')); }, 800);   // 隨時檢查：在地圖／我頁就播，進遊戲或換頁就停
-document.addEventListener('visibilitychange', ()=>THEME.sync());   // 自動登入時瀏覽器還不能出聲，等第一次點畫面再播
+document.addEventListener('visibilitychange', ()=>THEME.sync());
+(()=>{ const f = document.createElement('button'); f.id = 'sndFab'; f.className = 'snd-btn'; f.setAttribute('aria-label','聲音設定'); document.body.appendChild(f); renderSound(); })();   // 自動登入時瀏覽器還不能出聲，等第一次點畫面再播
 const SND = {
   ok(){ return AUD.on && AUD.ctx; },
   good(n){ if(!this.ok()) return; const t=AUD.ctx.currentTime, b=Math.min(7, n||0); tone(AUD.sfx, 84+b, t, .12, 'triangle', .6); tone(AUD.sfx, 88+b, t+.07, .16, 'triangle', .6); },
@@ -4905,12 +4913,22 @@ const SND = {
   win(){ if(!this.ok()) return; const t=AUD.ctx.currentTime; [72,76,79,84].forEach((m,i)=>tone(AUD.sfx, m, t+i*.1, .3, 'triangle', .55)); tone(AUD.sfx, 88, t+.42, .5, 'sine', .4); },
   lose(){ if(!this.ok()) return; const t=AUD.ctx.currentTime; [67,64,60].forEach((m,i)=>tone(AUD.sfx, m, t+i*.16, .35, 'sine', .5)); }
 };
+/* V12.6：聲音開關移到上方固定欄（每個分頁都看得到）；遊戲進行中左上角也有同一顆按鈕 */
+function sndIcon(){ return !AUD.on ? '🔇' : THEME.off ? '🔉' : '🔊'; }
 function renderSound(){
-  const b = $('#sndRow'); if(!b) return;
-  b.innerHTML = `<button class="chip ${AUD.on?'sel':''}" data-snd="1">🔊 開</button><button class="chip ${!AUD.on?'sel':''}" data-snd="0">🔇 關</button><button class="chip ${AUD.on && !THEME.off?'sel':''}" id="thPlay">🎵 主題曲${THEME.off?'（關）':''}</button>`;
-  $('#thPlay').onclick = ()=>{ if(!AUD.on){ toast('先打開聲音'); return; } THEME.off = !THEME.off; try{ localStorage.setItem('hfk_theme', THEME.off?'0':'1'); }catch(e){}
-    THEME.off ? THEME.stop() : THEME.play(); toast(THEME.off ? '主題曲已關閉（遊戲音樂照常）' : '主題曲已開啟'); renderSound(); };
-  b.querySelectorAll('[data-snd]').forEach(x=>x.onclick=()=>{ AUD.set(x.dataset.snd==='1'); renderSound(); if(AUD.on) SND.good(); });
+  ['#sndBtn','#sndFab'].forEach(sel=>{ const b = $(sel); if(b){ b.textContent = sndIcon(); b.onclick = e=>{ e.stopPropagation(); sndPop(b); }; } });
+}
+function sndPop(btn){
+  const old = $('#sndPop'); if(old){ old.remove(); return; }
+  const r = btn.getBoundingClientRect(), pop = document.createElement('div'); pop.id = 'sndPop'; pop.className = 'snd-pop';
+  const draw = ()=>{ pop.innerHTML = `<div class="sp-r"><span>🔊 遊戲音效與音樂</span><button class="tg ${AUD.on?'on':''}" id="spAll" aria-label="音效開關"></button></div>
+    <div class="sp-r"><span>🎵 王國主題曲</span><button class="tg ${AUD.on&&!THEME.off?'on':''}" id="spTh" aria-label="主題曲開關" ${AUD.on?'':'disabled'}></button></div>`;
+    pop.querySelector('#spAll').onclick = ()=>{ AUD.set(!AUD.on); if(AUD.on){ SND.good(); THEME.sync(); } draw(); renderSound(); };
+    pop.querySelector('#spTh').onclick = ()=>{ THEME.off = !THEME.off; try{ localStorage.setItem('hfk_theme', THEME.off?'0':'1'); }catch(e){} THEME.off ? THEME.stop() : THEME.sync(); draw(); renderSound(); }; };
+  draw(); document.body.appendChild(pop);
+  const left = Math.min(window.innerWidth-242, Math.max(8, r.left < window.innerWidth/2 ? r.left : r.right-230));
+  pop.style.left = left+'px'; pop.style.top = (r.bottom+8)+'px';
+  setTimeout(()=>document.addEventListener('pointerdown', function off(e){ if(!pop.contains(e.target) && e.target!==btn){ pop.remove(); document.removeEventListener('pointerdown', off, true); } }, true), 0);
 }
 
 /* ---------- 我想玩遊戲：練習模式（不加任何數值，不影響難度與每日紀錄） ---------- */
