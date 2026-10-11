@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V11.8</title>
+<title>今天在隱花王國尋寶 V11.9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -942,7 +942,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V11.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V11.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4840,11 +4840,18 @@ const THEME = {
   au:null, synth:false, fadeT:null, off:false, wasWant:false,
   /* V11.8：主題曲只在「王國地圖」和「我」頁播放（循環、接續上次位置、淡入淡出）；玩遊戲時換遊戲音樂；其他頁、切到背景就停
      音檔 theme.mp3（Pixabay〈Hope That Always Remains〉，和 index.html 放同一層）；讀不到才用合成版（每次進頁播一次） */
+  gn:null, pauseT:null, fading:false,
+  /* V11.9：iPhone（iOS Safari）不能用程式調整 audio 音量，原本的淡出永遠不會結束、音樂停不下來。
+     改成把音檔接進 Web Audio 用增益節點淡入淡出，並且一定在 0.6 秒後直接暫停 */
+  graph(){ const c = AUD.ctx; if(this.gn || !c || !this.au) return;
+    try{ const src = c.createMediaElementSource(this.au); this.gn = c.createGain(); this.gn.gain.value = 0; src.connect(this.gn); this.gn.connect(c.destination); }catch(e){ this.gn = null; } },
+  vol(v, t){ if(this.gn){ const c = AUD.ctx; this.gn.gain.cancelScheduledValues(c.currentTime); this.gn.gain.setTargetAtTime(v, c.currentTime, t||.15); } else { try{ this.au.volume = v; }catch(e){} } },
   play(){ if(!AUD.on || this.off) return; AUD.unlock(); if(this.synth) return this.playSynth();
     try{ if(!this.au){ this.au = new Audio('theme.mp3'); this.au.preload = 'auto'; this.au.loop = true; this.au.onerror = ()=>{ this.synth = true; }; }
-      const a = this.au; clearInterval(this.fadeT); if(!a.paused && a.volume>.3) return;
-      if(a.paused) a.volume = 0;
-      a.play().then(()=>{ this.pending = false; this.played = true; clearInterval(this.fadeT); this.fadeT = setInterval(()=>{ a.volume = Math.min(.55, a.volume+.04); if(a.volume>=.55) clearInterval(this.fadeT); }, 60); })
+      this.graph(); const a = this.au; clearTimeout(this.pauseT);
+      if(!a.paused && !this.fading) return;
+      this.fading = false;
+      a.play().then(()=>{ this.pending = false; this.played = true; this.vol(.55, .4); })
         .catch(err=>{ if(err && err.name==='NotAllowedError') this.pending = true; else if(err && err.name!=='AbortError'){ this.synth = true; } });
     }catch(e){ this.synth = true; } },
   want(){ const home = $('#home'), tab = document.querySelector('nav button.on');
@@ -4853,7 +4860,7 @@ const THEME = {
   sync(){ const w = this.want();
     if(w && (!this.synth || !this.wasWant)) this.play(); else if(!w) this.stop();
     this.wasWant = w; },
-  on(){ return !!this.g || !!(this.au && !this.au.paused); },
+  on(){ return !!this.g || !!(this.au && !this.au.paused && !this.fading); },
   playSynth(){ const c = AUD.ctx; if(!c || c.state!=='running'){ this.pending = true; return; }
     this.stop(); this.pending = false; this.played = true; const g = this.g = c.createGain(); g.gain.value = 1.3; g.connect(AUD.mus);
     const e = 60/116/2, T = c.currentTime+.1;
@@ -4865,7 +4872,8 @@ const THEME = {
         if(!last && (pos===2 || pos===6)){ ch.forEach(n=>tone(g, n, t, e*1.3, 'sine', .13)); noise(g, t, .08, .2, 1800); }
         if(!last && pos%2===1) noise(g, t, .03, .1, 8000); });
       if(last){ ch.forEach(n=>tone(g, n, T+b*8*e, e*8, 'sine', .16)); noise(g, T+b*8*e, .9, .18, 5000); } }); },
-  stop(){ this.pending = false; const a = this.au; if(a && !a.paused){ clearInterval(this.fadeT); this.fadeT = setInterval(()=>{ a.volume = Math.max(0, a.volume-.05); if(a.volume<=.01){ clearInterval(this.fadeT); a.pause(); } }, 50); }
+  stop(){ this.pending = false; const a = this.au; if(a && !a.paused && !this.fading){ this.fading = true; this.vol(0, .12);
+      clearTimeout(this.pauseT); this.pauseT = setTimeout(()=>{ a.pause(); this.fading = false; }, 600); }   // 不管音量能不能調，0.6 秒後一定暫停
     if(!this.g) return; const g = this.g, c = AUD.ctx; this.g = null; try{ g.gain.setTargetAtTime(0, c.currentTime, .15); setTimeout(()=>g.disconnect(), 800); }catch(e){} }
 };
 try{ THEME.off = localStorage.getItem('hfk_theme')==='0'; }catch(e){}
