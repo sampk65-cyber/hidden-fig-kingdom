@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V12.6</title>
+<title>今天在隱花王國尋寶 V12.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -105,6 +105,7 @@ button{cursor:pointer}
 .bar i{display:block;height:100%;background:linear-gradient(90deg,var(--rose),var(--fig))}
 .lvtxt{font-size:11px;color:var(--muted)}
 .snd-btn{flex:none;width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:#fff;font-size:18px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px #0001}
+.snd-wrap{flex:none;display:flex;flex-direction:column;align-items:center;gap:1px}.snd-wrap small{font-size:10px;font-weight:700;color:#8A7764;line-height:1}
 #sndFab{position:fixed;left:12px;top:calc(8px + env(safe-area-inset-top,0px));z-index:10001;display:none}
 html.gaming #sndFab{display:flex}
 .snd-pop{position:fixed;z-index:10002;background:#fff;border-radius:16px;box-shadow:0 8px 28px #0003;padding:12px;width:230px;color:#2A1F2D}
@@ -671,7 +672,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div class="lvtxt" id="hudLv"></div>
     </div>
     <div class="stat"><span id="hudSt">⚡5</span><span id="hudLeaf">🍃0</span></div>
-    <button class="snd-btn" id="sndBtn" aria-label="聲音設定">🔊</button>
+    <div class="snd-wrap"><button class="snd-btn" id="sndBtn" aria-label="聲音設定">🔊</button><small>聲音</small></div>
   </div>
 
   <!-- 王國 -->
@@ -955,7 +956,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V12.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V12.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4903,7 +4904,7 @@ try{ THEME.off = localStorage.getItem('hfk_theme')==='0'; }catch(e){}
 document.addEventListener('pointerdown', ()=>{ if(THEME.pending && THEME.want()) setTimeout(()=>THEME.play(), 60); }, {passive:true});   // 瀏覽器規定要先點畫面才能出聲
 setInterval(()=>{ THEME.sync(); document.documentElement.classList.toggle('gaming', !!document.querySelector('[id$="Ov"], #mg')); }, 800);   // 隨時檢查：在地圖／我頁就播，進遊戲或換頁就停
 document.addEventListener('visibilitychange', ()=>THEME.sync());
-(()=>{ const f = document.createElement('button'); f.id = 'sndFab'; f.className = 'snd-btn'; f.setAttribute('aria-label','聲音設定'); document.body.appendChild(f); renderSound(); })();   // 自動登入時瀏覽器還不能出聲，等第一次點畫面再播
+(()=>{ const f = document.createElement('button'); f.id = 'sndFab'; f.className = 'snd-btn'; f.setAttribute('aria-label','聲音設定'); document.body.appendChild(f); renderSound(); })();   // 遊戲中左上角；和上方「聲音」是同一組設定   // 自動登入時瀏覽器還不能出聲，等第一次點畫面再播
 const SND = {
   ok(){ return AUD.on && AUD.ctx; },
   good(n){ if(!this.ok()) return; const t=AUD.ctx.currentTime, b=Math.min(7, n||0); tone(AUD.sfx, 84+b, t, .12, 'triangle', .6); tone(AUD.sfx, 88+b, t+.07, .16, 'triangle', .6); },
