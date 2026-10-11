@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V12.0</title>
+<title>今天在隱花王國尋寶 V12.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -948,7 +948,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V12.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V12.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4396,15 +4396,16 @@ const TRASH = [
   {id:'leaf',  n:'落葉',   bin:3, svg:'<path d="M0 -14 C10 -10 14 2 0 14 C-14 2 -10 -10 0 -14Z" fill="#C99A4E"/><path d="M0 -12 L0 12 M0 -2 L6 -6 M0 4 L-6 0" stroke="#8C6A3E" stroke-width="1.4"/>'}
 ];
 const FISH = {id:'fish', n:'小魚', svg:'<ellipse cx="0" cy="0" rx="13" ry="7" fill="#F29B5A"/><path d="M11 0 L20 -7 L20 7Z" fill="#E07A3A"/><circle cx="-6" cy="-2" r="1.8" fill="#111"/><path d="M-1 -6 Q3 -10 7 -6" stroke="#E07A3A" stroke-width="2" fill="none"/>'};
-const BINS = [{n:'玻璃',c:'#3E8A5A'},{n:'鐵鋁罐',c:'#8B949C'},{n:'塑膠類',c:'#3E7FC4'},{n:'樹枝落葉',c:'#7A5A3E'}];
+const BINS = [{n:'玻璃',c:'#2E9E5B',i:'🍾'},{n:'鐵鋁罐',c:'#6E7780',i:'🥫'},{n:'塑膠類',c:'#2F7FD8',i:'🧴'},{n:'樹枝落葉',c:'#9A6A3A',i:'🍂'}];
+const RS = 1.55;   // V12.1：垃圾放大 1.55 倍，外圈用分類桶顏色標示，底下加名稱
 function rainGame(k, d){
   const mg=$('#mg'); mg.style.height='350px'; const W=mg.clientWidth, H=350;
   const need=[8,10,12][d], rate=[1900,1450,1100][d], spd=[.55,.75,.95][d], rise=[1.6,2.2,2.8][d];
-  const binY=H-70, ditchL=W*.22, ditchR=W*.78, ditchB=binY-12, bw=W/4;
+  const binY=H-70, ditchL=W*.12, ditchR=W*.88, ditchB=binY-12, bw=W/4, M=26;   // 水溝加寬，放得下較大的垃圾
   mg.innerHTML = `<svg class="gh" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#DCE8CC"/>
     <rect x="${ditchL}" y="0" width="${ditchR-ditchL}" height="${ditchB}" fill="#7FA9B8"/><rect id="water" x="${ditchL}" y="${ditchB}" width="${ditchR-ditchL}" height="0" fill="#3E7FC4" opacity=".55"/>
     <g id="flow"></g><rect x="${ditchL}" y="${ditchB-6}" width="${ditchR-ditchL}" height="6" fill="#5B6770"/>
-    ${BINS.map((b,i)=>`<g class="bin" data-b="${i}"><rect x="${i*bw+4}" y="${binY}" width="${bw-8}" height="62" rx="10" fill="${b.c}"/><text x="${i*bw+bw/2}" y="${binY+38}" text-anchor="middle" font-size="12" font-weight="700" fill="#fff">${b.n}</text></g>`).join('')}
+    ${BINS.map((b,i)=>`<g class="bin" data-b="${i}"><rect x="${i*bw+4}" y="${binY}" width="${bw-8}" height="62" rx="10" fill="${b.c}" stroke="#fff" stroke-width="2"/><text x="${i*bw+bw/2}" y="${binY+26}" text-anchor="middle" font-size="20">${b.i}</text><text x="${i*bw+bw/2}" y="${binY+50}" text-anchor="middle" font-size="14" font-weight="900" fill="#fff">${b.n}</text></g>`).join('')}
     <g id="trash"></g></svg>`;
   const gT=$('#trash'), gF=$('#flow'), water=$('#water');
   let items=[], sorted=0, wl=0, last=0, done=false, drag=null, sel=null, t0=performance.now(), nSpawn=0;
@@ -4416,11 +4417,11 @@ function rainGame(k, d){
   const drop = (it, bi)=>{
     if(bi===it.t.bin){ items=items.filter(z=>z!==it); it.el.remove(); sorted++; SND.good(sorted); wl=Math.max(0,wl-5); upd();
       if(sorted>=need && !done){ done=true; finishChallenge(k,true); } }
-    else { wl+=8; SND.bad(); it.held=false; it.x=Math.max(ditchL+16,Math.min(ditchR-16,it.x)); it.y=Math.min(it.y, ditchB-40); flash(`${it.t.n}要丟「${BINS[it.t.bin].n}」喔！水位上升`); upd(); }
+    else { wl+=8; SND.bad(); it.held=false; it.x=Math.max(ditchL+M,Math.min(ditchR-M,it.x)); it.y=Math.min(it.y, ditchB-60); flash(`${it.t.n}要丟「${BINS[it.t.bin].n}」喔！水位上升`); upd(); }
   };
   mg.onpointerdown = e=>{
     if(done) return; const [x,y]=P2(e);
-    const it = items.find(z=>Math.hypot(z.x-x, z.y-y)<28);
+    const it = items.find(z=>Math.hypot(z.x-x, z.y-y)<38);
     if(it && it.fish){ wl+=6; SND.bad(); it.scared=performance.now(); flash('🐟 不要抓魚！牠們住在水溝裡，水位上升'); upd(); return; }
     if(it){ drag=it; it.held=true; sel=null; mg.setPointerCapture(e.pointerId); return; }
     const bi = binAt(x,y); if(sel && bi>=0){ const s=sel; sel=null; s.el.classList.remove('sel'); drop(s, bi); }
@@ -4429,22 +4430,23 @@ function rainGame(k, d){
   const rel = ()=>{ if(!drag) return; const it=drag; drag=null; const bi=binAt(it.x,it.y);
     if(bi>=0) drop(it, bi);
     else if(!it.moved){ sel=it; it.el.classList.add('sel'); flash(`選了${it.t.n}，再點下方的分類桶`); it.held=true; }
-    else { it.held=false; it.x=Math.max(ditchL+16,Math.min(ditchR-16,it.x)); }
+    else { it.held=false; it.x=Math.max(ditchL+M,Math.min(ditchR-M,it.x)); }
     it.moved=false; };
   mg.onpointerup = rel; mg.onpointercancel = rel;
   const step = now=>{
     if(done) return; const e = el(), acc = 1 + e/22;
     if(now-last > rate/(1+e/30)){ last=now; nSpawn++;
       const fish = nSpawn%3===0, t = fish ? FISH : TRASH[rnd(TRASH.length)], g=document.createElementNS('http://www.w3.org/2000/svg','g');
-      g.innerHTML = fish ? t.svg : `<circle r="22" fill="#ffffff55"/>${t.svg}`; gT.appendChild(g);
-      items.push({t, el:g, fish, x:ditchL+20+Math.random()*(ditchR-ditchL-40), y:-20, ph:Math.random()*6, held:false, dir:Math.random()<.5?-1:1}); }
+      const bc = fish ? '' : BINS[t.bin].c;   // 外圈＝該丟的分類桶顏色
+      g.innerHTML = fish ? t.svg : `<circle r="21" fill="#ffffffdd" stroke="${bc}" stroke-width="4"/>${t.svg}<text y="31" text-anchor="middle" font-size="9.5" font-weight="900" fill="${bc}" stroke="#fff" stroke-width="3" paint-order="stroke">${t.n}</text>`; gT.appendChild(g);
+      items.push({t, el:g, fish, x:ditchL+M+Math.random()*(ditchR-ditchL-M*2), y:-34, ph:Math.random()*6, held:false, dir:Math.random()<.5?-1:1}); }
     items = items.filter(it=>{
       if(!it.held){
-        if(it.fish){ const sc = it.scared && now-it.scared<600 ? 2.2 : 1; it.y += spd*acc*.7*sc; it.x += it.dir*.9*sc; if(it.x<ditchL+14||it.x>ditchR-14) it.dir*=-1; }
+        if(it.fish){ const sc = it.scared && now-it.scared<600 ? 2.2 : 1; it.y += spd*acc*.7*sc; it.x += it.dir*.9*sc; if(it.x<ditchL+M||it.x>ditchR-M) it.dir*=-1; }
         else { it.y += spd*acc; it.x += Math.sin(now/400+it.ph)*.4; }
-        it.x=Math.max(ditchL+14,Math.min(ditchR-14,it.x)); }
-      if(!it.held && it.y>ditchB-14){ it.el.remove(); if(!it.fish){ wl+=12; SND.bad(); flash(`${it.t.n}卡在排水口，水位上升！`); upd(); } return false; }
-      it.el.setAttribute('transform', it.fish ? `translate(${it.x} ${it.y}) scale(${it.dir<0?-1:1},1)` : `translate(${it.x} ${it.y}) rotate(${it.held?0:Math.sin(now/300+it.ph)*15})`); return true;
+        it.x=Math.max(ditchL+M,Math.min(ditchR-M,it.x)); }
+      if(!it.held && it.y>ditchB-26){ it.el.remove(); if(!it.fish){ wl+=12; SND.bad(); flash(`${it.t.n}卡在排水口，水位上升！`); upd(); } return false; }
+      it.el.setAttribute('transform', it.fish ? `translate(${it.x} ${it.y}) scale(${(it.dir<0?-1:1)*RS},${RS})` : `translate(${it.x} ${it.y}) scale(${it.held?RS*1.12:RS}) rotate(${it.held?0:Math.sin(now/300+it.ph)*8})`); return true;
     });
     gF.innerHTML = [0,1,2,3].map(i=>{ const y=((now/18*acc)+i*70)%ditchB; return `<path d="M${ditchL+10} ${y} q12 6 24 0 t24 0 t24 0" stroke="#ffffff77" stroke-width="2" fill="none"/>`; }).join('');
     if(MG) MG.raf = requestAnimationFrame(step);
