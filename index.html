@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V12.2</title>
+<title>今天在隱花王國尋寶 V12.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -948,7 +948,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V12.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V12.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4400,10 +4400,10 @@ const TRASH = [
 ];
 const FISH = {id:'fish', n:'小魚', svg:'<ellipse cx="0" cy="0" rx="13" ry="7" fill="#F29B5A"/><path d="M11 0 L20 -7 L20 7Z" fill="#E07A3A"/><circle cx="-6" cy="-2" r="1.8" fill="#111"/><path d="M-1 -6 Q3 -10 7 -6" stroke="#E07A3A" stroke-width="2" fill="none"/>'};
 const BINS = [{n:'玻璃',c:'#2E9E5B',i:'🍾'},{n:'鐵鋁罐',c:'#6E7780',i:'🥫'},{n:'塑膠類',c:'#2F7FD8',i:'🧴'},{n:'樹枝落葉',c:'#9A6A3A',i:'🍂'}];
-const RS = 1.55;   // V12.1：垃圾放大 1.55 倍，外圈用分類桶顏色標示，底下加名稱
+const RS = 1.55;   // V12.1：垃圾放大 1.55 倍，外圈用分類桶顏色標示（V12.3 取消名稱）
 function rainGame(k, d){
   const mg=$('#mg'); mg.style.height='350px'; const W=mg.clientWidth, H=350;
-  const need=[8,10,12][d], rate=[1900,1450,1100][d], spd=[.55,.75,.95][d], rise=[1.6,2.2,2.8][d];
+  const need=[8,10,12][d], rate=[1600,1200,900][d], spd=[.7,.95,1.2][d], rise=[1.6,2.2,2.8][d], ringW=[4,3.5,1.5][d];   // V12.4：漂流更快、出現更密；高級外圈變細
   const binY=H-70, ditchL=W*.12, ditchR=W*.88, ditchB=binY-12, bw=W/4, M=26;   // 水溝加寬，放得下較大的垃圾
   mg.innerHTML = `<svg class="gh" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#DCE8CC"/>
     <rect x="${ditchL}" y="0" width="${ditchR-ditchL}" height="${ditchB}" fill="#7FA9B8"/><rect id="water" x="${ditchL}" y="${ditchB}" width="${ditchR-ditchL}" height="0" fill="#3E7FC4" opacity=".55"/>
@@ -4441,7 +4441,7 @@ function rainGame(k, d){
     if(now-last > rate/(1+e/30)){ last=now; nSpawn++;
       const fish = nSpawn%3===0, t = fish ? FISH : TRASH[rnd(TRASH.length)], g=document.createElementNS('http://www.w3.org/2000/svg','g');
       const bc = fish ? '' : BINS[t.bin].c;   // 外圈＝該丟的分類桶顏色
-      g.innerHTML = fish ? t.svg : `<circle r="21" fill="#ffffffdd" stroke="${bc}" stroke-width="4"/>${t.svg}<text y="31" text-anchor="middle" font-size="9.5" font-weight="900" fill="${bc}" stroke="#fff" stroke-width="3" paint-order="stroke">${t.n}</text>`; gT.appendChild(g);
+      g.innerHTML = fish ? t.svg : `<circle r="21" fill="#ffffffdd" stroke="${bc}" stroke-width="${ringW}"/>${t.svg}`; gT.appendChild(g);   // V12.3：只留顏色外圈，取消名稱文字
       items.push({t, el:g, fish, x:ditchL+M+Math.random()*(ditchR-ditchL-M*2), y:-34, ph:Math.random()*6, held:false, dir:Math.random()<.5?-1:1}); }
     items = items.filter(it=>{
       if(!it.held){
