@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V12.1</title>
+<title>今天在隱花王國尋寶 V12.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -948,7 +948,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V12.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V12.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1840,7 +1840,7 @@ function logTree(logs, tm, nm, noName){
 }
 function newPlayer(uid){
   return {uids:[uid], rtok:rid(16), name:'', role:null, mat:'linen', color:COLORS[3], points:0, leaves:0,
-    tools:{lens:0,shears:0,basket:0,shoes:0}, streak:0, lastDay:null, daily:null, boxes:0, shares:[], lastCode:'', created:Date.now()};
+    tools:{lens:0,shears:0,basket:0,shoes:0}, streak:0, lastDay:null, daily:null, boxes:0, shares:[], lastCode:'', created:Date.now(), needCard:true};   // needCard：V12.2 新會員優先提醒保存會員卡
 }
 async function loadMine(){
   if(!Login.uid) return false;
@@ -1872,7 +1872,9 @@ async function redeem(raw){
   const mine = await loadMine();
   if(mine) await loadCoupons();
   if(c.used){
-    if(mine && c.usedPid===PID){ history.replaceState(null,'',location.pathname); toast('這盒已經兌換過了，歡迎回來'); return P.role ? startHome() : openCreate(); }
+    if(mine && c.usedPid===PID){ if(c.type==='share'){ history.replaceState(null,'',location.pathname); toast('歡迎回來'); return P.role ? startHome() : openCreate(); } history.replaceState(null,'',location.pathname); toast('這盒已經兌換過了，歡迎回來'); return P.role ? startHome() : openCreate(); }
+    if(c.type==='share'){ history.replaceState(null,'',location.pathname);   // V12.2：分享券只能用來加入一次，用過就不能拿來登入（分享者手上也有這個連結）
+      return info('🎟️','這張分享券已經使用過了','分享券只能用來加入一次。<br>如果你就是用這張券加入的人，請掃描「我的會員卡」，或在登入頁用<b>會員編號＋會員密碼</b>登入。'); }
     if(mine && c.usedPid && c.usedPid!==PID){   // V10.0：這台裝置正在用別的帳號 → 詢問是否切換
       await Auth.flush();
       return openSheet(`<div class="big pop">🔄</div><h2 class="h2 wk">切換帳號？</h2><p class="sub">這個 QR 屬於另一個帳號。切換後，這台裝置會改登入那個帳號；目前帳號的資料都保留在雲端，之後可用它的 QR 或會員卡再切回來。</p>
@@ -2127,6 +2129,7 @@ async function checkMessages(tries=0){
   P.giftGot = P.giftGot || [];
   try{ const n = await DB.get('config/notice'); if(n && n.id && n.text && (P.noticeSeen!==n.id || (n.gift && !P.giftGot.includes(n.id)))) msgs.push({k:'n', id:n.id, text:n.text, created:n.created, gift:n.gift && !P.giftGot.includes(n.id) ? n.gift : null}); }catch(e){}
   try{ (await DB.list(`players/${PID}/inbox`)).filter(m=>!m.read || (m.gift && !m.claimed)).sort((a,b)=>a.created-b.created).forEach(m=>msgs.push({k:'m', id:m.id, text:m.text, created:m.created, gift:m.gift && !m.claimed ? m.gift : null})); }catch(e){}
+  if(P.needCard && !P.cardSaved) return cardRemind(()=>checkMessages());   // 新會員：先保存會員卡，再看農場來信
   if(!msgs.length) return cardRemind();
   openSheet(`<div class="big pop">📮</div><h2 class="h2 wk">農場來信</h2>${msgs.map((m,i)=>`<div class="card msg ${m.k}" style="text-align:left"><b>${m.k==='n'?'📢 農場公告':'💬 給你的私訊'}</b><span class="lvtxt">${new Date(m.created).toLocaleDateString('zh-TW')}</span><p style="margin:6px 0 0;white-space:pre-wrap">${esc(m.text)}</p>
       ${m.gift?`<div class="gift-box" id="gb${i}">${chestSvg('a')}<button class="btn main" data-gift="${i}">🎁 打開農場寶箱</button></div>`:''}</div>`).join('')}
@@ -5090,7 +5093,7 @@ function stampDone(kind){ if(kind==='card') P.cardSaved = true; else { P.cardSav
 async function downloadCard(){
   if(!P || !P.rtok){ toast('找不到會員卡資料'); return; }
   if(typeof qrcode==='undefined'){ toast('QR 元件還沒載入，請重新整理再試'); return; }
-  const W = 720, H = 1040, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const W = 720, H = 1180, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   const font = (w, n)=>`${w} ${n}px "Noto Sans TC", system-ui, sans-serif`;
   x.fillStyle = '#F7F3EA'; x.fillRect(0, 0, W, H);
   x.fillStyle = '#5B2346'; x.fillRect(0, 0, W, 150);
@@ -5104,7 +5107,11 @@ async function downloadCard(){
   x.fillStyle = '#5B2346'; x.font = font(900, 26); x.fillText('這是你帳號唯一的登入 QR', W/2, oy + size + 56);
   x.fillStyle = '#2A1F2D'; x.font = font(500, 22);
   x.fillText('換手機時用相機掃描，或在登入頁', W/2, oy + size + 96); x.fillText('選「從相簿選會員卡圖片」即可找回帳號', W/2, oy + size + 128);
-  x.fillStyle = '#C9566E'; x.font = font(700, 22); x.fillText('請勿分享給他人', W/2, oy + size + 172);
+  // V12.2：會員卡印上會員編號＋會員密碼，換手機時掃 QR 或輸入這組都能登入
+  const by = oy + size + 156; x.fillStyle = '#fff'; x.strokeStyle = '#5B2346'; x.lineWidth = 3; x.beginPath(); x.roundRect ? x.roundRect(80, by, W-160, 118, 18) : x.rect(80, by, W-160, 118); x.fill(); x.stroke();
+  x.fillStyle = '#6E6470'; x.font = font(500, 20); x.fillText('會員編號', W/2-150, by+40); x.fillText('會員密碼', W/2+110, by+40);
+  x.fillStyle = '#2A1F2D'; x.font = font(900, 30); x.fillText(PID, W/2-150, by+86); x.font = '700 26px ui-monospace, Menlo, Consolas, monospace'; x.fillText(P.rtok, W/2+110, by+86);
+  x.fillStyle = '#C9566E'; x.font = font(700, 22); x.fillText('請勿分享給他人・同一時間只能在一支手機使用', W/2, by + 160);
   x.fillStyle = '#9A8F98'; x.font = font(400, 16); x.fillText('Copyright © 2026 Sam pksun. All rights reserved.', W/2, H - 28);
   c.toBlob(b=>{ if(!b){ toast('產生圖片失敗'); return; } saveBlob(b, `隱花王國會員卡_${PID}.png`); stampDone('card'); toast('會員卡已下載，請存到相簿保存'); }, 'image/png');
 }
@@ -5134,12 +5141,19 @@ async function loginFromCardImage(file){
   }catch(e){ console.error(e); info('⚠️','讀取失敗','請檢查網路後再試一次。'); }
 }
 // V7.1：玩家端只提醒保存會員卡一次（資料一直在雲端，由農場端備份）
-async function cardRemind(){
-  if(!P || P.guest || P.cardAsked || P.cardSaved) return;
-  P.cardAsked = true; Auth.save();
-  openSheet(`<div class="big pop">🔑</div><h2 class="h2 wk">先保存你的會員卡</h2><p class="sub">會員卡 QR 是你帳號唯一的登入鑰匙。換手機、清除瀏覽器資料時，靠它就能找回角色、果友值和優惠券。<br>之後隨時可以在「我」分頁下載。</p>
-    <button class="btn main" id="rmCard">📥 下載會員卡圖片</button><button class="btn ghost" onclick="closeSheet()">之後再說</button>`, true);
-  $('#rmCard').onclick = ()=>{ downloadCard(); closeSheet(); };
+// V12.2：成為會員後（果盒 QR、分享券、家人邀請）第一時間提醒；還沒下載的，每天提醒一次直到下載
+async function cardRemind(then){
+  if(!P || P.guest || P.cardSaved || P.cardAskDay===today() || !P.rtok) return then && then();
+  P.cardAskDay = today(); const first = !!P.needCard; delete P.needCard; Auth.save();
+  openSheet(`<div class="big pop">🔑</div><h2 class="h2 wk">${first?'歡迎加入！':''}先保存你的會員卡</h2>
+    <p class="sub">會員卡是你帳號的登入鑰匙。換手機、清除瀏覽器資料、Safari 太久沒開被登出時，<b>掃會員卡 QR</b> 或輸入<b>會員編號＋會員密碼</b>就能找回角色、果友值和優惠券。</p>
+    <div class="pw-show" style="text-align:left"><div><small>會員編號</small><b>${esc(PID)}</b></div><div><small>會員密碼</small><b style="font-family:ui-monospace,monospace;letter-spacing:1px">${esc(P.rtok)}</b></div></div>
+    <p class="lvtxt">會員卡圖片上也印有這組編號和密碼，請存到相簿，不要給別人。</p>
+    <button class="btn main" id="rmCard">📥 下載會員卡圖片</button><button class="btn ghost" id="rmCopy">📋 複製編號＋密碼</button><button class="btn ghost" id="rmLater">明天再提醒我</button>`, true);
+  const after = ()=>{ closeSheet(); if(then) setTimeout(then, 600); };
+  $('#rmCard').onclick = ()=>{ downloadCard(); after(); };
+  $('#rmCopy').onclick = ()=>{ copyText(`隱花王國 會員編號：${PID}　會員密碼：${P.rtok}`, '已複製，請存在安全的地方'); P.cardSaved = true; Auth.save(); after(); };
+  $('#rmLater').onclick = after;
 }
 
 /* ---------- V5.5：保持登入（離開 LINE／FB 內建瀏覽器） ---------- */
