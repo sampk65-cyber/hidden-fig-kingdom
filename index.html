@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V12.7</title>
+<title>今天在隱花王國尋寶 V13.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -594,6 +594,23 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
 figure.ph{margin:0 0 12px}figure.ph img{width:100%;border-radius:14px;display:block}
 figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-b);margin-top:4px}figure.ph figcaption span{color:var(--muted);white-space:nowrap}
 .ph-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.ph-it img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}.ph-it small{display:block;font-size:12px;color:var(--muted)}
+
+/* ===== V13.0：一般溫室立體巡園 ===== */
+#ghOv{position:fixed;inset:0;z-index:40;background:#DDEFD6;touch-action:none;user-select:none;-webkit-user-select:none}
+#ghCv{display:block;width:100%;height:100%}
+.gh-joy{position:absolute;left:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));width:120px;height:120px;border-radius:50%;background:#14735A33;border:2px solid #fff;touch-action:none}
+.gh-stick{position:absolute;left:38px;top:38px;width:44px;height:44px;border-radius:50%;background:#fff;box-shadow:0 3px 12px #0004}
+.gh-joy span{position:absolute;left:-20px;right:-20px;bottom:-18px;text-align:center;font-size:11px;font-weight:900;color:#fff;text-shadow:0 1px 3px #0008}
+#ghOv .em-tip{top:calc(70px + env(safe-area-inset-top,0px))}
+#ghOv .em-top{left:58px}
+.gh-enter{display:block;width:100%;border:0;padding:0;background:none;position:relative;margin-top:8px;border-radius:14px}
+.gh-pv{width:100%;height:auto;display:block;border-radius:14px}
+.gh-enter.dry .gh-pv{filter:sepia(.5) saturate(.8)}
+.gh-cnt{position:absolute;left:8px;bottom:6px;background:#ffffffe0;border-radius:99px;padding:2px 10px;font-size:13px;font-weight:700;color:var(--fig)}
+.gh-hint{text-align:center;font-weight:700;color:var(--muted);margin:10px 0 6px}
+.gh-hint.on{color:var(--fig);animation:ghH 1.4s ease-in-out infinite}
+@keyframes ghH{50%{transform:scale(1.06)}}
+@media (prefers-reduced-motion:reduce){.gh-hint.on{animation:none}}
 </style>
 </head>
 <body>
@@ -2245,6 +2262,7 @@ function treeSvg(stage, i, fx){
 }
 let curZone = null;
 function openZone(zid){
+  if(document.getElementById('ghOv')){ closeSheet(); return; }     // 在立體溫室裡巡園：關掉結果視窗，留在溫室
   if(zid===knightZone() && !P.daily.knightMet) return knightBattle(zid);
   if(zid===chZone() && pendingCh().length) return startChallenge(pendingCh()[0]);
   if(ZONES.find(x=>x.id===zid).emerald) return openEmerald();
@@ -2257,13 +2275,129 @@ function openZone(zid){
     <p class="sub">目前階段：<b style="color:${STAGE[curZone.stage].c}">${curZone.stage}</b>，寶箱機會 ×${STAGE[curZone.stage].mult}。剩餘能量 ⚡${stamina()}</p>
     ${helpHtml(zid)}
     <div class="trees-wrap${done?' fx-'+done:''}" id="treesWrap">${PHOTO_N[zid]>0?`<button class="film-in" id="btnZPh" aria-label="${zName(curZone)}真實場景照片">${FILM_SVG}<span>真實場景</span></button>`:''}${fx.feed?`<button class="fert-bk" id="fertBk" aria-label="施肥桶">${BUCKET_SVG}<span id="fertN">施肥</span></button><div class="fert-layer hide" id="fertLayer"></div>`:''}
-    <div class="trees">${Array.from({length:TREES_N},(_,i)=>`<button class="tree ${tapped.includes(i)?'tapped':''} ${fx.dry?'dry':''}" data-i="${i}" aria-label="第 ${i+1} 棵樹">${treeSvg(curZone.stage,i,fx)}${res[i]?`<span class="res">${res[i]}</span>`:''}</button>`).join('')}</div></div>
+    <button class="gh-enter ${fx.dry?'dry':''}" id="ghGo" aria-label="走進${zName(curZone)}">${ghPreview(zid)}<span class="gh-cnt">🌳 ${tapped.length}/${TREES_N}</span></button></div>
+    <p class="gh-hint ${(!fx.dry&&!fx.bud&&!fx.weed&&!fx.feed)||done?'on':''}">👆 點選樹木，尋找寶箱</p>
+    <button class="btn main" id="ghGo2">🌳 走進溫室巡園（${ghLayout(zid).r} 排 × ${ghLayout(zid).n} 株）</button>
     <button class="btn ghost" onclick="closeSheet()">回地圖</button>`);
-  $('#sheetBox').querySelectorAll('.tree').forEach(b=>b.onclick=()=>tapTree(+b.dataset.i));
+  $('#ghGo').onclick = ()=>openGH3D(zid); $('#ghGo2').onclick = ()=>openGH3D(zid);
   $('#sheetBox').querySelectorAll('[data-h]').forEach(b=>b.onclick=()=> b.dataset.h==='feed' ? fertMode(zid) : doHelp(zid, b.dataset.h));
   const fb2 = $('#fertBk'); if(fb2) fb2.onclick = ()=>fertMode(zid);
   const zp = $('#btnZPh'); if(zp) zp.onclick = ()=>openPhotos(zid);
 }
+/* =========================================================
+   V13.0：一般溫室也改成立體巡園（和翡翠溫室同一套走法）
+   晨曦、映日 4 排 × 12 株；春泥 6 排 × 12 株；虛舟、松濤 5 排 × 20 株
+   每天 12 棵「藏寶樹」（沙沙作響）仍對應原本的 0–11 號，玩家既有資料不受影響
+   ========================================================= */
+const GH_LAYOUT = {z1:{r:4,n:12}, z2:{r:4,n:12}, z3:{r:6,n:12}, z4:{r:5,n:20}, z5:{r:5,n:20}};
+const GH_ROWGAP = 3.2, GH_STEP = 1.45;
+function ghLayout(zid){ return GH_LAYOUT[zid] || {r:4, n:12}; }
+function ghTreasures(zid){   // 每天、每座溫室固定的 12 棵藏寶樹位置
+  const L = ghLayout(zid), all = []; for(let r=0;r<L.r;r++) for(let k=0;k<L.n;k++) all.push([r,k]);
+  const rn = seedRand('gh'+zid+today()); for(let i=all.length-1;i>0;i--){ const j = Math.floor(rn()*(i+1)); [all[i],all[j]] = [all[j],all[i]]; }
+  const m = {}; all.slice(0, TREES_N).forEach(([r,k],i)=>{ m[r+'_'+k] = i; }); return m;
+}
+function ghPreview(zid){
+  const L = ghLayout(zid), tapped = (P.daily.tapped && P.daily.tapped[zid]) || [], W = 300, H = 120, gx = (W-24)/(L.n-1), gy = (H-30)/Math.max(1,L.r-1);
+  let s = `<svg viewBox="0 0 ${W} ${H}" class="gh-pv" aria-hidden="true"><rect width="${W}" height="${H}" rx="14" fill="#E3EED6"/>`;
+  for(let r=0;r<L.r;r++){ const y = 15 + r*gy; s += `<path d="M10 ${y} H${W-10}" stroke="#C9B48E" stroke-width="5" stroke-linecap="round"/>`;
+    for(let k=0;k<L.n;k++) s += `<circle cx="${12+k*gx}" cy="${y-2}" r="${L.n>12?4.2:5.4}" fill="${(k+r)%3?'#5E9A4E':'#4F8A45'}"/>`; }
+  return s + `</svg>`;
+}
+function openGH3D(zid){
+  if(document.getElementById('ghOv')) return;
+  closeSheet();
+  const z = ZONES.find(x=>x.id===zid), L = ghLayout(zid); curZone = z;
+  const LEN = L.n*GH_STEP + 5, ROWX = Array.from({length:L.r}, (_,i)=>(i-(L.r-1)/2)*GH_ROWGAP), XMAX = ROWX[ROWX.length-1] + 1.6;
+  const TRE = ghTreasures(zid);
+  const ov = document.createElement('div'); ov.id = 'ghOv';
+  ov.innerHTML = `<canvas id="ghCv"></canvas>
+    <div class="em-top"><div><b>🌳 ${zName(z)}</b><div class="em-loc" id="ghLoc">入口</div></div><div class="em-st" id="ghSt"></div><button class="em-x" id="ghX">回地圖</button></div>
+    <div id="ghJoy" class="gh-joy"><div class="gh-stick" id="ghStick"></div><span>走動</span></div>
+    <div class="em-tip" id="ghTip">👆 點選樹木，尋找寶箱・沙沙作響的樹藏著東西</div>`;
+  document.body.appendChild(ov);
+  const cv = $('#ghCv'), cx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio||1);
+  let W, H; const size = ()=>{ W = ov.clientWidth; H = ov.clientHeight; cv.width = W*dpr; cv.height = H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); }; size(); addEventListener('resize', size);
+  const img = emAvatarImg();
+  const G = {pz:1.2, px:ROWX[0] + GH_ROWGAP/2*(L.r>1?1:0), jx:0, jy:0, walk:0, raf:0, hit:[], t0:performance.now(), fall:[]};
+  window.GH = G; G.ROWX = ROWX;
+  if(L.r%2===1) G.px = (ROWX[(L.r-1)/2] + ROWX[(L.r+1)/2])/2;    // 從中間走道進去
+  else G.px = 0;
+  const J = $('#ghJoy'), S = $('#ghStick'); let jid = null;
+  const joy = e=>{ const r = J.getBoundingClientRect(); let x = (e.clientX-r.left-r.width/2)/(r.width/2), y = (e.clientY-r.top-r.height/2)/(r.height/2); const m = Math.hypot(x,y); if(m>1){ x/=m; y/=m; }
+    G.jx = x; G.jy = y; S.style.transform = `translate(${x*34}px,${y*34}px)`; };
+  J.onpointerdown = e=>{ jid = e.pointerId; J.setPointerCapture(e.pointerId); joy(e); };
+  J.onpointermove = e=>{ if(e.pointerId===jid) joy(e); };
+  J.onpointerup = J.onpointercancel = ()=>{ jid = null; G.jx = 0; G.jy = 0; S.style.transform = ''; };
+  const keys = {}; const kd = e=>{ keys[e.key] = e.type==='keydown'; }; addEventListener('keydown', kd); addEventListener('keyup', kd);
+  cv.onpointerdown = e=>{
+    const r = cv.getBoundingClientRect(), x = e.clientX-r.left, y = e.clientY-r.top;
+    let best = null, bd = 1e9; G.hit.forEach(h=>{ const d = Math.hypot(h.x-x, (h.y-y)*.7); if(d < h.r && d < bd){ bd = d; best = h; } });
+    if(!best) return;
+    $('#ghTip').classList.add('off');
+    if(best.dist > 4.2){ SND.bad(); toast('走近一點才搆得到這棵樹'); return; }
+    if(best.idx==null){ SND.tick(); toast('🍃 翻了翻葉子，沒有動靜。找找沙沙作響的樹！'); return; }
+    curZone = z; tapTree(best.idx);
+  };
+  const quit = ()=>{ cancelAnimationFrame(G.raf); removeEventListener('resize', size); removeEventListener('keydown', kd); removeEventListener('keyup', kd); ov.remove(); renderAll(); };
+  $('#ghX').onclick = quit;
+  const rowName = x=>{ const k = ROWX.reduce((b,v,i)=>Math.abs(v-x)<Math.abs(ROWX[b]-x)?i:b, 0); return k; };
+  function frame(now){
+    if(!document.getElementById('ghOv')) return;
+    const t = (now-G.t0)/1000, sp = .1;
+    let jy = G.jy, jx = G.jx; if(keys.ArrowUp) jy=-1; if(keys.ArrowDown) jy=1; if(keys.ArrowLeft) jx=-1; if(keys.ArrowRight) jx=1;
+    const mvz = -jy*sp, mvx = jx*sp*.85;
+    G.pz = Math.max(.5, Math.min(LEN-1, G.pz+mvz)); G.px = Math.max(-XMAX, Math.min(XMAX, G.px+mvx));
+    const moving = Math.abs(mvz)+Math.abs(mvx) > .01; if(moving) G.walk += (Math.abs(mvz)+Math.abs(mvx))*2.2;
+    const camZ = G.pz-5.5, camX = G.px, camY = 2.1, hz = H*.4, f = W*.85;
+    const pj = (x,y,zz)=>{ const dz = zz-camZ; if(dz<.4) return null; const s = f/dz; return {x:W/2+(x-camX)*s, y:hz+(camY-y)*s, s}; };
+    const g = cx.createLinearGradient(0,0,0,hz); g.addColorStop(0,'#F7FCF4'); g.addColorStop(1,'#D9EED3'); cx.fillStyle = g; cx.fillRect(0,0,W,hz+2);
+    cx.fillStyle = '#7C5E45'; cx.fillRect(0,hz,W,H-hz);
+    const halfW = XMAX + 1.5;
+    for(let az = Math.ceil(camZ/4)*4; az < Math.min(camZ+44, LEN+2); az += 4){ cx.beginPath(); let st = false;    // 拱形骨架
+      for(let x=-halfW; x<=halfW; x+=1){ const p = pj(x, 3.1+2.2*(1-(x/halfW)**2), az); if(!p) continue; st ? cx.lineTo(p.x,p.y) : cx.moveTo(p.x,p.y); st = true; }
+      cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = Math.max(1, 70/(az-camZ)); cx.stroke(); }
+    const quad = (x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,Math.min(LEN,camZ+46)), d=pj(x1,0,Math.min(LEN,camZ+46)); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
+    ROWX.forEach(x=>quad(x-.55, x+.55, '#6B4E3A'));
+    for(let i=0;i<ROWX.length-1;i++){ const m = (ROWX[i]+ROWX[i+1])/2; quad(m-.6, m+.6, '#CDBB9A'); }
+    [-halfW, halfW].forEach(x=>{ const a=pj(x,0,camZ+.6), b=pj(x,0,Math.min(LEN,camZ+44)), c=pj(x,3.1,Math.min(LEN,camZ+44)), d=pj(x,3.1,camZ+.6); if(a&&b&&c&&d){ cx.fillStyle='rgba(235,245,232,.55)'; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); } });
+    const back = pj(0,0,LEN+.5); if(back){ const tl = pj(-halfW,3.1,LEN+.5), br = pj(halfW,0,LEN+.5); if(tl&&br){ cx.fillStyle='rgba(225,238,220,.9)'; cx.fillRect(tl.x, tl.y, br.x-tl.x, br.y-tl.y); } }
+    const tapped = (P.daily.tapped && P.daily.tapped[zid]) || [], res = P.daily['res_'+zid] || {};
+    const items = [];
+    ROWX.forEach((x,r)=>{ if(Math.abs(x-camX) > 12) return; for(let k=0;k<L.n;k++){ const zz = 2.5 + k*GH_STEP; if(zz < camZ+.8 || zz > camZ+34) continue; items.push({x, z:zz, r, k, idx:TRE[r+'_'+k]}); } });
+    items.sort((a,b)=>b.z-a.z); G.hit = [];
+    let near = null, nd = 4.2; items.forEach(it=>{ if(it.idx==null || tapped.includes(it.idx)) return; const d = Math.hypot(it.x-G.px, it.z-G.pz); if(d < nd){ nd = d; near = it; } });
+    for(const it of items){
+      const b0 = pj(it.x,0,it.z), b1 = pj(it.x,2.6,it.z); if(!b0||!b1) continue; const s = b0.s, dist = Math.hypot(it.x-G.px, it.z-G.pz);
+      const live = it.idx!=null && !tapped.includes(it.idx), rustle = live && dist < 11 ? Math.sin(t*9 + it.k) * .35 : 0;
+      cx.strokeStyle = '#5E3B4A'; cx.lineWidth = Math.max(1, .07*s); cx.beginPath(); cx.moveTo(b0.x,b0.y); cx.lineTo(b1.x,b1.y); cx.stroke();
+      if(s < 16){ cx.fillStyle = '#4F8A45'; cx.beginPath(); cx.ellipse(b1.x, b1.y+(b0.y-b1.y)*.25, .35*s, .6*s, 0, 0, Math.PI*2); cx.fill(); }
+      else { const seed = it.k*7 + it.r*3;
+        for(let j=0;j<7;j++){ const yy = .8+j*.27, p = pj(it.x,yy,it.z), side = (j%2?1:-1);
+          palm(cx, p.x+side*.22*s, p.y-.05*s, .3*s, side*.6 + rustle*(j%2?1:-1), j%3?'#4F8A45':'#5E9A4E');
+          cx.fillStyle = j < (seed%4)+1 ? '#8C3A5E' : j===(seed%4)+1 ? '#C2466E' : '#A9C85A';
+          cx.beginPath(); cx.ellipse(p.x-side*.06*s, p.y+.04*s, .05*s, .065*s, 0, 0, Math.PI*2); cx.fill(); } }
+      if(rustle && Math.random() < .02) G.fall.push({x:it.x+(Math.random()-.5)*.6, y:2.4, z:it.z, vy:.012+Math.random()*.01, ph:Math.random()*6});
+      const top = pj(it.x, 2.9, it.z);
+      if(it.idx!=null && tapped.includes(it.idx) && res[it.idx] && top && s > 10 && dist < 14){ const fs = Math.max(12, .32*s);
+        cx.fillStyle = '#ffffffe0'; cx.beginPath(); cx.arc(top.x, top.y, fs*.8, 0, Math.PI*2); cx.fill(); cx.font = `${fs}px sans-serif`; cx.textAlign = 'center'; cx.fillText(res[it.idx], top.x, top.y+fs*.35); }
+      else if(it===near && top){ const fs = Math.max(12, .26*s), bob = Math.sin(t*5)*3;
+        cx.fillStyle = '#2A1F2Dd9'; cx.font = `900 ${fs*.8}px "Noto Sans TC",sans-serif`; cx.textAlign = 'center'; const tw = cx.measureText('👆 點我找找').width+12;
+        cx.fillRect(top.x-tw/2, top.y-fs*1.6+bob, tw, fs*1.2); cx.fillStyle = '#fff'; cx.fillText('👆 點我找找', top.x, top.y-fs*.7+bob); }
+      const mid = pj(it.x, 1.4, it.z); if(mid) G.hit.push({x:mid.x, y:mid.y, r:Math.max(26, .55*s), dist, idx:it.idx});
+    }
+    G.fall = G.fall.filter(l=>{ l.y -= l.vy; if(l.y < 0) return false; const p = pj(l.x + Math.sin(t*3+l.ph)*.2, l.y, l.z); if(p && p.s > 8){ cx.fillStyle = '#7FB560'; cx.beginPath(); cx.ellipse(p.x, p.y, .06*p.s, .03*p.s, t*3+l.ph, 0, Math.PI*2); cx.fill(); } return true; });
+    const ah = Math.min(H*.24, 200), aw = ah*.8, bob = moving ? Math.sin(G.walk*3)*4 : 0, ax = W/2;
+    cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(ax, H-24, aw*.32, 8, 0, 0, Math.PI*2); cx.fill();
+    if(img.complete){ cx.save(); if(mvx < -.01){ cx.translate(ax*2,0); cx.scale(-1,1); } cx.drawImage(img, ax-aw/2, H-24-ah+bob, aw, ah); cx.restore(); }
+    const k = Math.max(1, Math.min(L.n, Math.round((G.pz-2.5)/GH_STEP)+1)), ri = rowName(G.px);
+    $('#ghLoc').textContent = G.pz < 2 ? `入口・${L.r} 排 × ${L.n} 株` : `第 ${ri+1} 排附近・第 ${k} 株`;
+    $('#ghSt').textContent = `⚡${stamina()}・🌳 ${tapped.length}/${TREES_N}`;
+    G.raf = requestAnimationFrame(frame);
+  }
+  G.raf = requestAnimationFrame(frame);
+}
+
 /* ---------- 今日劇情：依時段推進，五步完成送劇情寶箱 ---------- */
 const CHAPTERS = [
   {from:5,  to:9,  icon:'🌅', t:'清晨・晨露巡園', p:'阿無揉揉眼睛醒來，溫室裡的果子掛滿露水。先報到，再出門走一走鍛鍊體力，能量會多一些。'},
