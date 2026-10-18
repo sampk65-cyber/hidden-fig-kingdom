@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V13.2</title>
+<title>今天在隱花王國尋寶 V13.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2248,6 +2248,7 @@ function renderMap(){
       <ellipse cx="${z.x}" cy="${z.y+18}" rx="40" ry="7" fill="#0002"/>
       <path d="M${z.x-36} ${z.y+16} L${z.x-36} ${z.y-2} Q${z.x} ${z.y-34} ${z.x+36} ${z.y-2} L${z.x+36} ${z.y+16}Z" fill="#F5FAF2" stroke="#8FB087" stroke-width="2"/>
       <path d="M${z.x-18} ${z.y+16} L${z.x-18} ${z.y-14} M${z.x} ${z.y+16} L${z.x} ${z.y-19} M${z.x+18} ${z.y+16} L${z.x+18} ${z.y-14}" stroke="#B9D2B0" stroke-width="1.5"/>
+      ${mapMiniTrees(z)}
       <rect x="${z.x-42}" y="${z.y+24}" width="84" height="22" rx="11" fill="#fff"/>
       <text x="${z.x-11}" y="${z.y+39}" text-anchor="middle" font-size="12" font-weight="700" fill="#2A1F2D">${z.g}溫室</text>
       <text x="${z.x+25}" y="${z.y+39}" text-anchor="middle" font-size="10" fill="${st.c}" font-weight="700">${z.stage}</text>
@@ -2360,7 +2361,11 @@ function ghPreview(zid){
   const L = ghLayout(zid), tapped = (P.daily.tapped && P.daily.tapped[zid]) || [], W = 300, H = 120, gx = (W-24)/(L.n-1), gy = (H-30)/Math.max(1,L.r-1);
   let s = `<svg viewBox="0 0 ${W} ${H}" class="gh-pv" aria-hidden="true"><rect width="${W}" height="${H}" rx="14" fill="#E3EED6"/>`;
   for(let r=0;r<L.r;r++){ const y = 15 + r*gy; s += `<path d="M10 ${y} H${W-10}" stroke="#C9B48E" stroke-width="5" stroke-linecap="round"/>`;
-    for(let k=0;k<L.n;k++) s += `<circle cx="${12+k*gx}" cy="${y-2}" r="${L.n>12?4.2:5.4}" fill="${(k+r)%3?'#5E9A4E':'#4F8A45'}"/>`; }
+    const st = (ZONES.find(x=>x.id===zid)||{}).stage, T = stageTree(st), rr = (L.n>12?4.2:5.4) * (T.h<1 ? .45 : T.h<2 ? .8 : 1);
+    for(let k=0;k<L.n;k++){ const cxp = 12+k*gx;
+      if(T.n===0) s += `<circle cx="${cxp}" cy="${y-1}" r="${rr}" fill="#8C6A4E"/>${T.bud&&k%2?`<circle cx="${cxp+1.6}" cy="${y-3}" r="1.2" fill="#7FBF4E"/>`:''}`;
+      else s += `<circle cx="${cxp}" cy="${y-2}" r="${rr}" fill="${(k+r)%3?'#5E9A4E':'#4F8A45'}"/>${T.fruit==='ripe'&&(k+r)%2?`<circle cx="${cxp+2}" cy="${y-1}" r="1.5" fill="#8C3A5E"/>`:T.fruit==='green'&&(k+r)%3===0?`<circle cx="${cxp+2}" cy="${y-1}" r="1.2" fill="#C8DC7A"/>`:''}`; } }
+  s += `<text x="${W-10}" y="${H-8}" text-anchor="end" font-size="11" font-weight="700" fill="#5B2346">${(ZONES.find(x=>x.id===zid)||{}).stage||''}・${(T0=>T0.h<1?'約 50 公分':T0.h<2?'約 150 公分':'約 2.6 公尺')(stageTree((ZONES.find(x=>x.id===zid)||{}).stage))}</text>`;
   return s + `</svg>`;
 }
 function openGH3D(zid){
@@ -2430,28 +2435,22 @@ function openGH3D(zid){
     items.sort((a,b)=>b.z-a.z); G.hit = []; G.nearHit = null;
     let near = null, nd = 4.2; items.forEach(it=>{ if(it.idx==null || tapped.includes(it.idx)) return; const d = Math.hypot(it.x-G.px, it.z-G.pz); if(d < nd){ nd = d; near = it; } });
     for(const it of items){
-      const b0 = pj(it.x,0,it.z), b1 = pj(it.x,2.6,it.z); if(!b0||!b1) continue; const s = b0.s, dist = Math.hypot(it.x-G.px, it.z-G.pz);
+      const TH = stageTree(z.stage).h, b0 = pj(it.x,0,it.z), b1 = pj(it.x,TH,it.z); if(!b0||!b1) continue; const s = b0.s, dist = Math.hypot(it.x-G.px, it.z-G.pz);
       const live = it.idx!=null && !tapped.includes(it.idx), rustle = live && dist < 11 ? Math.sin(t*9 + it.k) * .35 : 0;
       if(live){ const tp = pj(it.x, 7, it.z); if(tp){ const bw = Math.max(8, .6*s), pulse = .75 + .25*Math.sin(t*3 + it.k);   // V13.1：藏寶樹的金色光束，遠遠就看得到
           const gr = cx.createLinearGradient(0, tp.y, 0, b0.y); gr.addColorStop(0,'rgba(255,214,90,0)'); gr.addColorStop(.5,`rgba(255,214,90,${.42*pulse})`); gr.addColorStop(1,`rgba(255,236,150,${.7*pulse})`);
           cx.fillStyle = gr; cx.beginPath(); cx.moveTo(b0.x-bw*.7, b0.y); cx.lineTo(tp.x-bw*.35, tp.y); cx.lineTo(tp.x+bw*.35, tp.y); cx.lineTo(b0.x+bw*.7, b0.y); cx.fill();
           cx.fillStyle = `rgba(255,236,150,${.45*pulse})`; cx.beginPath(); cx.ellipse(b0.x, b0.y, bw, bw*.25, 0, 0, Math.PI*2); cx.fill(); } }
-      cx.strokeStyle = '#5E3B4A'; cx.lineWidth = Math.max(1, .07*s); cx.beginPath(); cx.moveTo(b0.x,b0.y); cx.lineTo(b1.x,b1.y); cx.stroke();
-      if(s < 16){ cx.fillStyle = '#4F8A45'; cx.beginPath(); cx.ellipse(b1.x, b1.y+(b0.y-b1.y)*.25, .35*s, .6*s, 0, 0, Math.PI*2); cx.fill(); }
-      else { const seed = it.k*7 + it.r*3;
-        for(let j=0;j<7;j++){ const yy = .8+j*.27, p = pj(it.x,yy,it.z), side = (j%2?1:-1);
-          palm(cx, p.x+side*.22*s, p.y-.05*s, .3*s, side*.6 + rustle*(j%2?1:-1), j%3?'#4F8A45':'#5E9A4E');
-          cx.fillStyle = j < (seed%4)+1 ? '#8C3A5E' : j===(seed%4)+1 ? '#C2466E' : '#A9C85A';
-          cx.beginPath(); cx.ellipse(p.x-side*.06*s, p.y+.04*s, .05*s, .065*s, 0, 0, Math.PI*2); cx.fill(); } }
-      if(rustle && Math.random() < .02) G.fall.push({x:it.x+(Math.random()-.5)*.6, y:2.4, z:it.z, vy:.012+Math.random()*.01, ph:Math.random()*6});
-      const top = pj(it.x, 2.9, it.z);
+      drawFigTree(cx, pj, it.x, it.z, s, z.stage, it.k*7 + it.r*3, rustle);
+      if(rustle && TH > 1 && Math.random() < .02) G.fall.push({x:it.x+(Math.random()-.5)*.6, y:TH-.2, z:it.z, vy:.012+Math.random()*.01, ph:Math.random()*6});
+      const top = pj(it.x, TH+.3, it.z);
       if(it.idx!=null && tapped.includes(it.idx) && res[it.idx] && top && s > 10 && dist < 14){ const fs = Math.min(26, Math.max(12, .32*s));
         cx.fillStyle = '#ffffffe0'; cx.beginPath(); cx.arc(top.x, top.y, fs*.8, 0, Math.PI*2); cx.fill(); cx.font = `${fs}px sans-serif`; cx.textAlign = 'center'; cx.fillText(res[it.idx], top.x, top.y+fs*.35); }
       else if(it===near && top){ const fs = Math.max(12, .26*s), bob = Math.sin(t*5)*3;
         cx.fillStyle = '#2A1F2Dd9'; cx.font = `900 ${fs*.8}px "Noto Sans TC",sans-serif`; cx.textAlign = 'center'; const tw = cx.measureText('點我找找 ▼').width+12;
         cx.fillRect(top.x-tw/2, top.y-fs*1.6+bob, tw, fs*1.2); cx.fillStyle = '#fff'; cx.fillText('點我找找 ▼', top.x, top.y-fs*.7+bob);
         const w2 = Math.max(tw/2+14, .45*s); G.nearHit = {x0:top.x-w2, x1:top.x+w2, y0:top.y-fs*1.6-14, y1:b0.y, idx:it.idx}; }
-      const mid = pj(it.x, 1.4, it.z); if(mid) G.hit.push({x:mid.x, y:mid.y, r:Math.max(26, .55*s), dist, idx:it.idx});
+      const mid = pj(it.x, TH*.55, it.z); if(mid) G.hit.push({x:mid.x, y:mid.y, r:Math.max(26, (TH<1?.4:.55)*s), dist, idx:it.idx});
     }
     G.fall = G.fall.filter(l=>{ l.y -= l.vy; if(l.y < 0) return false; const p = pj(l.x + Math.sin(t*3+l.ph)*.2, l.y, l.z); if(p && p.s > 8){ cx.fillStyle = '#7FB560'; cx.beginPath(); cx.ellipse(p.x, p.y, .06*p.s, .03*p.s, t*3+l.ph, 0, Math.PI*2); cx.fill(); } return true; });
     const ah = Math.min(H*.24, 200), aw = ah*.8, bob = moving ? Math.sin(G.walk*3)*4 : 0, ax = W/2;
@@ -4685,6 +4684,41 @@ function palm(cx, x, y, sz, rot, col){   // 掌狀無花果葉
   for(let k=-2;k<=2;k++){ cx.save(); cx.rotate(k*.55); cx.beginPath(); cx.ellipse(0,-sz*.55,sz*.24,sz*.55,0,0,Math.PI*2); cx.fill(); cx.restore(); }
   cx.beginPath(); cx.arc(0,0,sz*.28,0,Math.PI*2); cx.fill(); cx.restore();
 }
+
+/* V13.3：依溫室階段畫樹——剪枝約 50 公分只剩枝頭新芽、座果約 150 公分掛青果、採收（產季）約 2.6 公尺掛熟果 */
+function stageTree(stage){
+  if(stage==='剪枝') return {h:.5, n:0, fruit:'none', bud:true};
+  if(stage==='度冬') return {h:.5, n:0, fruit:'none', bud:false};
+  if(stage==='座果') return {h:1.5, n:4, fruit:'green'};
+  return {h:2.6, n:7, fruit:'ripe'};
+}
+function drawFigTree(cx, pj, x, z, s, stage, seed, rustle){
+  const T = stageTree(stage), b0 = pj(x,0,z), b1 = pj(x,T.h,z); if(!b0||!b1) return;
+  cx.strokeStyle = '#5E3B4A'; cx.lineWidth = Math.max(1, (T.h<1 ? .1 : .07)*s); cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(b0.x,b0.y); cx.lineTo(b1.x,b1.y); cx.stroke();
+  if(T.n===0){   // 剪枝：短短的主幹，剪口和兩三個新芽
+    cx.fillStyle = '#C9A77E'; cx.beginPath(); cx.ellipse(b1.x, b1.y, .05*s, .02*s, 0, 0, Math.PI*2); cx.fill();
+    if(T.bud && s > 12){ [[-.08,.42],[.07,.33],[-.05,.22]].forEach(([dx,yy],k)=>{ const p = pj(x+dx, yy, z); if(!p) return; cx.fillStyle = k===1?'#8FCB5A':'#7FBF4E';
+      cx.beginPath(); cx.ellipse(p.x + (dx>0?.04:-.04)*s, p.y, .045*s, .025*s, dx>0?-.5:.5, 0, Math.PI*2); cx.fill(); }); }
+    return;
+  }
+  if(s < 16){ cx.fillStyle = '#4F8A45'; cx.beginPath(); cx.ellipse(b1.x, b1.y+(b0.y-b1.y)*.25, .35*s, .5*s*T.h/2.6+.1*s, 0, 0, Math.PI*2); cx.fill(); return; }
+  const gap = (T.h-.6)/T.n;
+  for(let j=0;j<T.n;j++){ const yy = .55 + j*gap + (T.h>2?.25:0), p = pj(x,yy,z), side = (j%2?1:-1); if(!p) continue;
+    palm(cx, p.x+side*.22*s, p.y-.05*s, (T.h<2?.26:.3)*s, side*.6 + (rustle||0)*(j%2?1:-1), j%3?'#4F8A45':'#5E9A4E');
+    if(T.fruit==='green'){ if(j < T.n-1){ cx.fillStyle = '#A9C85A'; cx.beginPath(); cx.ellipse(p.x-side*.06*s, p.y+.04*s, .035*s, .045*s, 0, 0, Math.PI*2); cx.fill(); } }
+    else { cx.fillStyle = j < (seed%4)+1 ? '#8C3A5E' : j===(seed%4)+1 ? '#C2466E' : '#A9C85A';
+      cx.beginPath(); cx.ellipse(p.x-side*.06*s, p.y+.04*s, .05*s, .065*s, 0, 0, Math.PI*2); cx.fill(); } }
+}
+function mapMiniTrees(z){   // 地圖上溫室裡的小樹，跟著階段變高變矮
+  const T = stageTree(z.stage), base = z.y+15, hh = T.h<1 ? 5 : T.h<2 ? 13 : 21;
+  return [-26,-9,9,26].map((dx,k)=>{ const x = z.x+dx, top = base-hh;
+    let g = `<path d="M${x} ${base} L${x} ${top}" stroke="#8C6A4E" stroke-width="${T.h<1?2.4:1.6}" stroke-linecap="round"/>`;
+    if(T.n===0){ if(T.bud) g += `<circle cx="${x+1.5}" cy="${top+1}" r="1.4" fill="#7FBF4E"/>`; }
+    else { g += `<ellipse cx="${x}" cy="${top+hh*.35}" rx="${T.h<2?5:6.5}" ry="${hh*.42}" fill="#5E9A4E" opacity=".9"/>`;
+      if(T.fruit==='ripe') g += `<circle cx="${x-2.5}" cy="${top+hh*.5}" r="1.6" fill="#8C3A5E"/><circle cx="${x+2.5}" cy="${top+hh*.7}" r="1.5" fill="#C2466E"/>`;
+      else g += `<circle cx="${x+2}" cy="${top+hh*.6}" r="1.3" fill="#C8DC7A"/>`; }
+    return g; }).join('');
+}
 function openEmerald(){
   if(document.getElementById('emOv')){ closeSheet(); return; }
   const z6 = ZONES.find(z=>z.emerald); curZone = z6;
@@ -4826,16 +4860,10 @@ function openEmerald(){
     items.sort((a,b)=>b.z-a.z); EM.spark = [];
     for(const it of items){
       if(it.k==='t'){
-        const b0=pj(it.x,0,it.z), b1=pj(it.x,2.9,it.z); if(!b0||!b1) continue; const s=b0.s;
-        cx.strokeStyle='#5E3B4A'; cx.lineWidth=Math.max(1, .07*s); cx.beginPath(); cx.moveTo(b0.x,b0.y); cx.lineTo(b1.x,b1.y); cx.stroke();
-        const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke();
-        if(s<16){ cx.fillStyle='#4F8A45'; cx.beginPath(); cx.ellipse(b1.x, b1.y+(b0.y-b1.y)*.25, .35*s, .6*s, 0, 0, Math.PI*2); cx.fill(); continue; }
-        const seed = Math.round(it.z*10+Math.abs(it.x)*7);
-        for(let j=0;j<8;j++){ const y=.9+j*.26, p=pj(it.x,y,it.z), side=(j%2?1:-1);
-          palm(cx, p.x+side*.22*s, p.y-.05*s, .3*s, side*.6, j%3?'#4F8A45':'#5E9A4E');
-          cx.fillStyle = j < ((seed%4)+1) ? '#8C3A5E' : j===((seed%4)+1) ? '#C2466E' : '#A9C85A';
-          cx.beginPath(); cx.ellipse(p.x-side*.06*s, p.y+.04*s, .05*s, .065*s, 0, 0, Math.PI*2); cx.fill(); }
-        const cp=pj(it.x,1.5,it.z); cx.fillStyle='#F2663A'; cx.fillRect(cp.x-.04*s, cp.y-.03*s, .08*s, .06*s);
+        const TH = stageTree(z6.stage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
+        if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
+        drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0);
+        if(TH>1 && s>=16){ const cp=pj(it.x,Math.min(1.5,TH*.6),it.z); cx.fillStyle='#F2663A'; cx.fillRect(cp.x-.04*s, cp.y-.03*s, .08*s, .06*s); }
       } else if(it.k==='sign'){
         const p=pj(it.x,1.15,it.z), q=pj(it.x,0,it.z); if(!p||p.s<6) continue;
         cx.strokeStyle='#8C6A4E'; cx.lineWidth=Math.max(1,.05*p.s); cx.beginPath(); cx.moveTo(q.x,q.y); cx.lineTo(p.x,p.y); cx.stroke();
