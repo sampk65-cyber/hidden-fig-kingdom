@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V13.0</title>
+<title>今天在隱花王國尋寶 V13.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2314,7 +2314,7 @@ function openGH3D(zid){
   ov.innerHTML = `<canvas id="ghCv"></canvas>
     <div class="em-top"><div><b>🌳 ${zName(z)}</b><div class="em-loc" id="ghLoc">入口</div></div><div class="em-st" id="ghSt"></div><button class="em-x" id="ghX">回地圖</button></div>
     <div id="ghJoy" class="gh-joy"><div class="gh-stick" id="ghStick"></div><span>走動</span></div>
-    <div class="em-tip" id="ghTip">👆 點選樹木，尋找寶箱・沙沙作響的樹藏著東西</div>`;
+    <div class="em-tip" id="ghTip">👆 走到發光的樹旁邊，點樹尋找寶箱</div>`;
   document.body.appendChild(ov);
   const cv = $('#ghCv'), cx = cv.getContext('2d'), dpr = Math.min(2, window.devicePixelRatio||1);
   let W, H; const size = ()=>{ W = ov.clientWidth; H = ov.clientHeight; cv.width = W*dpr; cv.height = H*dpr; cx.setTransform(dpr,0,0,dpr,0,0); }; size(); addEventListener('resize', size);
@@ -2332,7 +2332,10 @@ function openGH3D(zid){
   const keys = {}; const kd = e=>{ keys[e.key] = e.type==='keydown'; }; addEventListener('keydown', kd); addEventListener('keyup', kd);
   cv.onpointerdown = e=>{
     const r = cv.getBoundingClientRect(), x = e.clientX-r.left, y = e.clientY-r.top;
-    let best = null, bd = 1e9; G.hit.forEach(h=>{ const d = Math.hypot(h.x-x, (h.y-y)*.7); if(d < h.r && d < bd){ bd = d; best = h; } });
+    // V13.1：優先點到「點我找找」那棵（標籤或樹幹都算），被前面已找過的樹擋住也點得到
+    const nh = G.nearHit; if(nh && x>nh.x0 && x<nh.x1 && y>nh.y0 && y<nh.y1){ $('#ghTip').classList.add('off'); curZone = z; return tapTree(nh.idx); }
+    const tp = (P.daily.tapped && P.daily.tapped[zid]) || [];
+    let best = null, bd = 1e9; G.hit.forEach(h=>{ const d = Math.hypot(h.x-x, (h.y-y)*.7), live = h.idx!=null && !tp.includes(h.idx), sc = d - (live ? 60 : 0); if(d < h.r && sc < bd){ bd = sc; best = h; } });
     if(!best) return;
     $('#ghTip').classList.add('off');
     if(best.dist > 4.2){ SND.bad(); toast('走近一點才搆得到這棵樹'); return; }
@@ -2365,11 +2368,15 @@ function openGH3D(zid){
     const tapped = (P.daily.tapped && P.daily.tapped[zid]) || [], res = P.daily['res_'+zid] || {};
     const items = [];
     ROWX.forEach((x,r)=>{ if(Math.abs(x-camX) > 12) return; for(let k=0;k<L.n;k++){ const zz = 2.5 + k*GH_STEP; if(zz < camZ+.8 || zz > camZ+34) continue; items.push({x, z:zz, r, k, idx:TRE[r+'_'+k]}); } });
-    items.sort((a,b)=>b.z-a.z); G.hit = [];
+    items.sort((a,b)=>b.z-a.z); G.hit = []; G.nearHit = null;
     let near = null, nd = 4.2; items.forEach(it=>{ if(it.idx==null || tapped.includes(it.idx)) return; const d = Math.hypot(it.x-G.px, it.z-G.pz); if(d < nd){ nd = d; near = it; } });
     for(const it of items){
       const b0 = pj(it.x,0,it.z), b1 = pj(it.x,2.6,it.z); if(!b0||!b1) continue; const s = b0.s, dist = Math.hypot(it.x-G.px, it.z-G.pz);
       const live = it.idx!=null && !tapped.includes(it.idx), rustle = live && dist < 11 ? Math.sin(t*9 + it.k) * .35 : 0;
+      if(live){ const tp = pj(it.x, 7, it.z); if(tp){ const bw = Math.max(8, .6*s), pulse = .75 + .25*Math.sin(t*3 + it.k);   // V13.1：藏寶樹的金色光束，遠遠就看得到
+          const gr = cx.createLinearGradient(0, tp.y, 0, b0.y); gr.addColorStop(0,'rgba(255,214,90,0)'); gr.addColorStop(.5,`rgba(255,214,90,${.42*pulse})`); gr.addColorStop(1,`rgba(255,236,150,${.7*pulse})`);
+          cx.fillStyle = gr; cx.beginPath(); cx.moveTo(b0.x-bw*.7, b0.y); cx.lineTo(tp.x-bw*.35, tp.y); cx.lineTo(tp.x+bw*.35, tp.y); cx.lineTo(b0.x+bw*.7, b0.y); cx.fill();
+          cx.fillStyle = `rgba(255,236,150,${.45*pulse})`; cx.beginPath(); cx.ellipse(b0.x, b0.y, bw, bw*.25, 0, 0, Math.PI*2); cx.fill(); } }
       cx.strokeStyle = '#5E3B4A'; cx.lineWidth = Math.max(1, .07*s); cx.beginPath(); cx.moveTo(b0.x,b0.y); cx.lineTo(b1.x,b1.y); cx.stroke();
       if(s < 16){ cx.fillStyle = '#4F8A45'; cx.beginPath(); cx.ellipse(b1.x, b1.y+(b0.y-b1.y)*.25, .35*s, .6*s, 0, 0, Math.PI*2); cx.fill(); }
       else { const seed = it.k*7 + it.r*3;
@@ -2379,11 +2386,12 @@ function openGH3D(zid){
           cx.beginPath(); cx.ellipse(p.x-side*.06*s, p.y+.04*s, .05*s, .065*s, 0, 0, Math.PI*2); cx.fill(); } }
       if(rustle && Math.random() < .02) G.fall.push({x:it.x+(Math.random()-.5)*.6, y:2.4, z:it.z, vy:.012+Math.random()*.01, ph:Math.random()*6});
       const top = pj(it.x, 2.9, it.z);
-      if(it.idx!=null && tapped.includes(it.idx) && res[it.idx] && top && s > 10 && dist < 14){ const fs = Math.max(12, .32*s);
+      if(it.idx!=null && tapped.includes(it.idx) && res[it.idx] && top && s > 10 && dist < 14){ const fs = Math.min(26, Math.max(12, .32*s));
         cx.fillStyle = '#ffffffe0'; cx.beginPath(); cx.arc(top.x, top.y, fs*.8, 0, Math.PI*2); cx.fill(); cx.font = `${fs}px sans-serif`; cx.textAlign = 'center'; cx.fillText(res[it.idx], top.x, top.y+fs*.35); }
       else if(it===near && top){ const fs = Math.max(12, .26*s), bob = Math.sin(t*5)*3;
-        cx.fillStyle = '#2A1F2Dd9'; cx.font = `900 ${fs*.8}px "Noto Sans TC",sans-serif`; cx.textAlign = 'center'; const tw = cx.measureText('👆 點我找找').width+12;
-        cx.fillRect(top.x-tw/2, top.y-fs*1.6+bob, tw, fs*1.2); cx.fillStyle = '#fff'; cx.fillText('👆 點我找找', top.x, top.y-fs*.7+bob); }
+        cx.fillStyle = '#2A1F2Dd9'; cx.font = `900 ${fs*.8}px "Noto Sans TC",sans-serif`; cx.textAlign = 'center'; const tw = cx.measureText('點我找找 ▼').width+12;
+        cx.fillRect(top.x-tw/2, top.y-fs*1.6+bob, tw, fs*1.2); cx.fillStyle = '#fff'; cx.fillText('點我找找 ▼', top.x, top.y-fs*.7+bob);
+        const w2 = Math.max(tw/2+14, .45*s); G.nearHit = {x0:top.x-w2, x1:top.x+w2, y0:top.y-fs*1.6-14, y1:b0.y, idx:it.idx}; }
       const mid = pj(it.x, 1.4, it.z); if(mid) G.hit.push({x:mid.x, y:mid.y, r:Math.max(26, .55*s), dist, idx:it.idx});
     }
     G.fall = G.fall.filter(l=>{ l.y -= l.vy; if(l.y < 0) return false; const p = pj(l.x + Math.sin(t*3+l.ph)*.2, l.y, l.z); if(p && p.s > 8){ cx.fillStyle = '#7FB560'; cx.beginPath(); cx.ellipse(p.x, p.y, .06*p.s, .03*p.s, t*3+l.ph, 0, Math.PI*2); cx.fill(); } return true; });
@@ -5014,7 +5022,7 @@ const THEME = {
     }catch(e){ this.synth = true; } },
   want(){ const home = $('#home'), tab = document.querySelector('nav button.on');
     return !!(P && home && home.classList.contains('on') && tab && ['map','me'].includes(tab.dataset.tab) && !document.hidden
-      && !MUSIC.timer && !document.querySelector('[id$="Ov"], #mg')); },
+      && !MUSIC.timer && !document.querySelector('[id$="Ov"]:not(#ghOv):not(#emOv), #mg')); },   // V13.1：走進溫室也播主題曲
   sync(){ const w = this.want();
     if(w && (!this.synth || !this.wasWant)) this.play(); else if(!w) this.stop();
     this.wasWant = w; },
