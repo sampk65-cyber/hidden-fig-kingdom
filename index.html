@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V13.3</title>
+<title>今天在隱花王國尋寶 V13.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -420,7 +420,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .bird .myna{width:100%;height:100%}
 .tapring{position:absolute;width:40px;height:40px;margin:-20px 0 0 -20px;border:3px solid var(--gold);border-radius:50%;animation:ring .5s ease-out forwards;pointer-events:none}
 @keyframes ring{from{transform:scale(.3);opacity:1}to{transform:scale(1.6);opacity:0}}
-#weedOv{position:fixed;inset:0;z-index:80;background:#F3E6CF;display:flex;flex-direction:column;touch-action:manipulation;user-select:none;-webkit-user-select:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
+#weedOv{position:fixed;inset:0;z-index:80;background:#F3E6CF;display:flex;flex-direction:column;touch-action:none;user-select:none;-webkit-user-select:none;padding:env(safe-area-inset-top,0px) 0 env(safe-area-inset-bottom,0px)}
 .wd{flex:1;display:flex;flex-direction:column;padding:10px 14px}
 .wd.top{transform:rotate(180deg);background:#E3EED6}
 .wd-h{text-align:center;font-weight:900;font-size:18px;margin-bottom:8px}
@@ -3699,12 +3699,16 @@ function famWeed(){
   const sc = {A:0, B:0}, cells = {A:[], B:[]}, kinds = {}; let left = 30, over = false, st;
   ['A','B'].forEach(s=>ov.querySelectorAll(`.wh[data-s="${s}"]`).forEach(b=>cells[s].push(b)));
   const show = ()=>{ $('#wsA').textContent = sc.A; $('#wsB').textContent = sc.B; };
-  ov.addEventListener('pointerdown', e=>{
-    const b = e.target.closest('.wh'); if(!b || over) return; const s = b.dataset.s, t = b.dataset.t;
+  // V13.4：兩個人要能同時點——每根手指各自處理（touchstart 逐指判斷），滑鼠才用 pointerdown
+  const hitAt = (x, y)=>{ const el = document.elementFromPoint(x, y); const b = el && el.closest && el.closest('.wh'); if(b) whack(b); };
+  ov.addEventListener('touchstart', e=>{ e.preventDefault(); for(const tc of e.changedTouches) hitAt(tc.clientX, tc.clientY); }, {passive:false});
+  ov.addEventListener('pointerdown', e=>{ if(e.pointerType==='touch') return; const b = e.target.closest('.wh'); if(b) whack(b); });
+  function whack(b){
+    if(!b || over) return; const s = b.dataset.s, t = b.dataset.t;
     if(t==='mole'){ sc[s]-=3; SND.bad(); b.dataset.t=''; b.innerHTML='<span class="pop2 neg">-3</span>'; if(navigator.vibrate) navigator.vibrate(60); }
     else if(t){ sc[s]++; kinds[t]=(kinds[t]||0)+1; SND.good(sc[s]%8); b.dataset.t=''; b.innerHTML='<span class="pop2">+1</span>'; }
     show();
-  });
+  }
   // 越後段越難：冒得越快、停留越短、一次冒更多個，最後鼴鼠變綠色混在草裡
   const wdf = [1.2,1,.8][diffOf('weed')], gEarly = diffOf('weed')===2;
   const level0 = ()=>{ const t = 30-left; return t<10 ? {iv:650, life:1050, n:1, mole:.15, green:false, name:'第 1 關'}
