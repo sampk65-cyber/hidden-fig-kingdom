@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V13.7</title>
+<title>今天在隱花王國尋寶 V13.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,7 +64,7 @@ button{cursor:pointer}
 .en{font-family:"LXGW WenKai TC",serif;letter-spacing:.02em;color:var(--muted);font-size:14px;margin:0 0 12px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left}
 .field{display:block;width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);background:transparent;margin:6px 0 10px;font-size:16px}
-/* V13.7：夜晚模式輸入框文字看得到 */
+/* V13.8：夜晚模式輸入框文字看得到 */
 :root{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark}}
 input,textarea,select{color:var(--ink);caret-color:var(--ink)}.field{color:var(--ink);caret-color:var(--ink);background:color-mix(in srgb,var(--card) 70%,transparent)}.field::placeholder{color:var(--muted);opacity:1}select.field option{background:var(--card);color:var(--ink)}
 .btn{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-weight:700;font-size:16px}
@@ -215,8 +215,16 @@ nav button.on{color:var(--fig);font-weight:700}
 @keyframes phG{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.45);opacity:.25}}
 .pill-row{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}.pill-row .visit-pill{margin:0}
 .rank-pill{cursor:pointer;font:inherit}
-/* V13.7：隱花王國曆 */
-.kcal{padding:14px 16px 0;cursor:pointer;overflow:hidden}
+/* V13.8：隱花王國曆 */
+.kcal{padding:6px 12px 6px;cursor:pointer;overflow:hidden;margin-bottom:8px}
+#kCal.card{padding:4px 14px 7px;margin:8px 0}#feedBox.card{padding:7px 12px 5px;margin:8px 0}#feedBox .fm{min-height:0}#feedBox .fm-t{line-height:1.45!important}
+.kc2-mid{display:flex;align-items:center;gap:8px;padding-top:17px}
+.kc2-mid .kc-track{flex:1;margin:0 6px;height:4px}
+.kc2-t{font-size:12px;font-weight:800;color:color-mix(in srgb,var(--gold) 80%,var(--ink));white-space:nowrap;line-height:1.1;text-align:center}.kc2-t small{display:block;font-size:10px;font-weight:500;color:var(--muted)}
+.kc2-mid .kc-dot{width:8px;height:8px}.kc2-mid .kc-knob{width:12px;height:12px;border-width:3px;box-shadow:0 0 0 3px color-mix(in srgb,var(--fig) 22%,transparent)}
+.kc2-now{position:absolute;bottom:9px;white-space:nowrap;font-size:11px;font-weight:700;padding:1px 7px;border-radius:99px;background:var(--fig);color:#fff}
+.kc2-bot{display:flex;align-items:center;gap:8px;margin-top:5px;font-size:12px}.kc2-bot b{font-size:12px;white-space:nowrap}.kc2-bot span{flex:1;text-align:right;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.kc2-bot span.hot{color:var(--fig);font-weight:800}.kc2-bot i{font-style:normal;color:var(--muted)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .kc2-bot span.hot{color:var(--flesh)}:root:not([data-theme="light"]) .kc2-now{background:color-mix(in srgb,var(--fig) 70%,var(--rose))}}:root[data-theme="dark"] .kc2-bot span.hot{color:var(--flesh)}:root[data-theme="dark"] .kc2-now{background:color-mix(in srgb,var(--fig) 70%,var(--rose))}
 .kc-rail{padding:0 30px}
 .kc-row{position:relative}
 .kc-top{height:30px}
@@ -307,14 +315,16 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .ctask.late{border-color:#E8452C;background:color-mix(in srgb,#E8452C 10%,transparent)}.ctask.late small{color:#B5321E;font-weight:700}
 .ctask:disabled{opacity:.55}
 /* ===== V5.1：留言板輪播、丟無花果、三次澆水 ===== */
-#feedBox{padding:10px 14px}
+#feedBox{padding:8px 12px}
 .fm{display:flex;gap:8px;align-items:flex-start;min-height:44px;animation:fmIn .5s}
 @keyframes fmIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.fm-ic{font-size:20px;line-height:1.3}
-.fm-t{flex:1;font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.fm-act{display:flex;gap:6px;align-items:center;margin-top:6px}.fm-act .chip{padding:5px 10px;font-size:12px}
+.fm-ic{font-size:16px;line-height:1.4}
+.fm-t{flex:1;font-size:14px;line-height:1.45;display:-webkit-box;-webkit-line-clamp:1;cursor:pointer;-webkit-box-orient:vertical;overflow:hidden}
+.fm-act{display:flex;gap:4px;align-items:center;margin-top:4px}
+.fm-ib{border:0;background:none;padding:2px 5px;font:inherit;font-size:16px;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:2px}.fm-ib b{font-size:11px;color:var(--muted)}
+.fm-act .fm-nb{padding:0 8px;font-size:13px;line-height:20px}.fm-act .fm-date{flex:none;margin-right:2px}.fm-act .chip{padding:5px 10px;font-size:12px}
 .fm-dots{flex:1;display:flex;gap:4px}
-/* V13.7：留言板日期與翻頁、粉專連結 */
+/* V13.8：留言板日期與翻頁、粉專連結 */
 .fm-nav{display:flex;align-items:center;gap:6px;margin:6px 0 0 28px;flex-wrap:wrap}
 .fm-date{font-size:12px;color:var(--muted);flex:1;white-space:nowrap}.fm-date em{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--fig);border-radius:6px;padding:1px 6px;margin-left:4px}
 .fm-nb{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}.fm-nb:disabled{opacity:.35;cursor:default}
@@ -322,7 +332,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-fb{font-size:12px;font-weight:700;color:#1877F2;text-decoration:none;white-space:nowrap}
 .fm-fb.big{display:block;text-align:center;margin-top:10px;padding:10px;border-radius:12px;border:1.5px solid #1877F2;font-size:14px}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fm-fb{color:#6AA6FF;border-color:#6AA6FF}}:root[data-theme="dark"] .fm-fb{color:#6AA6FF;border-color:#6AA6FF}
-.fm-cm{margin:8px 0 2px 28px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--fig) 6%,var(--card));font-size:13px;min-height:20px;overflow:hidden;cursor:pointer}
+.fm-cm{margin:4px 0 0 24px;padding:3px 8px;border-radius:10px;background:color-mix(in srgb,var(--fig) 6%,var(--card));font-size:13px;min-height:20px;overflow:hidden;cursor:pointer}
 .fm-cm.fm-none{color:var(--muted);cursor:default}
 .fm-cmv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fm-cmv.in{animation:cmIn .45s ease}
 @keyframes cmIn{from{transform:translateY(100%);opacity:0}to{transform:none;opacity:1}}
@@ -3734,7 +3744,7 @@ function famWeed(){
   const sc = {A:0, B:0}, cells = {A:[], B:[]}, kinds = {}; let left = 30, over = false, st;
   ['A','B'].forEach(s=>ov.querySelectorAll(`.wh[data-s="${s}"]`).forEach(b=>cells[s].push(b)));
   const show = ()=>{ $('#wsA').textContent = sc.A; $('#wsB').textContent = sc.B; };
-  // V13.7：兩個人要能同時點——每根手指各自處理（touchstart 逐指判斷），滑鼠才用 pointerdown
+  // V13.8：兩個人要能同時點——每根手指各自處理（touchstart 逐指判斷），滑鼠才用 pointerdown
   const hitAt = (x, y)=>{ const el = document.elementFromPoint(x, y); const b = el && el.closest && el.closest('.wh'); if(b) whack(b); };
   ov.addEventListener('touchstart', e=>{ e.preventDefault(); for(const tc of e.changedTouches) hitAt(tc.clientX, tc.clientY); }, {passive:false});
   ov.addEventListener('pointerdown', e=>{ if(e.pointerType==='touch') return; const b = e.target.closest('.wh'); if(b) whack(b); });
@@ -3887,7 +3897,7 @@ async function redeemSecret(){
 
 /* ---------- 農場留言板：按讚、留言、分享都有回饋，留言一樣要友善 ---------- */
 let FEED = null;
-const FB_PAGE = 'https://www.facebook.com/share/1CgemBs1yX/';   // V13.7：農場粉絲專頁
+const FB_PAGE = 'https://www.facebook.com/share/1CgemBs1yX/';   // V13.8：農場粉絲專頁
 function fmDate(t){ if(!t) return ''; const d = new Date(t), n = new Date(); const wd = '日一二三四五六'[d.getDay()];
   const dd = Math.round((new Date(n.getFullYear(),n.getMonth(),n.getDate()) - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
   const tag = dd===0?'今天':dd===1?'昨天':''; return `${d.getFullYear()!==n.getFullYear()?d.getFullYear()+'/':''}${d.getMonth()+1}/${d.getDate()}（${wd}）${tag?' · '+tag:''}`; }
@@ -3899,7 +3909,7 @@ async function loadFeed(){
       for(let i=0;i<seed.length;i++) await DB.set('feed/F'+i, {text:seed[i], created:Date.now()-i*864e5});
       ps = await DB.list('feed');
     }
-    FEED = ps.sort((a,b)=>b.created-a.created).slice(0,10);   // V13.7：可往回看 10 則
+    FEED = ps.sort((a,b)=>b.created-a.created).slice(0,10);   // V13.8：可往回看 10 則
     await Promise.all(FEED.map(async p=>{ try{ p.cms = (await DB.list(`feed/${p.id}/comments`)).sort((a,b)=>b.created-a.created); }catch(e){ p.cms = []; } }));   // V7.3：留言數與跑馬燈
   }catch(e){ FEED = []; }
   renderFeed();
@@ -3911,16 +3921,16 @@ function renderFeed(){
   const box = $('#feedBox'); FEED.i = (FEED.i||0) % FEED.length;
   const show = ()=>{
     const p = FEED[FEED.i], likes = P.likes||[], cms = (p.cms||[]).slice(0,10);
+    const lk = likes.includes(p.id), nc = (p.cms||[]).length;
     box.innerHTML = `<div class="fm"><span class="fm-ic">📣</span><div class="fm-t" id="fmT">${esc(p.text)}</div></div>
-      <div class="fm-nav"><span class="fm-date">🗓 ${fmDate(p.created)}${FEED.i===0?' <em>最新</em>':''}</span>${FEED.length>1?`<button class="fm-nb" id="fmPrev" ${FEED.i>=FEED.length-1?'disabled':''}>‹ 上一則</button><span class="fm-pg">${FEED.i+1}／${FEED.length}</span><button class="fm-nb" id="fmNext" ${FEED.i===0?'disabled':''}>下一則 ›</button>`:''}</div>
-      ${cms.length ? `<div class="fm-cm" id="fmCm"><div class="fm-cmv" id="fmCmV"></div></div>` : `<div class="fm-cm fm-none">還沒有留言，來說第一句吧！</div>`}
-      <div class="fm-act"><a class="fm-fb" href="${FB_PAGE}" target="_blank" rel="noopener">📘 粉專</a><div class="fm-dots"></div>
-      <button class="chip ${likes.includes(p.id)?'sel':''}" data-like="${p.id}">${likes.includes(p.id)?'💚':'🤍'} 讚</button><button class="chip" data-cm="${p.id}">💬 留言${(p.cms||[]).length ? ` <b>${p.cms.length}</b>` : ''}</button><button class="chip" data-shp="${p.id}">📣 分享</button></div>`;
+      ${cms.length ? `<div class="fm-cm" id="fmCm"><div class="fm-cmv" id="fmCmV"></div></div>` : ''}
+      <div class="fm-act"><span class="fm-date">${fmDate(p.created).replace(/（.）/,'')}</span>${FEED.length>1?`<button class="fm-nb" id="fmPrev" aria-label="上一則" ${FEED.i>=FEED.length-1?'disabled':''}>‹</button><span class="fm-pg">${FEED.i+1}/${FEED.length}</span><button class="fm-nb" id="fmNext" aria-label="下一則" ${FEED.i===0?'disabled':''}>›</button>`:''}<div class="fm-dots"></div>
+      <button class="fm-ib ${lk?'sel':''}" data-like="${p.id}" aria-label="讚">${lk?'💚':'🤍'}</button><button class="fm-ib" data-cm="${p.id}" aria-label="留言">💬${nc?`<b>${nc}</b>`:''}</button><button class="fm-ib" data-shp="${p.id}" aria-label="分享">📣</button><a class="fm-ib fm-fb" href="${FB_PAGE}" target="_blank" rel="noopener" aria-label="農場粉專">📘</a></div>`;
     clearInterval(FEED.ctm);
     if(cms.length){ let k = 0; const tick = ()=>{ const v = document.getElementById('fmCmV'); if(!v) return clearInterval(FEED.ctm); const c = cms[k % cms.length]; k++;
         v.classList.remove('in'); void v.offsetWidth; v.innerHTML = `💬 <b>${esc(c.name||'王國居民')}</b>：${esc(c.text)}`; v.classList.add('in'); };
       tick(); if(cms.length>1) FEED.ctm = setInterval(tick, 2600); }
-    box.querySelector('#fmCm') && (box.querySelector('#fmCm').onclick = ()=>openComments(p.id));
+    box.querySelector('#fmCm') && (box.querySelector('#fmCm').onclick = ()=>openComments(p.id)); box.querySelector('#fmT').onclick = ()=>openComments(p.id);
     box.querySelector('[data-like]').onclick = ()=>{ const id=p.id; P.likes=P.likes||[]; if(P.likes.includes(id)) return; P.likes.push(id); P.daily.likes=(P.daily.likes||0)+1;
       if(P.daily.likes<=3) socialReward(.5,'謝謝你按讚'); else { Auth.save(); toast('謝謝你按讚 💚'); } show(); };
     box.querySelector('[data-cm]').onclick = ()=>openComments(p.id);
@@ -3931,7 +3941,7 @@ function renderFeed(){
   };
   show();
   clearInterval(FEED.tm);
-  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; if(FEED.hold && Date.now()-FEED.hold<60000) return; FEED.i=(FEED.i+1)%Math.min(FEED.length,3); show(); }, 8000);   // V13.7：自動輪播只轉最新 3 則；手動翻頁後暫停 1 分鐘   // 每 8 秒輪播下一則（留言跑馬燈在中間輪動）
+  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; if(FEED.hold && Date.now()-FEED.hold<60000) return; FEED.i=(FEED.i+1)%Math.min(FEED.length,3); show(); }, 8000);   // V13.8：自動輪播只轉最新 3 則；手動翻頁後暫停 1 分鐘   // 每 8 秒輪播下一則（留言跑馬燈在中間輪動）
 }
 // 分享：把貼文連同「自己的分享券連結」一起分享；分享本身只給小獎勵（無法確認對方真的看到），朋友用分享券加入才給大獎勵
 async function sharePost(p){
@@ -5293,7 +5303,7 @@ function doHelp(zid, id){
   SND.good(c.gain*2); Auth.save(); renderAll(); toast(`${c.i} 幫忙${c.n}完成！能量 +${c.gain}`); openZone(zid);
 }
 /* ---------- 王國造訪人次：每次開啟遊戲累積一次 ---------- */
-/* ---------- V13.7：隱花王國曆——上：日期、中：二十四節氣、下：隱花元年與王國紀念日（全部用台灣時間計算） ---------- */
+/* ---------- V13.8：隱花王國曆——上：日期、中：二十四節氣、下：隱花元年與王國紀念日（全部用台灣時間計算） ---------- */
 const KCAL_Y0 = 2025;   // 2026 年＝隱花元年
 const TERM_N = '小寒,大寒,立春,雨水,驚蟄,春分,清明,穀雨,立夏,小滿,芒種,夏至,小暑,大暑,立秋,處暑,白露,秋分,寒露,霜降,立冬,小雪,大雪,冬至'.split(',');
 // 國立天文台（NAOJ）公布時刻換成台灣時間（UTC+8）後的日期；表外年份用太陽黃經公式推算（誤差約 15 分鐘內）
@@ -5351,24 +5361,16 @@ function renderCal(force){
   const c = kCalInfo(), key = c.td+'';
   if(!force && key===KCAL_LAST && el.innerHTML) return; KCAL_LAST = key;
   const p = Math.max(0, Math.min(1, c.pos)), pct = (p*100).toFixed(1);
-  const hideL = p < .22, hideR = p > .78, dayIn = c.td - c.prev.day + 1, left = c.next.day - c.td;
   const wk = '日一二三四五六'[c.T.w];
   const kd = c.kd, kdTxt = !kd ? '' : kd.today ? `🎉 今天是「${kd.n}」${kd.len?`（第 ${c.td-kd.s+1} 天）`:''}` : `${kd.i} 再 ${kd.s-c.td} 天「${kd.n}」`;
   el.innerHTML = `
-    <div class="kc-rail">
-      <div class="kc-row kc-top">
-        <span class="kc-d end ${hideL?'off':''}" style="left:0;transform:translateX(-30%)">${md(c.prev.day)}</span>
-        <span class="kc-d now" style="left:${pct}%;transform:translateX(-${(12+76*p).toFixed(0)}%)">${md(c.td)}（${wk}）</span>
-        <span class="kc-d end ${hideR?'off':''}" style="left:100%;transform:translateX(-70%)">${md(c.next.day)}</span>
-      </div>
-      <div class="kc-track"><i class="kc-fill" style="width:${pct}%"></i><b class="kc-dot" style="left:0"></b><b class="kc-dot" style="left:100%"></b><b class="kc-knob" style="left:${pct}%"></b></div>
-      <div class="kc-row kc-mid">
-        <span class="kc-t" style="left:0;transform:translateX(-30%)">${c.prev.n}${hideL?` <small>${md(c.prev.day)}</small>`:''}</span>
-        <span class="kc-t r" style="left:100%;transform:translateX(-70%)">${c.next.n}${hideR?` <small>${md(c.next.day)}</small>`:''}</span>
-      </div>
-      <p class="kc-sub">${c.prev.n}第 ${dayIn} 天・再 ${left} 天${c.next.n}</p>
+    <div class="kc2-mid">
+      <span class="kc2-t">${c.prev.n}<small>${md(c.prev.day)}</small></span>
+      <div class="kc-track"><i class="kc-fill" style="width:${pct}%"></i><b class="kc-dot" style="left:0"></b><b class="kc-dot" style="left:100%"></b><b class="kc-knob" style="left:${pct}%"></b>
+        <span class="kc2-now" style="left:${pct}%;transform:translateX(-${(10+80*p).toFixed(0)}%)">${md(c.td)}（${wk}）</span></div>
+      <span class="kc2-t">${c.next.n}<small>${md(c.next.day)}</small></span>
     </div>
-    <div class="kc-bot"><b>🏰 ${kYearName(c.T.y)}</b><span class="${kd&&kd.today?'hot':''}">${kdTxt}</span><i>›</i></div>`;
+    <div class="kc2-bot"><b>🏰 ${kYearName(c.T.y)}</b><span class="${kd&&kd.today?'hot':''}">${kdTxt}</span><i>›</i></div>`;
   el.onclick = openKCal;
 }
 function openKCal(){
