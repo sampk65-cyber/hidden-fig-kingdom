@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V13.4</title>
+<title>今天在隱花王國尋寶 V13.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -64,6 +64,9 @@ button{cursor:pointer}
 .en{font-family:"LXGW WenKai TC",serif;letter-spacing:.02em;color:var(--muted);font-size:14px;margin:0 0 12px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left}
 .field{display:block;width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);background:transparent;margin:6px 0 10px;font-size:16px}
+/* V13.6：夜晚模式輸入框文字看得到 */
+:root{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark}}
+input,textarea,select{color:var(--ink);caret-color:var(--ink)}.field{color:var(--ink);caret-color:var(--ink);background:color-mix(in srgb,var(--card) 70%,transparent)}.field::placeholder{color:var(--muted);opacity:1}select.field option{background:var(--card);color:var(--ink)}
 .btn{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-weight:700;font-size:16px}
 .btn.main{background:var(--fig);color:#fff}
 .btn.line{background:#06C755;color:#fff;margin-top:10px}
@@ -288,6 +291,14 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-t{flex:1;font-size:14px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .fm-act{display:flex;gap:6px;align-items:center;margin-top:6px}.fm-act .chip{padding:5px 10px;font-size:12px}
 .fm-dots{flex:1;display:flex;gap:4px}
+/* V13.6：留言板日期與翻頁、粉專連結 */
+.fm-nav{display:flex;align-items:center;gap:6px;margin:6px 0 0 28px;flex-wrap:wrap}
+.fm-date{font-size:12px;color:var(--muted);flex:1;white-space:nowrap}.fm-date em{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--fig);border-radius:6px;padding:1px 6px;margin-left:4px}
+.fm-nb{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}.fm-nb:disabled{opacity:.35;cursor:default}
+.fm-pg{font-size:12px;color:var(--muted);min-width:34px;text-align:center}
+.fm-fb{font-size:12px;font-weight:700;color:#1877F2;text-decoration:none;white-space:nowrap}
+.fm-fb.big{display:block;text-align:center;margin-top:10px;padding:10px;border-radius:12px;border:1.5px solid #1877F2;font-size:14px}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fm-fb{color:#6AA6FF;border-color:#6AA6FF}}:root[data-theme="dark"] .fm-fb{color:#6AA6FF;border-color:#6AA6FF}
 .fm-cm{margin:8px 0 2px 28px;padding:6px 10px;border-radius:10px;background:color-mix(in srgb,var(--fig) 6%,var(--card));font-size:13px;min-height:20px;overflow:hidden;cursor:pointer}
 .fm-cm.fm-none{color:var(--muted);cursor:default}
 .fm-cmv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fm-cmv.in{animation:cmIn .45s ease}
@@ -921,7 +932,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <div class="admpane hide" id="ap-feed">
       <h2 class="h2 wk">農場留言板貼文</h2>
       <div class="card"><label class="lbl" for="fdText" style="margin-top:0">新貼文</label><textarea id="fdText" class="field" rows="3" maxlength="120" placeholder="今天溫室發生了什麼事？"></textarea><button id="btnFd" class="btn main">發布貼文</button></div>
-      <div class="card"><label class="lbl" for="scCode" style="margin-top:0">本週粉專通關密語</label><p class="lvtxt">貼在 FB／IG 粉專貼文裡，顧客輸入後我的樹加速 3 天（不占每日上限；運動路線換果友值）。每週一要換新的，舊密語會自動失效。建議至少 6 個字；全形半形、大小寫、空格都不影響。系統只存加密後的雜湊碼，看不到原文，請自己記好。</p><p class="lvtxt" id="scStat" style="font-weight:700"></p><input id="scCode" class="field" maxlength="20" placeholder="例如：小呱夜巡無花果"><button id="btnScSave" class="btn main">儲存密語</button></div>
+      <div class="card"><label class="lbl" for="scCode" style="margin-top:0">本週粉專通關密語</label><p class="lvtxt">貼在 <a href="https://www.facebook.com/share/1CgemBs1yX/" target="_blank" rel="noopener">農場 FB 粉專</a>貼文裡，顧客輸入後我的樹加速 3 天（不占每日上限；運動路線換果友值）。每週一要換新的，舊密語會自動失效。建議至少 6 個字；全形半形、大小寫、空格都不影響。系統只存加密後的雜湊碼，看不到原文，請自己記好。</p><p class="lvtxt" id="scStat" style="font-weight:700"></p><input id="scCode" class="field" maxlength="20" placeholder="例如：小呱夜巡無花果"><button id="btnScSave" class="btn main">儲存密語</button></div>
     </div>
     <div class="admpane hide" id="ap-admins">
       <h2 class="h2 wk">管理員</h2>
@@ -3699,7 +3710,7 @@ function famWeed(){
   const sc = {A:0, B:0}, cells = {A:[], B:[]}, kinds = {}; let left = 30, over = false, st;
   ['A','B'].forEach(s=>ov.querySelectorAll(`.wh[data-s="${s}"]`).forEach(b=>cells[s].push(b)));
   const show = ()=>{ $('#wsA').textContent = sc.A; $('#wsB').textContent = sc.B; };
-  // V13.4：兩個人要能同時點——每根手指各自處理（touchstart 逐指判斷），滑鼠才用 pointerdown
+  // V13.6：兩個人要能同時點——每根手指各自處理（touchstart 逐指判斷），滑鼠才用 pointerdown
   const hitAt = (x, y)=>{ const el = document.elementFromPoint(x, y); const b = el && el.closest && el.closest('.wh'); if(b) whack(b); };
   ov.addEventListener('touchstart', e=>{ e.preventDefault(); for(const tc of e.changedTouches) hitAt(tc.clientX, tc.clientY); }, {passive:false});
   ov.addEventListener('pointerdown', e=>{ if(e.pointerType==='touch') return; const b = e.target.closest('.wh'); if(b) whack(b); });
@@ -3817,6 +3828,7 @@ function renderTree(){
       ${row('🔑','粉專通關密語', '+3 天（每週 1 次，不占上限）', P.socialWk===weekKey())}
     </table>
     <div style="display:flex;gap:8px;margin-top:10px"><input id="scIn" class="field" style="margin:0" placeholder="輸入粉專貼文裡的通關密語"><button class="tbtn" id="btnSc" style="padding:0 14px">兌換</button></div>
+    <a class="fm-fb big" href="${FB_PAGE}" target="_blank" rel="noopener">📘 去農場粉專看本週密語</a>
   </div>`;
   $('#treeBox').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>careTree(b.dataset.c));
   const h = $('#btnHarvest'); if(h) h.onclick = harvestTree;
@@ -3851,6 +3863,10 @@ async function redeemSecret(){
 
 /* ---------- 農場留言板：按讚、留言、分享都有回饋，留言一樣要友善 ---------- */
 let FEED = null;
+const FB_PAGE = 'https://www.facebook.com/share/1CgemBs1yX/';   // V13.6：農場粉絲專頁
+function fmDate(t){ if(!t) return ''; const d = new Date(t), n = new Date(); const wd = '日一二三四五六'[d.getDay()];
+  const dd = Math.round((new Date(n.getFullYear(),n.getMonth(),n.getDate()) - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
+  const tag = dd===0?'今天':dd===1?'昨天':''; return `${d.getFullYear()!==n.getFullYear()?d.getFullYear()+'/':''}${d.getMonth()+1}/${d.getDate()}（${wd}）${tag?' · '+tag:''}`; }
 async function loadFeed(){
   try{
     let ps = await DB.list('feed');
@@ -3859,7 +3875,7 @@ async function loadFeed(){
       for(let i=0;i<seed.length;i++) await DB.set('feed/F'+i, {text:seed[i], created:Date.now()-i*864e5});
       ps = await DB.list('feed');
     }
-    FEED = ps.sort((a,b)=>b.created-a.created).slice(0,3);
+    FEED = ps.sort((a,b)=>b.created-a.created).slice(0,10);   // V13.6：可往回看 10 則
     await Promise.all(FEED.map(async p=>{ try{ p.cms = (await DB.list(`feed/${p.id}/comments`)).sort((a,b)=>b.created-a.created); }catch(e){ p.cms = []; } }));   // V7.3：留言數與跑馬燈
   }catch(e){ FEED = []; }
   renderFeed();
@@ -3872,8 +3888,9 @@ function renderFeed(){
   const show = ()=>{
     const p = FEED[FEED.i], likes = P.likes||[], cms = (p.cms||[]).slice(0,10);
     box.innerHTML = `<div class="fm"><span class="fm-ic">📣</span><div class="fm-t" id="fmT">${esc(p.text)}</div></div>
+      <div class="fm-nav"><span class="fm-date">🗓 ${fmDate(p.created)}${FEED.i===0?' <em>最新</em>':''}</span>${FEED.length>1?`<button class="fm-nb" id="fmPrev" ${FEED.i>=FEED.length-1?'disabled':''}>‹ 上一則</button><span class="fm-pg">${FEED.i+1}／${FEED.length}</span><button class="fm-nb" id="fmNext" ${FEED.i===0?'disabled':''}>下一則 ›</button>`:''}</div>
       ${cms.length ? `<div class="fm-cm" id="fmCm"><div class="fm-cmv" id="fmCmV"></div></div>` : `<div class="fm-cm fm-none">還沒有留言，來說第一句吧！</div>`}
-      <div class="fm-act"><div class="fm-dots">${FEED.map((_,k)=>`<i class="${k===FEED.i?'on':''}"></i>`).join('')}</div>
+      <div class="fm-act"><a class="fm-fb" href="${FB_PAGE}" target="_blank" rel="noopener">📘 粉專</a><div class="fm-dots"></div>
       <button class="chip ${likes.includes(p.id)?'sel':''}" data-like="${p.id}">${likes.includes(p.id)?'💚':'🤍'} 讚</button><button class="chip" data-cm="${p.id}">💬 留言${(p.cms||[]).length ? ` <b>${p.cms.length}</b>` : ''}</button><button class="chip" data-shp="${p.id}">📣 分享</button></div>`;
     clearInterval(FEED.ctm);
     if(cms.length){ let k = 0; const tick = ()=>{ const v = document.getElementById('fmCmV'); if(!v) return clearInterval(FEED.ctm); const c = cms[k % cms.length]; k++;
@@ -3884,10 +3901,13 @@ function renderFeed(){
       if(P.daily.likes<=3) socialReward(.5,'謝謝你按讚'); else { Auth.save(); toast('謝謝你按讚 💚'); } show(); };
     box.querySelector('[data-cm]').onclick = ()=>openComments(p.id);
     box.querySelector('[data-shp]').onclick = ()=>sharePost(p);
+    const go = d=>{ FEED.i = Math.max(0, Math.min(FEED.length-1, FEED.i+d)); FEED.hold = Date.now(); show(); };
+    const pv = box.querySelector('#fmPrev'), nx = box.querySelector('#fmNext');
+    if(pv) pv.onclick = ()=>go(1); if(nx) nx.onclick = ()=>go(-1);
   };
   show();
   clearInterval(FEED.tm);
-  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; FEED.i=(FEED.i+1)%FEED.length; show(); }, 8000);   // 每 8 秒輪播下一則（留言跑馬燈在中間輪動）
+  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; if(FEED.hold && Date.now()-FEED.hold<60000) return; FEED.i=(FEED.i+1)%Math.min(FEED.length,3); show(); }, 8000);   // V13.6：自動輪播只轉最新 3 則；手動翻頁後暫停 1 分鐘   // 每 8 秒輪播下一則（留言跑馬燈在中間輪動）
 }
 // 分享：把貼文連同「自己的分享券連結」一起分享；分享本身只給小獎勵（無法確認對方真的看到），朋友用分享券加入才給大獎勵
 async function sharePost(p){
@@ -3903,14 +3923,14 @@ async function sharePost(p){
 let CM_LAST = 0; const CM_BACK = 10*60*1000;   // V11.7：留言間隔 15 秒；自己的留言 10 分鐘內可收回
 async function openComments(id){
   const p = FEED.find(x=>x.id===id);
-  openSheet(`<h2 class="h2 wk" style="margin-top:0">💬 留言</h2><p class="sub">${esc(p?p.text:'')}</p><div id="cmList"><p class="lvtxt">讀取留言…</p></div>
+  openSheet(`<h2 class="h2 wk" style="margin-top:0">💬 留言</h2><p class="sub">${esc(p?p.text:'')}</p>${p&&p.created?`<p class="fm-date" style="margin:-4px 0 8px">🗓 ${fmDate(p.created)}</p>`:''}<div id="cmList"><p class="lvtxt">讀取留言…</p></div>
     <div class="kwarn hide" id="cw"></div>
     <div style="display:flex;gap:8px;margin-top:8px"><input class="field" style="margin:0" id="ci" maxlength="40" placeholder="說句好話…"><button class="tbtn" id="cs" style="padding:0 14px">送出</button></div>
     <button class="btn ghost" onclick="closeSheet()">關閉</button>`);
   let all = []; try{ all = (await DB.list(`feed/${id}/comments`)).sort((a,b)=>a.created-b.created); }catch(e){}
   if(p){ p.cms = [...all].reverse(); if($('#feedBox')) renderFeed(); }
   const cs = all.slice(-8), canBack = c=>c.pid===PID && PID && Date.now()-(c.created||0) < CM_BACK;
-  $('#cmList').innerHTML = cs.map(c=>`<div class="cm"><b>${esc(c.name)}</b>：${esc(c.text)}${canBack(c)?` <button class="linkbtn" data-back="${c.id}" style="font-size:12px">收回</button>`:''}</div>`).join('') || '<p class="lvtxt">還沒有留言，來說第一句吧！</p>';
+  $('#cmList').innerHTML = cs.map(c=>`<div class="cm"><b>${esc(c.name)}</b>：${esc(c.text)} <small class="fm-date">${c.created?fmDate(c.created).replace(/（.）/,''):''}</small>${canBack(c)?` <button class="linkbtn" data-back="${c.id}" style="font-size:12px">收回</button>`:''}</div>`).join('') || '<p class="lvtxt">還沒有留言，來說第一句吧！</p>';
   $('#cmList').querySelectorAll('[data-back]').forEach(b=>b.onclick=async()=>{ if(!confirm('收回這則留言？')) return; b.disabled = true;
     try{ await DB.del(`feed/${id}/comments/${b.dataset.back}`); toast('留言已收回'); openComments(id); }
     catch(e){ console.error(e); b.disabled = false; toast(/permission/i.test(e.code||e.message||'') ? '超過 10 分鐘就不能收回了' : '收回失敗，請稍後再試'); } });
