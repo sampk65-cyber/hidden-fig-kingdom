@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V13.9</title>
+<title>今天在隱花王國尋寶 V14.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,6 +13,11 @@
 /* V12.0：iOS／Android 觸控一致性——按鈕不雙擊放大、不出長按選單；遊戲進行中禁止下拉重整與橡皮筋回彈 */
 button,[role=button],.coupon,.my-c,.mem-c,.rh-lane{touch-action:manipulation;-webkit-touch-callout:none}
 html.gaming,html.gaming body{overscroll-behavior:none}
+/* V14.0：筆電／桌機（滑鼠）或橫放的平板——全螢幕遊戲改成置中的手機寬度，兩側變暗；直立平板維持全螢幕，方便兩人對玩 */
+@media (min-width:700px) and (pointer:fine), (min-width:900px) and (orientation:landscape){
+  body.has-ov::before{content:'';position:fixed;inset:0;background:#140E12;z-index:39}
+  [id$="Ov"]{left:50%!important;right:auto!important;width:min(100vw,560px)!important;transform:translateX(-50%);box-shadow:0 0 40px #0008}
+}
 [id$="Ov"],#mg{overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 [id$="Ov"] img,#mg img,[id$="Ov"] svg,#mg svg{-webkit-touch-callout:none;-webkit-user-drag:none}
 
@@ -33,8 +38,8 @@ html.gaming,html.gaming body{overscroll-behavior:none}
 }
 :root[data-theme="dark"]{--bg:#191317;--card:#251C23;--ink:#F2E9EE;--muted:#B3A5AE;--line:#3B3039;--map:#24301F;--path:#8F7A35}
 *,*::before,*::after{box-sizing:inherit}
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;height:100%;background:var(--bg);color:var(--ink);
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;height:100%;touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:var(--bg);color:var(--ink);
   font-family:"Noto Sans TC",system-ui,"PingFang TC","Microsoft JhengHei",sans-serif;font-size:15px;line-height:1.55;
   -webkit-tap-highlight-color:transparent}
 button,input{font:inherit;color:inherit}
@@ -64,7 +69,7 @@ button{cursor:pointer}
 .en{font-family:"LXGW WenKai TC",serif;letter-spacing:.02em;color:var(--muted);font-size:14px;margin:0 0 12px}
 .panel{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;text-align:left}
 .field{display:block;width:100%;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);background:transparent;margin:6px 0 10px;font-size:16px}
-/* V13.9：夜晚模式輸入框文字看得到 */
+/* V14.0：夜晚模式輸入框文字看得到 */
 :root{color-scheme:light}:root[data-theme="dark"]{color-scheme:dark}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark}}
 input,textarea,select{color:var(--ink);caret-color:var(--ink)}.field{color:var(--ink);caret-color:var(--ink);background:color-mix(in srgb,var(--card) 70%,transparent)}.field::placeholder{color:var(--muted);opacity:1}select.field option{background:var(--card);color:var(--ink)}
 .btn{display:block;width:100%;border:0;border-radius:14px;padding:13px;font-weight:700;font-size:16px}
@@ -215,9 +220,9 @@ nav button.on{color:var(--fig);font-weight:700}
 @keyframes phG{0%,100%{transform:scale(1);opacity:.9}50%{transform:scale(1.45);opacity:.25}}
 .pill-row{display:flex;justify-content:flex-end;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 8px}.pill-row .visit-pill{margin:0}
 .rank-pill{cursor:pointer;font:inherit}
-/* V13.9：隱花王國曆 */
+/* V14.0：隱花王國曆 */
 .kcal{padding:6px 12px 6px;cursor:pointer;overflow:hidden;margin-bottom:8px}
-/* V13.9：天氣與劇情精簡 */
+/* V14.0：天氣與劇情精簡 */
 .pill-row{flex-wrap:nowrap!important;margin:0 0 6px!important}.pill-row .visit-pill{font-size:12px!important;padding:4px 11px!important;white-space:nowrap}
 #wxBox .wx2{padding:8px 12px;margin:8px 0}
 .wx2-r{display:flex;align-items:center;gap:8px}.wx2-r+.wx2-r{margin-top:6px}
@@ -337,7 +342,7 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .fm-ib{border:0;background:none;padding:2px 5px;font:inherit;font-size:16px;cursor:pointer;color:var(--ink);text-decoration:none;display:inline-flex;align-items:center;gap:2px}.fm-ib b{font-size:11px;color:var(--muted)}
 .fm-act .fm-nb{padding:0 8px;font-size:13px;line-height:20px}.fm-act .fm-date{flex:none;margin-right:2px}.fm-act .chip{padding:5px 10px;font-size:12px}
 .fm-dots{flex:1;display:flex;gap:4px}
-/* V13.9：留言板日期與翻頁、粉專連結 */
+/* V14.0：留言板日期與翻頁、粉專連結 */
 .fm-nav{display:flex;align-items:center;gap:6px;margin:6px 0 0 28px;flex-wrap:wrap}
 .fm-date{font-size:12px;color:var(--muted);flex:1;white-space:nowrap}.fm-date em{font-style:normal;font-size:11px;font-weight:700;color:#fff;background:var(--fig);border-radius:6px;padding:1px 6px;margin-left:4px}
 .fm-nb{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:99px;padding:4px 10px;font:inherit;font-size:12px;cursor:pointer}.fm-nb:disabled{opacity:.35;cursor:default}
@@ -590,7 +595,7 @@ body.admin #app{max-width:1100px}
 #admin{padding:14px 16px 40px}
 .admtabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:8px 0;z-index:5}
 .zrow{display:flex;gap:10px;align-items:center}
-.zrow b{width:48px;flex:none}
+.zrow b{min-width:8.5em;flex:none;white-space:nowrap;font-size:14px}
 .zrow .field{margin:4px 0}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
 #printArea{display:none}
@@ -868,7 +873,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 
 <!-- ================= 4. 管理後台（?admin） ================= -->
 <section id="admin" class="screen">
-  <div id="admLogin" class="panel" style="margin-top:24px">
+  <div id="admLogin" class="panel" style="margin:24px auto 0;max-width:480px">
     <h2 class="h2 wk" style="margin-top:0">隱花王國・農場管理後台</h2>
     <label class="lbl" for="admEmail">管理員 Email</label>
     <input id="admEmail" class="field" type="email" autocomplete="username">
@@ -947,7 +952,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
           <div><label class="lbl" for="wWind">風速 m/s</label><input id="wWind" class="field" type="number" inputmode="decimal"></div>
         </div>
         <div class="lbl">病蟲害</div>
-        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> 🪰 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> 🍂 銹病</label><label class="chip"><input type="checkbox" value="myna"> 🐦 八哥</label></div>
+        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> 🦟 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> 🍂 銹病</label><label class="chip"><input type="checkbox" value="myna"> 🐦 八哥</label></div>
         <p class="lvtxt">規則：33°C 以上高溫、30°C 以上且沒下雨為乾旱、風速 10m/s 以上強風、雨量 20mm 以上豪雨。越熱果況越好，雨和風讓果況變差。</p>
         <button id="btnWx" class="btn main">發布</button>
       </div>
@@ -1031,7 +1036,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = true;
 
-const APP_VERSION = 'V12.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V14.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1391,7 +1396,7 @@ function mycoGame(done){
     <div style="text-align:center;margin-top:10px"><button class="btn main" id="mySol" style="width:auto;display:inline-block;padding:8px 18px">💡 放棄，看解答</button></div>`;
   document.body.appendChild(ov); MUSIC.start();
   const W = '#4FC3F7', DRY = '#EFE6D2';
-  const tile = (c,i)=>{ if(c.rock) return `<div class="my-c rock">🪨</div>`; const on = lit.has(i), col = on ? W : DRY, x = i%N, y = Math.floor(i/N);
+  const tile = (c,i)=>{ if(c.rock) return `<div class="my-c rock">🧱</div>`; const on = lit.has(i), col = on ? W : DRY, x = i%N, y = Math.floor(i/N);
     const ends = [[50,0],[100,50],[50,100],[0,50]];
     const seg = ends.map(([ex,ey],k)=>c.m&(1<<k) ? `<line x1="50" y1="50" x2="${ex}" y2="${ey}" stroke="${col}" stroke-width="${on?16:12}" stroke-linecap="${on?'butt':'round'}"/>` : '').join('');
     // 漏水提示：有水的管口對到邊界、石頭或沒接上的格子，就畫水滴
@@ -2536,7 +2541,7 @@ function storySteps(){
   const a = activeCh()[0];
   return [
     {icon:'🌅', n:'報到簽到', ok:true},
-    P.route==='relax' ? {icon:'🪴', n:'照顧我的樹 1 次', ok:(P.daily.cares||0)>=1} : {icon:'👟', n:'走滿 3000 步', ok:effSteps()>=3000},
+    P.route==='relax' ? {icon:'🌱', n:'照顧我的樹 1 次', ok:(P.daily.cares||0)>=1} : {icon:'👟', n:'走滿 3000 步', ok:effSteps()>=3000},
     {icon:'🌳', n:'巡園找 3 棵樹', ok:treesFound()>=3},
     {icon:'🛡️', n:`守護任務：黑騎士${a?'＋'+CH[a].n:''}`, ok:!!P.daily.knightMet && !pendingCh().length}
   ];
@@ -2544,7 +2549,7 @@ function storySteps(){
 function renderStory(){
   const c = chapter(), st = storySteps(), done = st.filter(x=>x.ok).length;
   const claim = done===st.length && !P.daily.storyClaimed;
-  const box = $('#storyBox'), open = box.classList.contains('open');   // V13.9：精簡版，點一下展開故事全文
+  const box = $('#storyBox'), open = box.classList.contains('open');   // V14.0：精簡版，點一下展開故事全文
   box.innerHTML = `<div class="st2-h"><span class="st2-i">${c.icon}</span><b>${c.t}</b><span class="st2-n">劇情 ${done}/${st.length}</span><i class="st2-x">${open?'︿':'﹀'}</i></div>
     <p class="st2-p">${c.p}</p>
     <div class="st2-steps">${st.map(x=>`<span class="${x.ok?'ok':''}">${x.ok?'✓':x.icon} ${x.n}</span>`).join('')}</div>
@@ -2620,7 +2625,7 @@ function renderLevel(){
 }
 function howSheet(){
   const lv = lvIndex(P.points||0);
-  const rows = [['🌅 每日簽到','+2'],['👟 走滿 3000／6000／10000 步','+4／+10／+15（活力路線 ×1.5）'],['🌳 巡園每棵樹','+1～2'],['✨ 發現稀有收藏','+3'],['📖 答對知識卡','+5'],['🔥 處理今日天氣事件','+6'],['⚡ 巡園遇到的挑戰','+1～7（看過關指數）'],['🛡️ 趕走黑騎士','+5，再送 1 個寶箱'],['🎁 開到寶箱','+2'],['🪴 照顧我的樹','+2'],['🧺 樹採收','+10'],['🏆 完成今日劇情','+10'],['📦 兌換果盒 QR','每 NT$10 = 1 分（不受每日上限）'],['🎟️ 親友用分享券加入','+20']];
+  const rows = [['🌅 每日簽到','+2'],['👟 走滿 3000／6000／10000 步','+4／+10／+15（活力路線 ×1.5）'],['🌳 巡園每棵樹','+1～2'],['✨ 發現稀有收藏','+3'],['📖 答對知識卡','+5'],['🔥 處理今日天氣事件','+6'],['⚡ 巡園遇到的挑戰','+1～7（看過關指數）'],['🛡️ 趕走黑騎士','+5，再送 1 個寶箱'],['🎁 開到寶箱','+2'],['🌱 照顧我的樹','+2'],['🧺 樹採收','+10'],['🏆 完成今日劇情','+10'],['📦 兌換果盒 QR','每 NT$10 = 1 分（不受每日上限）'],['🎟️ 親友用分享券加入','+20']];
   openSheet(`<h2 class="h2 wk" style="margin-top:0">怎麼賺果友值</h2><p class="sub">遊戲裡每天最多賺 ${DAILY_CAP} 分；買果兌換和邀請親友不受上限。優惠券每週最多 3 張、手上最多 3 張，拿滿後寶箱改裝果友值。</p>
     <table class="ladder">${rows.map(r=>`<tr><td>${r[0]}</td><td style="text-align:right;white-space:nowrap">${r[1]}</td></tr>`).join('')}</table>
     <div class="lbl">粉絲等級</div>
@@ -3355,7 +3360,7 @@ function renderWeather(){
   $('#wxBox').innerHTML = `<div class="card wx2">
     <div class="wx2-r"><b class="wx2-t">${WX.temp}°</b><span class="wx2-n">今日神岡</span><small>🌧️${WX.rain}mm・🍃${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div>
     <div class="wx2-r">${act.map(k=>`<button class="wx2-ch ${chDone(k)?'ok':''}" data-ch="${k}"><span>${CH[k].i}</span><b>${chDone(k)?CH[k].n+'・已處理 ✓':czName()+'出現'+CH[k].n+'！'}</b>${chDone(k)?'':'<i>›</i>'}</button>`).join('')}<button class="wx2-play" id="btnPlay">🎮 玩遊戲</button></div>
-  </div>`;   // V13.9：精簡版
+  </div>`;   // V14.0：精簡版
   $('#btnPlay').onclick = playMenu;
   $('#wxBox').querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{ if(chDone(b.dataset.ch)){ toast('這個挑戰今天已經處理好了'); return; } startChallenge(b.dataset.ch); });
 }
@@ -3393,7 +3398,7 @@ function renderRoute(){
   const relax = P.route==='relax';
   const ra = $('#routeActive'), rr = $('#routeRelax'); ra.classList.remove('hide'); rr.classList.remove('hide');
   if(relax) ra.parentNode.insertBefore(rr, ra); else ra.parentNode.insertBefore(ra, rr);      // 兩條路線都看得到我的樹，主路線排前面
-  $('#navMove').innerHTML = relax ? '<b>🪴</b>我的樹' : '<b>👟</b>運動・樹';
+  $('#navMove').innerHTML = relax ? '<b>🌱</b>我的樹' : '<b>👟</b>運動・樹';
   renderTree(); renderWeek();
   $('#meRouteNow').textContent = P.route==='relax' ? '照顧我的樹、慢慢累積' : '走路換巡園次數，步數越多寶箱越多';
   $('#meRoute').innerHTML = Object.entries(ROUTES).map(([k,r])=>`<button class="chip ${P.route===k?'sel':''}" data-rt="${k}">${r.n}</button>`).join('');
@@ -3543,7 +3548,7 @@ function renderFamily(){
   $('#famBox').innerHTML = `<div class="story-h"><span class="story-i">👨‍👩‍👧</span><div style="flex:1"><div class="lbl" style="margin:0">家人挑戰賽</div><div class="lvtxt">${FAM_LV[k].n}・親密值 ${IM}${N?`／${N.min}`:''}</div></div></div>${famLine}
     <div class="bar" style="margin:8px 0"><i style="width:${pct}%;background:linear-gradient(90deg,#F29BB4,#C9566E)"></i></div>
     <p class="sub" style="margin:0 0 8px">一支手機兩人玩，或邀請家人用自己的手機一起累積；每 100 親密值送寶箱。</p>
-    <div class="fam-g"><button id="btnFam"><b>🏒</b>氣墊球</button><button id="btnWeed"><b>🌿</b>比賽除草</button><button id="btnWoodF"><b>🪵</b>碎木接力</button></div>
+    <div class="fam-g"><button id="btnFam"><b>🏒</b>氣墊球</button><button id="btnWeed"><b>🌿</b>比賽除草</button><button id="btnWoodF"><b>🪓</b>碎木接力</button></div>
     <button class="linkbtn" id="btnFamInv">＋ 邀請家人</button>`;
   $('#btnFam').onclick = ()=>famSetup('hockey'); $('#btnWeed').onclick = ()=>famSetup('weed'); $('#btnWoodF').onclick = ()=>famSetup('wood'); $('#btnFamInv').onclick = famInvite;
 }
@@ -3634,9 +3639,9 @@ function famGame(){
   ov.addEventListener('pointerdown', e=>{ const y=e.clientY-ov.getBoundingClientRect().top;
     if(y < H*.45){ const now=performance.now(); if(now-lastThrow<350) return; lastThrow=now; thrown++;
       // 無花果會往左右飄、碰牆反彈，落點每次不同，撿的人一定要移動籃子
-      figs.push({x:e.clientX, y:y, vy:2.2, vx:(Math.random()<.5?-1:1)*(1.2+Math.random()*1.8), r:Math.random()*.6}); }
-    else { catcher=e.pointerId; moveB(e.clientX); } });
-  ov.addEventListener('pointermove', e=>{ const y=e.clientY-ov.getBoundingClientRect().top; if(e.pointerId===catcher || (e.pointerType==='mouse' && y>=H*.45)) moveB(e.clientX); });
+      figs.push({x:e.clientX-ov.getBoundingClientRect().left, y:y, vy:2.2, vx:(Math.random()<.5?-1:1)*(1.2+Math.random()*1.8), r:Math.random()*.6}); }
+    else { catcher=e.pointerId; moveB(e.clientX-ov.getBoundingClientRect().left); } });
+  ov.addEventListener('pointermove', e=>{ const y=e.clientY-ov.getBoundingClientRect().top; if(e.pointerId===catcher || (e.pointerType==='mouse' && y>=H*.45)) moveB(e.clientX-ov.getBoundingClientRect().left); });
   const rel = e=>{ if(e.pointerId===catcher) catcher=null; }; ov.addEventListener('pointerup', rel); ov.addEventListener('pointercancel', rel);
   function fig(x,y,rot){ cx.save(); cx.translate(x,y); cx.rotate(rot); cx.fillStyle='#7A2E52'; cx.beginPath(); cx.moveTo(0,-16); cx.bezierCurveTo(10,-6,16,4,14,12); cx.bezierCurveTo(10,22,-10,22,-14,12); cx.bezierCurveTo(-16,4,-10,-6,0,-16); cx.fill(); cx.strokeStyle='#5E9A4E'; cx.lineWidth=3; cx.beginPath(); cx.moveTo(0,-16); cx.lineTo(3,-22); cx.stroke(); cx.restore(); }
   function frame(now){
@@ -3759,7 +3764,7 @@ function famWeed(){
   const sc = {A:0, B:0}, cells = {A:[], B:[]}, kinds = {}; let left = 30, over = false, st;
   ['A','B'].forEach(s=>ov.querySelectorAll(`.wh[data-s="${s}"]`).forEach(b=>cells[s].push(b)));
   const show = ()=>{ $('#wsA').textContent = sc.A; $('#wsB').textContent = sc.B; };
-  // V13.9：兩個人要能同時點——每根手指各自處理（touchstart 逐指判斷），滑鼠才用 pointerdown
+  // V14.0：兩個人要能同時點——每根手指各自處理（touchstart 逐指判斷），滑鼠才用 pointerdown
   const hitAt = (x, y)=>{ const el = document.elementFromPoint(x, y); const b = el && el.closest && el.closest('.wh'); if(b) whack(b); };
   ov.addEventListener('touchstart', e=>{ e.preventDefault(); for(const tc of e.changedTouches) hitAt(tc.clientX, tc.clientY); }, {passive:false});
   ov.addEventListener('pointerdown', e=>{ if(e.pointerType==='touch') return; const b = e.target.closest('.wh'); if(b) whack(b); });
@@ -3912,7 +3917,9 @@ async function redeemSecret(){
 
 /* ---------- 農場留言板：按讚、留言、分享都有回饋，留言一樣要友善 ---------- */
 let FEED = null;
-const FB_PAGE = 'https://www.facebook.com/share/1CgemBs1yX/';   // V13.9：農場粉絲專頁
+/* V14.0：有全螢幕遊戲時在 body 加上 has-ov（大螢幕兩側變暗用） */
+new MutationObserver(()=>document.body.classList.toggle('has-ov', !!document.querySelector('body > [id$="Ov"]'))).observe(document.body, {childList:true});
+const FB_PAGE = 'https://www.facebook.com/share/1CgemBs1yX/';   // V14.0：農場粉絲專頁
 function fmDate(t){ if(!t) return ''; const d = new Date(t), n = new Date(); const wd = '日一二三四五六'[d.getDay()];
   const dd = Math.round((new Date(n.getFullYear(),n.getMonth(),n.getDate()) - new Date(d.getFullYear(),d.getMonth(),d.getDate()))/864e5);
   const tag = dd===0?'今天':dd===1?'昨天':''; return `${d.getFullYear()!==n.getFullYear()?d.getFullYear()+'/':''}${d.getMonth()+1}/${d.getDate()}（${wd}）${tag?' · '+tag:''}`; }
@@ -3924,7 +3931,7 @@ async function loadFeed(){
       for(let i=0;i<seed.length;i++) await DB.set('feed/F'+i, {text:seed[i], created:Date.now()-i*864e5});
       ps = await DB.list('feed');
     }
-    FEED = ps.sort((a,b)=>b.created-a.created).slice(0,10);   // V13.9：可往回看 10 則
+    FEED = ps.sort((a,b)=>b.created-a.created).slice(0,10);   // V14.0：可往回看 10 則
     await Promise.all(FEED.map(async p=>{ try{ p.cms = (await DB.list(`feed/${p.id}/comments`)).sort((a,b)=>b.created-a.created); }catch(e){ p.cms = []; } }));   // V7.3：留言數與跑馬燈
   }catch(e){ FEED = []; }
   renderFeed();
@@ -3956,7 +3963,7 @@ function renderFeed(){
   };
   show();
   clearInterval(FEED.tm);
-  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; if(FEED.hold && Date.now()-FEED.hold<60000) return; FEED.i=(FEED.i+1)%Math.min(FEED.length,3); show(); }, 8000);   // V13.9：自動輪播只轉最新 3 則；手動翻頁後暫停 1 分鐘   // 每 8 秒輪播下一則（留言跑馬燈在中間輪動）
+  if(FEED.length>1) FEED.tm = setInterval(()=>{ if(!document.getElementById('fmT') || $('#sheet').classList.contains('hide')===false) return; if(FEED.hold && Date.now()-FEED.hold<60000) return; FEED.i=(FEED.i+1)%Math.min(FEED.length,3); show(); }, 8000);   // V14.0：自動輪播只轉最新 3 則；手動翻頁後暫停 1 分鐘   // 每 8 秒輪播下一則（留言跑馬燈在中間輪動）
 }
 // 分享：把貼文連同「自己的分享券連結」一起分享；分享本身只給小獎勵（無法確認對方真的看到），朋友用分享券加入才給大獎勵
 async function sharePost(p){
@@ -4010,9 +4017,9 @@ async function openComments(id){
    ========================================================= */
 const TASK_SLOTS = [[6,10],[10,14],[14,18],[18,23]];
 const TASKS = [
-  {id:'wood', n:'碎木工作', i:'🪵', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
+  {id:'wood', n:'碎木工作', i:'🪓', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
   // 之後的新小遊戲加在這裡，就會自動輪流出現
-  ,{id:'myco', n:'灌溉連線', i:'💧', d:'水分是無花果長大的關鍵，灌溉管路要接到每一棵樹，不能有漏水或沒接上的地方。好的水路配上健康的土壤菌群，樹才長得好。', rules:'點一下格子，水管就會順時針轉 90 度。從最上排的 🚰 水源開始，把水灌到棋盤上每一格，每一棵 🌳 都要喝到水。有水的管子會變藍色；管口沒接好會出現紅色水滴，代表漏水。🪨 石頭不能通過。計時條歸零前全部灌到水就過關，越快、轉越少次分數越高；時間到或按「放棄」會顯示解答。簡單 4×4、中級 5×5、高級 6×6。', play:mycoGame}
+  ,{id:'myco', n:'灌溉連線', i:'💧', d:'水分是無花果長大的關鍵，灌溉管路要接到每一棵樹，不能有漏水或沒接上的地方。好的水路配上健康的土壤菌群，樹才長得好。', rules:'點一下格子，水管就會順時針轉 90 度。從最上排的 🚰 水源開始，把水灌到棋盤上每一格，每一棵 🌳 都要喝到水。有水的管子會變藍色；管口沒接好會出現紅色水滴，代表漏水。🧱 石塊不能通過。計時條歸零前全部灌到水就過關，越快、轉越少次分數越高；時間到或按「放棄」會顯示解答。簡單 4×4、中級 5×5、高級 6×6。', play:mycoGame}
   ,{id:'rhythm', n:'節奏採收', i:'🎵', d:'無花果要在紫紅色的最佳時機採收，太早太生、太晚過熟。跟著節奏採，又快又準！', rules:'三首歌輪流（〈無花果收成歌〉〈小呱夜巡〉〈溫室晨光〉），跟著旋律，紫紅色熟果會隨著每個音符從上往下掉（低音在左、高音在右），第一小節是前奏。熟果掉到黃色線上時，點那一排的「採」按鈕（或直接點那一排）。剛好在線上是「完美」，差一點是「不錯」。中級以上會有綠色青果，不要點，點了扣分。連續採中有連擊。', play:rhythmGame}
   ,{id:'memory', n:'農場翻牌', i:'🃏', d:'王國夥伴們躲在卡片後面，一起來找找看！', rules:'開始前先看 2～3 秒，記住夥伴的位置。翻兩張一樣的就配對成功，連續配對分數加倍（最多 4 倍）。中級以上配對過半時，一陣風會把剩下的卡片洗牌。計時條歸零前全部配完，剩餘時間也會加分。', play:memoryGame}
 ];
@@ -4246,7 +4253,7 @@ function woodGame(done, who){
     const show = ()=>{
       const s = steps[i];
       box.innerHTML = `<div class="tut-card"><div class="tut-step">教學 ${i+1}/4</div><h3>${s.h}</h3><p>${s.p}</p>${s.svg||''}
-        ${s.ans?`<div class="tut-btns"><button data-t="saw">🪚 鋸子</button><button data-t="pruner">✂️ 電剪</button></div><div class="tut-fb" id="tutFb"></div>`:''}
+        ${s.ans?`<div class="tut-btns"><button data-t="saw">🪓 鋸子</button><button data-t="pruner">✂️ 電剪</button></div><div class="tut-fb" id="tutFb"></div>`:''}
         ${s.rot?`<svg viewBox="0 0 200 150" class="tut-svg" id="tutRot"><rect x="70" y="118" width="60" height="26" rx="6" fill="#5B6770"/><text x="100" y="136" text-anchor="middle" font-size="11" fill="#fff">碎木機</text>
           <g id="tutPiece" style="transition:transform .25s"><line x1="100" y1="30" x2="100" y2="90" stroke="#7A5A3E" stroke-width="13" stroke-linecap="round"/></g></svg><div class="tut-fb" id="tutFb">點木段轉方向</div>`:''}
         ${s.end?`<button class="btn main" id="tutGo">我懂了，開始！</button>`:''}
@@ -4532,7 +4539,7 @@ function famWood(){
   const F = P.fam, s = [];
   const run = i=>woodGame(res=>{
     s[i] = res.carts||0;
-    if(i===0){ openSheet(`<div class="big">🪵</div><h2 class="h2 wk">${esc(F.names[0])} 推了 ${s[0]} 車</h2><p class="sub">換 ${esc(F.names[1])} 上場！手機交給對方吧。</p><button class="btn main" id="wNext">${esc(F.names[1])} 正式開始</button>`, true); $('#wNext').onclick = ()=>{ closeSheet(); run(1); }; }
+    if(i===0){ openSheet(`<div class="big">🪓</div><h2 class="h2 wk">${esc(F.names[0])} 推了 ${s[0]} 車</h2><p class="sub">換 ${esc(F.names[1])} 上場！手機交給對方吧。</p><button class="btn main" id="wNext">${esc(F.names[1])} 正式開始</button>`, true); $('#wNext').onclick = ()=>{ closeSheet(); run(1); }; }
     else finish();
   }, F.names[i]);
   run(0);
@@ -4545,7 +4552,7 @@ function famWood(){
     if(Math.floor(F.intimacy/100)>beforeLv && P.daily.famChest!==today()){ P.daily.famChest=today(); const c=makeCoupon(), t=cpT(c); chest=`${chestSvg()}<div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>家庭寶箱</b>${cpNote(c)}</div></div>`; }
     Auth.save(); renderAll();
     const win = s[0]===s[1] ? '平手！' : `${esc(s[0]>s[1]?F.names[0]:F.names[1])} 贏了！`;
-    openSheet(`<div class="big pop">🪵</div><h2 class="h2 wk">${win}</h2><p class="sub">${esc(F.names[0])} ${s[0]} 車・${esc(F.names[1])} ${s[1]} 車（推越多車越厲害）<br>${counted?`一起整理枝條，親密值 +${gain}`:'今天前 3 場才計親密值'}${pts?`，果友值 +${pts}`:''}${up?`<br>🔺 ${up}`:''}</p>${chest}
+    openSheet(`<div class="big pop">🪓</div><h2 class="h2 wk">${win}</h2><p class="sub">${esc(F.names[0])} ${s[0]} 車・${esc(F.names[1])} ${s[1]} 車（推越多車越厲害）<br>${counted?`一起整理枝條，親密值 +${gain}`:'今天前 3 場才計親密值'}${pts?`，果友值 +${pts}`:''}${up?`<br>🔺 ${up}`:''}</p>${chest}
       <div class="card" style="text-align:left"><b>📖 農場小知識</b><p class="sub" style="margin:4px 0 0">修剪下來的枝條打成碎木，鋪回土裡保濕、養菌，是循環農法的一環。</p></div>
       <button class="btn main" id="wAgain2">再比一輪</button><button class="btn ghost" onclick="closeSheet()">結束</button>`, true);
     $('#wAgain2').onclick = ()=>{ closeSheet(); famWood(); };
@@ -4566,8 +4573,9 @@ function famHockey(){
   const reset = to=>{ puck = {x:W/2, y:H/2, vx:(Math.random()-.5)*2, vy: to==='T' ? -2.4 : 2.4}; pause = performance.now()+700; };
   reset(Math.random()<.5?'T':'B');
   const side = y=> y<H/2 ? 'T' : 'B';
-  ov.addEventListener('pointerdown', e=>{ const s = side(e.clientY); pad[s].id = e.pointerId; pad[s].tx = e.clientX; pad[s].ty = e.clientY; });
-  ov.addEventListener('pointermove', e=>{ for(const s of ['T','B']) if(pad[s].id===e.pointerId || (e.pointerType==='mouse' && e.buttons && side(e.clientY)===s)){ pad[s].tx=e.clientX; pad[s].ty=e.clientY; } });
+  const rp = e=>{ const r = ov.getBoundingClientRect(); return [e.clientX-r.left, e.clientY-r.top]; };   // V14.0：座標換成遊戲區內座標（大螢幕置中時才不會偏）
+  ov.addEventListener('pointerdown', e=>{ const [x,y] = rp(e), s = side(y); pad[s].id = e.pointerId; pad[s].tx = x; pad[s].ty = y; });
+  ov.addEventListener('pointermove', e=>{ const [x,y] = rp(e); for(const s of ['T','B']) if(pad[s].id===e.pointerId || (e.pointerType==='mouse' && e.buttons && side(y)===s)){ pad[s].tx=x; pad[s].ty=y; } });
   const rel = e=>{ for(const s of ['T','B']) if(pad[s].id===e.pointerId) pad[s].id=null; }; ov.addEventListener('pointerup', rel); ov.addEventListener('pointercancel', rel);
   function figPuck(x,y){ cx.save(); cx.translate(x,y); cx.fillStyle='#7A2E52'; cx.beginPath(); cx.arc(0,0,BR,0,Math.PI*2); cx.fill(); cx.fillStyle='#A84A75'; cx.beginPath(); cx.arc(-BR*.3,-BR*.3,BR*.35,0,Math.PI*2); cx.fill(); cx.strokeStyle='#5E9A4E'; cx.lineWidth=3; cx.beginPath(); cx.moveTo(0,-BR); cx.lineTo(3,-BR-6); cx.stroke(); cx.restore(); }
   function txt(s, x, y, rot, size, col){ cx.save(); cx.translate(x,y); cx.rotate(rot); cx.fillStyle=col||'#2A1F2D'; cx.font=`900 ${size}px "Noto Sans TC",sans-serif`; cx.textAlign='center'; cx.fillText(s,0,0); cx.restore(); }
@@ -4990,7 +4998,7 @@ function openEmerald(){
 /* ---------- 寶箱追逐賽：今日獎池（全體玩家共用、數量有限） ---------- */
 const POOL_DEF = {e:20, d:10, c:5, b:3, a:1, zEvery:3};
 // V7.6：六種寶箱（木箱→鑽石），每種寶箱的獎品、名稱、副標都可在後台改，獎池欄位不變（不必改 Firebase 規則）
-const CHEST = {e:{chest:'橡木小箱', icon:'🪵', grade:'木箱'}, d:{chest:'鍛鐵寶箱', icon:'⚙️', grade:'鐵箱'}, c:{chest:'青銅寶箱', icon:'🥉', grade:'銅箱'},
+const CHEST = {e:{chest:'橡木小箱', icon:'📦', grade:'木箱'}, d:{chest:'鍛鐵寶箱', icon:'⚙️', grade:'鐵箱'}, c:{chest:'青銅寶箱', icon:'🥉', grade:'銅箱'},
   b:{chest:'月光銀箱', icon:'🥈', grade:'銀箱'}, a:{chest:'黃金寶箱', icon:'🥇', grade:'金箱'}, z:{chest:'星鑽寶盒', icon:'💎', grade:'鑽石'}};
 const REWARDS = {p10:{n:'果友值 +10', pts:10}, p20:{n:'果友值 +20', pts:20}, ship:{n:'免運券', cp:'ship'}, c200:{n:'折 200 元券', cp:'c200'},
   half:{n:'半價券', cp:'half'}, free:{n:'免單券', cp:'free'}, custom:{n:'自訂獎品（現場兌換）', cp:'sp'}};
@@ -5239,7 +5247,7 @@ let PRACTICE = false, PRACTICE_D = null, PRAC_T0 = 0;
 const PRACTICE_LIST = [
   {k:'whitefly', i:'🦟', n:'銀葉粉蝨'}, {k:'rust', i:'🍂', n:'銹病三輪'}, {k:'rain', i:'🌧️', n:'豪雨垃圾分類'},
   {k:'drought', i:'💧', n:'乾旱澆水'}, {k:'heat', i:'☀️', n:'高溫撐陽傘'}, {k:'wind', i:'🌪️', n:'強風夾枝'},
-  {k:'myna', i:'🐦', n:'趕走八哥'}, {k:'wood', i:'🪵', n:'碎木工作'}, {k:'pick', i:'🧺', n:'摘果挑戰賽'}, {k:'memory', i:'🃏', n:'農場翻牌'}, {k:'myco', i:'💧', n:'灌溉連線'}, {k:'rhythm', i:'🎵', n:'節奏採收'}
+  {k:'myna', i:'🐦', n:'趕走八哥'}, {k:'wood', i:'🪓', n:'碎木工作'}, {k:'pick', i:'🧺', n:'摘果挑戰賽'}, {k:'memory', i:'🃏', n:'農場翻牌'}, {k:'myco', i:'💧', n:'灌溉連線'}, {k:'rhythm', i:'🎵', n:'節奏採收'}
 ];
 function playMenu(){
   const tired = stamina()<=0;
@@ -5318,7 +5326,7 @@ function doHelp(zid, id){
   SND.good(c.gain*2); Auth.save(); renderAll(); toast(`${c.i} 幫忙${c.n}完成！能量 +${c.gain}`); openZone(zid);
 }
 /* ---------- 王國造訪人次：每次開啟遊戲累積一次 ---------- */
-/* ---------- V13.9：隱花王國曆——上：日期、中：二十四節氣、下：隱花元年與王國紀念日（全部用台灣時間計算） ---------- */
+/* ---------- V14.0：隱花王國曆——上：日期、中：二十四節氣、下：隱花元年與王國紀念日（全部用台灣時間計算） ---------- */
 const KCAL_Y0 = 2025;   // 2026 年＝隱花元年
 const TERM_N = '小寒,大寒,立春,雨水,驚蟄,春分,清明,穀雨,立夏,小滿,芒種,夏至,小暑,大暑,立秋,處暑,白露,秋分,寒露,霜降,立冬,小雪,大雪,冬至'.split(',');
 // 國立天文台（NAOJ）公布時刻換成台灣時間（UTC+8）後的日期；表外年份用太陽黃經公式推算（誤差約 15 分鐘內）
@@ -5329,7 +5337,7 @@ const TERM_FIX = {
 const KDAYS = [
   {n:'隱花元旦', i:'🎆', at:'01-01', d:'王國新年。翻開新的一頁曆，向果樹說聲新年好。'},
   {n:'喚芽節',   i:'🌱', at:'立春', d:'春天開始，無花果的冬芽慢慢甦醒，枝條準備冒出新芽。'},
-  {n:'蚯蚓節',   i:'🪱', at:'穀雨', d:'春雨滋潤土壤，蚯蚓忙著鬆土；蚯蚓塔也開工，把廚餘變成蚯蚓糞。'},
+  {n:'蚯蚓節',   i:'🐛', at:'穀雨', d:'春雨滋潤土壤，蚯蚓忙著鬆土；蚯蚓塔也開工，把廚餘變成蚯蚓糞。'},
   {n:'隱花日',   i:'🌸', at:'小滿', d:'無花果其實有花——花藏在果子裡面，所以叫「隱花」。這是王國名字的由來。'},
   {n:'長晝守護日', i:'☀️', at:'夏至', d:'一年白天最長的一天。溫室最熱的季節，守護者記得幫果樹補水。'},
   {n:'聖樹節',   i:'🏺', at:'立秋', d:'古埃及人把無花果家族的西克莫無花果樹當成聖樹。這天向無花果家族悠久的歷史致敬。'},
