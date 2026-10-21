@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.0</title>
+<title>今天在隱花王國尋寶 V14.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -655,7 +655,7 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
 .film-node{cursor:pointer}
 figure.ph{margin:0 0 12px}figure.ph img{width:100%;border-radius:14px;display:block}
 figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-size:var(--fs-b);margin-top:4px}figure.ph figcaption span{color:var(--muted);white-space:nowrap}
-.ph-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.ph-it img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}.ph-it small{display:block;font-size:12px;color:var(--muted)}
+.ph-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}.ph-it img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px}.ph-it small{display:block;font-size:12px;color:var(--muted)}.ph-it small.ph-nocap{opacity:.6}.ph-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 
 /* ===== V13.0：一般溫室立體巡園 ===== */
 #ghOv{position:fixed;inset:0;z-index:40;background:#DDEFD6;touch-action:none;user-select:none;-webkit-user-select:none}
@@ -1036,7 +1036,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V14.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V14.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -3073,7 +3073,18 @@ const Admin = {
     $('#phMonths').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{ Admin.phM=+b.dataset.m; Admin.photo(); });
     const list = inY.filter(p=>+p.ym.slice(5)===Admin.phM);
     $('#phMonthT').textContent = `${Admin.phY} 年 ${Admin.phM} 月・${list.length} 張`;
-    $('#phList').innerHTML = list.length ? list.map(p=>`<div class="ph-it"><img src="${p.url||p.data}" alt="" loading="lazy"><small>${esc(p.cap||'')}</small><small>❤️ ${p.likes||0}・${new Date(p.created).toLocaleDateString('zh-TW')}</small><button class="chip" data-del="${p.id}">刪除</button></div>`).join('') : '<p class="sub">這個月還沒有照片</p>';
+    $('#phList').innerHTML = list.length ? list.map(p=>`<div class="ph-it"><img src="${p.url||p.data}" alt="" loading="lazy" data-ed="${p.id}" style="cursor:pointer"><small class="${p.cap?'':'ph-nocap'}">${p.cap?esc(p.cap):'（沒有備註）'}</small><small>❤️ ${p.likes||0}・${new Date(p.created).toLocaleDateString('zh-TW')}</small><div class="ph-btns"><button class="chip" data-ed="${p.id}">✏️ 改備註</button><button class="chip" data-del="${p.id}">刪除</button></div></div>`).join('') : '<p class="sub">這個月還沒有照片</p>';
+    // V14.1：點照片或「改備註」可修改備註和拍攝月份（讚數不受影響）
+    $('#phList').querySelectorAll('[data-ed]').forEach(b=>b.onclick=()=>{ const it = items.find(x=>x.id===b.dataset.ed); if(!it) return;
+      openSheet(`<h2 class="h2 wk" style="margin-top:0">✏️ 修改照片</h2><img src="${it.url||it.data}" alt="" style="width:100%;max-height:240px;object-fit:cover;border-radius:12px">
+        <label class="lbl" for="peCap">備註（30 字內）</label><input id="peCap" class="field" maxlength="30" value="${esc(it.cap||'')}" placeholder="例如：三期今天開始採收">
+        <label class="lbl" for="peYm">拍攝月份</label><input id="peYm" class="field" type="month" value="${it.ym}">
+        <p class="lvtxt" style="margin:0 0 8px">讚數 ${it.likes||0} 會保留。改月份後照片會移到那個月的資料夾。</p>
+        <button class="btn main" id="peSave">儲存</button><button class="btn ghost" onclick="closeSheet()">取消</button>`);
+      const sv = $('#peSave'); sv.onclick = async()=>{ if(sv.disabled) return; const ym = $('#peYm').value || it.ym; if(!/^\d{4}-\d{2}$/.test(ym)){ toast('月份格式不對'); return; }
+        sv.disabled = true; try{ await DB.update(`zonephotos/${zid}/items/${it.id}`, {cap:$('#peCap').value.trim(), ym}); closeSheet(); toast('照片已更新');
+          Admin.phY = +ym.slice(0,4); Admin.phM = +ym.slice(5); Admin.photo(); }catch(e){ console.error(e); toast('儲存失敗：'+(e.code||e.message)); sv.disabled = false; } };
+    });
     $('#phList').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{ if(!confirm('確定刪除這張照片？')) return;
       const it = items.find(x=>x.id===b.dataset.del);
       if(it && it.path && !DEMO){ try{ const st = await DB.storage(); await st.deleteObject(st.ref(st.S, it.path)); }catch(e){ console.warn(e); } }
