@@ -2336,15 +2336,40 @@ async function checkMessages(tries=0){
   msgs.filter(m=>m.k==='m' && !m.gift).forEach(m=>DB.update(`players/${PID}/inbox/${m.id}`, {read:true}).catch(()=>{}));
 }
 function newPhotoToast(){ const z = ZONES.filter(z=>phNew(z.id)); if(z.length) toast(`🎞️ ${z.map(x=>zName(x)).join('、')}有新的實景照片，點溫室上發光的數字看看`, 3600); }
+// V14.3：天空之城地圖——每座溫室是一座浮空島，金葉小徑變成木棧雲橋，背景依時間換成晨、午、黃昏、夜空
+function skyTone(){ if(window.SKY_FORCE) return window.SKY_FORCE; const h = new Date().getHours(); return h<5||h>=19 ? 'night' : h<7 ? 'dawn' : h>=17 ? 'dusk' : 'day'; }
+const SKY = {
+  day:  {a:'#6FB3E8', b:'#B9DDF6', c:'#F4F1E4', cl:'#FFFFFF', far:'#9CC6E6'},
+  dawn: {a:'#8FA7D8', b:'#F2C6C2', c:'#FBE3C4', cl:'#FFF6EE', far:'#C9B6D4'},
+  dusk: {a:'#5B5FA8', b:'#E8968A', c:'#F8C99A', cl:'#FFE9DC', far:'#A08AB5'},
+  night:{a:'#141C3A', b:'#2B3A6B', c:'#4A5A8C', cl:'#C9D3EE', far:'#33416E'}
+};
+function skyCloud(x, y, s, o, cls){
+  return `<g class="${cls||''}" transform="translate(${x} ${y}) scale(${s})" opacity="${o}"><ellipse cx="0" cy="6" rx="34" ry="9" fill="var(--sk-cl)"/><circle cx="-16" cy="0" r="11" fill="var(--sk-cl)"/><circle cx="2" cy="-6" r="15" fill="var(--sk-cl)"/><circle cx="20" cy="1" r="10" fill="var(--sk-cl)"/></g>`;
+}
+function skyIsland(x, y, w, emerald){
+  // y＝島面高度；w＝島面半寬。上層草皮、中層土石、底下尖錐與垂下的藤蔓
+  const d = emerald ? 74 : 54, tip = x + (emerald ? 6 : 4);
+  return `<g class="isle">
+    <path d="M${x-w} ${y} C${x-w+4} ${y+d*.45} ${x-w*.45} ${y+d*.7} ${tip} ${y+d} C${x+w*.5} ${y+d*.68} ${x+w-4} ${y+d*.42} ${x+w} ${y}Z" fill="url(#isRock)"/>
+    <path d="M${x-w*.78} ${y+d*.28} Q${x} ${y+d*.4} ${x+w*.8} ${y+d*.26} M${x-w*.5} ${y+d*.55} Q${x+4} ${y+d*.64} ${x+w*.52} ${y+d*.52}" stroke="#5E4030" stroke-opacity=".35" stroke-width="1.5" fill="none"/>
+    <path d="M${x-w*.6} ${y+4} q-2 ${d*.35} 3 ${d*.5} M${x+w*.55} ${y+4} q3 ${d*.3} -1 ${d*.46} M${x+w*.15} ${y+6} q-2 ${d*.25} 2 ${d*.36}" stroke="#4E8A45" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <circle cx="${x-w*.6+1}" cy="${y+d*.5+4}" r="2.2" fill="#E8A0B4"/><circle cx="${x+w*.55-1}" cy="${y+d*.46+4}" r="2" fill="#F6E27A"/>
+    <ellipse cx="${x}" cy="${y}" rx="${w}" ry="${emerald?15:12}" fill="#6FAE4E"/>
+    <ellipse cx="${x}" cy="${y-2}" rx="${w-3}" ry="${emerald?12:9.5}" fill="#8CCB62"/>
+    <ellipse cx="${x-w*.35}" cy="${y-5}" rx="${w*.3}" ry="3" fill="#B5E08A" opacity=".7"/>
+  </g>`;
+}
 function renderMap(){
   const pathD = 'M180 560 C150 520 70 510 92 470 C112 432 280 440 270 402 C258 362 90 372 96 322 C102 282 270 296 264 246 C258 204 96 214 104 170 C110 130 178 140 180 74';
-  let leaves=''; [[30,90],[330,150],[24,250],[338,330],[28,410],[332,500],[60,540]].forEach(([x,y],i)=>{
-    leaves+=`<g transform="translate(${x} ${y}) rotate(${i*47})" opacity=".35"><path d="M0 -16 C10 -14 14 -4 10 4 C16 6 14 16 4 14 C2 20 -6 20 -6 12 C-14 14 -16 4 -10 2 C-14 -6 -8 -14 0 -16Z" fill="#3E6B3A"/></g>`;
-  });
+  const tone = skyTone(), SK = SKY[tone];
+  let leaves = [[40,96,.8,.9,'drift1'],[318,150,.7,.85,'drift2'],[26,262,.6,.8,'drift2'],[336,338,.75,.85,'drift1'],[30,420,.65,.8,'drift1'],[330,520,.7,.85,'drift2']]
+    .map(([x,y,sc,o,c])=>skyCloud(x,y,sc,o,c)).join('');
+  if(tone==='night') leaves = [[24,40],[70,120],[150,30],[240,96],[330,60],[300,200],[40,210],[200,170],[350,280],[20,350]].map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="${i%3?1:1.6}" fill="#fff" opacity=".8"><animate attributeName="opacity" values=".8;.25;.8" dur="${2+i%4}s" repeatCount="indefinite"/></circle>`).join('') + leaves;
   const nodes = ZONES.map(z=>{
     const st = STAGE[z.stage], tapped = (P.daily.tapped[z.id]||[]).length;
     if(z.emerald) return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${zName(z)}，${z.stage}">
-      <ellipse cx="${z.x}" cy="${z.y+34}" rx="70" ry="10" fill="#0003"/>
+      ${skyIsland(z.x, z.y+32, 84, true)}
       <path d="M${z.x-62} ${z.y+30} L${z.x-62} ${z.y} Q${z.x} ${z.y-56} ${z.x+62} ${z.y} L${z.x+62} ${z.y+30}Z" fill="#2DB38A" stroke="#14735A" stroke-width="3"/>
       <path d="M${z.x-40} ${z.y+30} L${z.x-40} ${z.y-14} M${z.x-14} ${z.y+30} L${z.x-14} ${z.y-26} M${z.x+14} ${z.y+30} L${z.x+14} ${z.y-26} M${z.x+40} ${z.y+30} L${z.x+40} ${z.y-14}" stroke="#7FE0BF" stroke-width="2"/>
       <path d="M${z.x-62} ${z.y+4} Q${z.x} ${z.y-30} ${z.x+62} ${z.y+4}" stroke="#7FE0BF" stroke-width="2" fill="none"/>
@@ -2352,7 +2377,7 @@ function renderMap(){
       <text x="${z.x}" y="${z.y+55}" text-anchor="middle" font-size="13" font-weight="700" fill="#14735A">翡翠溫室</text>
       ${zBadge(z, z.x+56, z.y-10, st.c, `${tapped}/10`)}</g>`;
     return `<g class="zone-node" data-z="${z.id}" tabindex="0" role="button" aria-label="${zName(z)}，${z.stage}">
-      <ellipse cx="${z.x}" cy="${z.y+18}" rx="40" ry="7" fill="#0002"/>
+      ${skyIsland(z.x, z.y+18, 50)}
       <path d="M${z.x-36} ${z.y+16} L${z.x-36} ${z.y-2} Q${z.x} ${z.y-34} ${z.x+36} ${z.y-2} L${z.x+36} ${z.y+16}Z" fill="#F5FAF2" stroke="#8FB087" stroke-width="2"/>
       <path d="M${z.x-18} ${z.y+16} L${z.x-18} ${z.y-14} M${z.x} ${z.y+16} L${z.x} ${z.y-19} M${z.x+18} ${z.y+16} L${z.x+18} ${z.y-14}" stroke="#B9D2B0" stroke-width="1.5"/>
       ${mapMiniTrees(z)}
@@ -2362,12 +2387,27 @@ function renderMap(){
       ${zBadge(z, z.x+34, z.y-8, st.c, `${tapped}/${TREES_N}`)}</g>`;
   }).join('');
   $('#mapSvg').innerHTML = `<svg viewBox="0 0 360 580" aria-label="隱花王國地圖">
-    <rect width="360" height="580" fill="var(--map)"/>${leaves}
-    <path d="${pathD}" stroke="#0001" stroke-width="30" fill="none" stroke-linecap="round" transform="translate(0 4)"/>
-    <path d="${pathD}" stroke="var(--path)" stroke-width="26" fill="none" stroke-linecap="round"/>
-    <path d="${pathD}" stroke="#fff" stroke-opacity=".55" stroke-width="2" stroke-dasharray="10 14" fill="none"/>
+    <defs>
+      <linearGradient id="skyBg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${SK.a}"/><stop offset=".62" stop-color="${SK.b}"/><stop offset="1" stop-color="${SK.c}"/></linearGradient>
+      <linearGradient id="isRock" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#B98A5E"/><stop offset=".55" stop-color="#8A6242"/><stop offset="1" stop-color="#5E4030"/></linearGradient>
+      <radialGradient id="skyGlow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient>
+    </defs>
+    <style>#mapSvg svg{--sk-cl:${SK.cl}} .drift1{animation:skyDrift 26s ease-in-out infinite alternate} .drift2{animation:skyDrift 34s ease-in-out infinite alternate-reverse} .isle-far{animation:skyBob 9s ease-in-out infinite alternate}
+      @keyframes skyDrift{from{translate:-14px 0}to{translate:14px 0}} @keyframes skyBob{from{translate:0 -3px}to{translate:0 3px}}
+      @media (prefers-reduced-motion:reduce){.drift1,.drift2,.isle-far{animation:none}}</style>
+    <rect width="360" height="580" fill="url(#skyBg)"/>
+    <circle cx="300" cy="40" r="60" fill="url(#skyGlow)"/>
+    <g class="isle-far" opacity=".6">
+      ${[[30,206,22],[326,292,26],[234,132,15]].map(([x,y,w])=>`<path d="M${x-w} ${y} Q${x-w*.4} ${y+w*.9} ${x+2} ${y+w*1.5} Q${x+w*.5} ${y+w*.8} ${x+w} ${y}Z" fill="${SK.far}"/><ellipse cx="${x}" cy="${y}" rx="${w}" ry="${w*.28}" fill="${tone==='night'?'#3E5C5A':'#9CC98A'}"/>`).join('')}
+    </g>
+    ${leaves}
+    <path d="${pathD}" stroke="#fff" stroke-opacity=".75" stroke-width="34" fill="none" stroke-linecap="round" filter="blur(3px)" style="filter:blur(3px)"/>
+    <path d="${pathD}" stroke="#7A5232" stroke-width="17" fill="none" stroke-linecap="round" transform="translate(0 2)"/>
+    <path d="${pathD}" stroke="#D7A766" stroke-width="14" fill="none" stroke-dasharray="6 2.2"/>
+    <path d="${pathD}" stroke="#F3D79C" stroke-opacity=".6" stroke-width="2" fill="none" stroke-dasharray="6 2.2" transform="translate(0 -4)"/>
+    <g opacity=".95">${skyCloud(150,566,1.5,1)}${skyCloud(222,572,1.3,1)}${skyCloud(70,578,1.2,.9)}${skyCloud(300,580,1.3,.9)}</g>
     <path id="mapPath" d="${pathD}" fill="none" stroke="none"/>
-    <text x="180" y="574" text-anchor="middle" font-size="11" fill="var(--muted)">金葉小徑・從大門出發</text>
+    <text x="180" y="574" text-anchor="middle" font-size="11" font-weight="700" fill="#6B5A4E">金葉雲橋・從雲門出發</text>
     ${nodes}
     ${badgeHint()}
     ${knightMark()}
