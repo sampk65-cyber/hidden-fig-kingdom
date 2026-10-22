@@ -1,0 +1,210 @@
+rules_version = '2';
+// 隱花王國尋寶 — Firestore 安全規則 V14.2（V4.3＋免單、半價、折200、特別獎改由後端 api/game.js 發放）
+service cloud.firestore {
+  match /databases/{db}/documents {
+
+    function signed()  { return request.auth != null; }
+    function isAdmin() { return signed() && exists(/databases/$(db)/documents/admins/$(request.auth.uid)); }
+    function member(pid)      { return request.auth.uid in get(/databases/$(db)/documents/players/$(pid)).data.uids; }
+    function memberAfter(pid) { return request.auth.uid in getAfter(/databases/$(db)/documents/players/$(pid)).data.uids; }
+    function codeAfter(c)     { return getAfter(/databases/$(db)/documents/codes/$(c)).data; }
+    function changed()        { return request.resource.data.diff(resource.data).affectedKeys(); }
+
+    match /admins/{uid} {
+      allow get: if signed() && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['email','name','created','by'])
+        && request.resource.data.by == request.auth.uid;
+      allow delete: if isAdmin() && request.auth.uid != uid;
+    }
+
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /batches/{bid} {
+      allow read, write: if isAdmin();
+    }
+
+    match /users/{uid} {
+      allow read, write: if signed() && request.auth.uid == uid;
+      allow read: if isAdmin();
+    }
+
+    match /codes/{code} {
+      allow get: if signed();
+      allow list, delete: if isAdmin();
+      allow create: if isAdmin()
+        || (signed() && request.resource.data.type == 'share'
+            && request.resource.data.pts == 0
+            && request.resource.data.used == false
+            && memberAfter(request.resource.data.fromPid));
+      allow update: if isAdmin()
+        || (signed() && resource.data.used == false
+            && request.resource.data.used == true
+            && request.resource.data.usedBy == request.auth.uid
+            && changed().hasOnly(['used','usedBy','usedPid','usedAt']))
+        || (signed() && resource.data.type == 'share'
+            && resource.data.used == true
+            && resource.data.rewarded == false
+            && request.resource.data.rewarded == true
+            && changed().hasOnly(['rewarded'])
+            && member(resource.data.fromPid));
+    }
+
+    match /pool/{day} {
+      allow read: if signed();
+      allow write: if isAdmin();          // V14.2：扣獎池改由後端處理，手機不能再改
+    }
+
+    match /stats/{doc} {
+      allow read: if true;
+      allow create: if signed() && request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == 1;
+      allow update: if signed() && request.resource.data.keys().hasOnly(['n']) && request.resource.data.n == resource.data.n + 1;
+    }
+
+    match /feed/{fid} {
+      allow read: if signed();
+      allow write: if isAdmin();
+      match /comments/{cid} {
+        allow read: if signed();
+        allow create: if signed() && member(request.resource.data.pid)
+          && request.resource.data.text is string && request.resource.data.text.size() <= 40;
+        allow update: if isAdmin();
+        allow delete: if isAdmin()
+          || (signed() && member(resource.data.pid) && request.time.toMillis() - resource.data.created < 600000);
+      }
+    }
+
+    match /zonephotos/{zid}/items/{id} {
+      allow read: if true;
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin()
+        || (signed()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes'])
+            && request.resource.data.likes == resource.data.get('likes', 0) + 1
+            && !exists(/databases/$(db)/documents/zonephotos/$(zid)/items/$(id)/likes/$(request.auth.uid))
+            && existsAfter(/databases/$(db)/documents/zonephotos/$(zid)/items/$(id)/likes/$(request.auth.uid)));
+      match /likes/{uid} {
+        allow read: if signed() && request.auth.uid == uid;
+        allow create: if signed() && request.auth.uid == uid
+          && getAfter(/databases/$(db)/documents/zonephotos/$(zid)/items/$(id)).data.likes
+             == get(/databases/$(db)/documents/zonephotos/$(zid)/items/$(id)).data.get('likes', 0) + 1;
+      }
+    }
+
+    match /scores/{game}/top/{pid} {
+      allow read: if signed();
+      allow create, update: if signed() && member(pid)
+        && request.resource.data.keys().hasOnly(['pid','name','score','t'])
+        && request.resource.data.pid == pid
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0 && request.resource.data.score <= 100
+        && (resource == null || request.resource.data.score >= resource.data.score);
+      allow delete: if isAdmin();
+    }
+
+    match /ranks/{pid} {
+      allow read: if signed();
+      allow create, update: if signed() && member(pid)
+        && request.resource.data.keys().hasOnly(['pid','name','points','t'])
+        && request.resource.data.pid == pid
+        && request.resource.data.name is string && request.resource.data.name.size() <= 20
+        && request.resource.data.points is int && request.resource.data.points >= 0
+        && request.resource.data.points <= get(/databases/$(db)/documents/players/$(pid)).data.points;
+      allow delete: if isAdmin();
+    }
+
+    match /names/{key} {
+      allow get: if signed();
+      allow list: if isAdmin();
+      allow create: if signed() && member(request.resource.data.pid)
+        && request.resource.data.keys().hasOnly(['pid','name','t'])
+        && request.resource.data.name is string && request.resource.data.name.size() <= 12;
+      allow update: if isAdmin();
+      allow delete: if isAdmin() || (signed() && member(resource.data.pid));
+    }
+
+    match /fams/{fid} {
+      allow get: if signed();
+      allow list: if isAdmin();
+      allow create: if signed() && member(fid)
+        && request.resource.data.owner == fid
+        && request.resource.data.members == [fid];
+      allow update: if isAdmin()
+        || (signed()
+            && changed().hasOnly(['members','names','lastJoin'])
+            && request.resource.data.members.size() == resource.data.members.size() + 1
+            && request.resource.data.members.size() <= 3
+            && request.resource.data.members.hasAll(resource.data.members)
+            && request.resource.data.lastJoin in request.resource.data.members
+            && !(request.resource.data.lastJoin in resource.data.members)
+            && memberAfter(request.resource.data.lastJoin))
+        || (signed()
+            && changed().hasOnly(['intimacy','games','by'])
+            && request.resource.data.by in resource.data.members
+            && member(request.resource.data.by)
+            && request.resource.data.intimacy >= resource.data.intimacy
+            && request.resource.data.intimacy - resource.data.intimacy <= 60)
+        || (signed()
+            && changed().hasOnly(['names','by'])
+            && request.resource.data.by in resource.data.members
+            && member(request.resource.data.by));
+      allow delete: if isAdmin();
+    }
+
+    match /players/{pid} {
+      allow read: if isAdmin() || (signed() && request.auth.uid in resource.data.uids);
+      allow create: if signed() && request.resource.data.uids == [request.auth.uid] && (
+          (request.resource.data.points == 0
+            && request.resource.data.get('boxes', 0) == 0
+            && request.resource.data.famId is string
+            && pid in getAfter(/databases/$(db)/documents/fams/$(request.resource.data.famId)).data.members)
+          || (codeAfter(request.resource.data.lastCode).usedBy == request.auth.uid
+            && request.resource.data.points <= codeAfter(request.resource.data.lastCode).pts + 10));
+      allow update: if isAdmin()
+        || (signed() && request.auth.uid in resource.data.uids
+            && !changed().hasAny(['uids','rtok','claim','claimCode'])
+            && (request.resource.data.points - resource.data.points <= 120
+                || (request.resource.data.lastCode != resource.data.lastCode
+                    && codeAfter(request.resource.data.lastCode).usedBy == request.auth.uid
+                    && request.resource.data.points - resource.data.points
+                       <= codeAfter(request.resource.data.lastCode).pts + 120)))
+        || (signed() && request.resource.data.claim == resource.data.rtok
+            && changed().hasOnly(['uids','claim'])
+            && request.resource.data.uids.hasAll(resource.data.uids)
+            && request.resource.data.uids.size() == resource.data.uids.size() + 1
+            && request.auth.uid in request.resource.data.uids)
+        || (signed() && changed().hasOnly(['uids','claimCode'])
+            && request.resource.data.uids.hasAll(resource.data.uids)
+            && request.resource.data.uids.size() == resource.data.uids.size() + 1
+            && request.auth.uid in request.resource.data.uids
+            && get(/databases/$(db)/documents/codes/$(request.resource.data.claimCode)).data.usedPid == pid
+            && get(/databases/$(db)/documents/codes/$(request.resource.data.claimCode)).data.get('type', '') != 'share');
+      match /coupons/{cid} {
+        allow read: if isAdmin() || (signed() && member(pid));
+        // V14.2：手機只能新增一般寶箱的小額券；免單、半價、折200、特別獎只能由後端發放
+        allow create: if signed() && member(pid)
+          && request.resource.data.used == false
+          && request.resource.data.t in ['n9','n85','n8','ship']
+          && !request.resource.data.keys().hasAny(['srv','src','spN'])
+          && request.resource.data.exp <= request.time.toMillis() + 8*86400000;
+        allow update, delete: if isAdmin();
+      }
+      match /inbox/{mid} {
+        allow read: if isAdmin() || (signed() && member(pid));
+        allow create, delete: if isAdmin();
+        allow update: if isAdmin() || (signed() && member(pid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read','claimed'])
+          && (resource.data.get('claimed', false) == false || request.resource.data.get('claimed', false) == true));
+      }
+    }
+
+    // V14.2：後端抽獎用的計數與紀錄，手機完全不能讀寫
+    match /srv/{doc} {
+      allow read, write: if false;
+    }
+  }
+}
