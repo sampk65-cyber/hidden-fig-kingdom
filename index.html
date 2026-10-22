@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.1</title>
+<title>今天在隱花王國尋寶 V14.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1036,7 +1036,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V14.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V14.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1099,6 +1099,47 @@ const DB = {
     return s.docs.map(x=>({id:x.id, ...x.data()}));
   }
 };
+
+/* ---------- V14.2：後端抽獎 API（免單、半價、折200、特別獎都由伺服器決定，手機端無法自己產生） ---------- */
+const FREE_RATE = [0, 0, 1/100, 2/100];   // 一般寶箱藏免單的機率（真正的抽籤在伺服器 api/game.js）
+const API = {
+  async call(op, data={}){
+    if(DEMO) return API.demo(op, data);
+    const u = fb && fb.A && fb.A.currentUser; if(!u) throw Object.assign(new Error('請重新登入'), {code:'auth'});
+    const tok = await u.getIdToken();
+    const r = await fetch('/api/game', {method:'POST', headers:{'Content-Type':'application/json', 'Authorization':'Bearer '+tok}, body:JSON.stringify({op, ...data})});
+    let j = {}; try{ j = await r.json(); }catch(e){}
+    // 後端還沒設定好（尚未放金鑰或還沒部署）：暫時沿用手機端流程，遊戲不會中斷；設定完成後自動改由後端處理
+    if((r.status===503 && j.error==='noconfig') || r.status===404){ console.warn('後端尚未設定，暫用手機端流程'); return API.demo(op, data); }
+    if(!r.ok){ const e = new Error(j.msg || '伺服器忙碌，請稍後再試'); e.code = j.error || 'net'; throw e; }
+    return j;
+  },
+  // 示範模式（test.html 沒有連 Firebase）：在手機上模擬伺服器的行為，方便測試畫面
+  async demo(op, d){
+    if(op==='lucky'){ const p = FREE_RATE[lvIndex(P.points||0)]||0; if(!(p>0) || Math.random()>=p) return {win:false}; return {win:true, coupon:grantCoupon('free', {src:'lucky'})}; }
+    if(op==='chaseStart'){ const p = await poolToday(); const tiers = []; for(let i=0;i<3;i++){ const t = drawTier(p); if(t) tiers.push(t); }
+      if(tiers.length && !tiers.some(t=>!RARE_TIERS.includes(t)) && (p.e||p.d)) tiers[tiers.length-1] = p.e ? 'e' : 'd'; API._s = {sid:'D'+Date.now(), tiers}; return API._s; }
+    if(op==='chaseClaim'){ const S = API._s; if(!S || S.sid!==d.sid) throw Object.assign(new Error('這一局已經領過了'), {code:'session'}); API._s = null;
+      let k = S.tiers[d.idx], ok = await claimPrize(k); if(!ok && k!=='e'){ k='e'; ok = await claimPrize('e'); } if(!ok) return {ok:false, k};
+      const R = tc(k), T = TIERS.find(t=>t.k===k); if(R.rw.pts) return {ok:true, k, pts:R.rw.pts, prize:R.prize, note:R.note};
+      const c = R.rw.cp==='sp' ? grantCoupon('sp', {spN:R.prize, spD:R.note||'到農場出示此券兌換', spI:T.icon, days:14}) : grantCoupon(R.rw.cp);
+      return {ok:true, k, prize:R.prize, note:R.note, coupon:c}; }
+    if(op==='gift'){ const g = d.gift; if(!DEMO && d.kind==='m') await DB.update(`players/${PID}/inbox/${d.id}`, {read:true, claimed:true}); if(g.k==='pts') return {pts:Math.min(100, g.n)};
+      const c = g.k==='sp' ? grantCoupon('sp', {spN:g.name, spD:g.note, spI:'🎁', days:14, src:'gift'}) : grantCoupon(g.t, {days:14, src:'gift'}); return {coupon:c}; }
+    throw new Error('unknown op');
+  }
+};
+// 伺服器發的券：放進手機上的優惠券清單（不再自己寫入資料庫）
+function addSrvCoupon(c){ if(!c || !c.id) return null; if(!MY_COUPONS.find(x=>x.id===c.id)) MY_COUPONS.push({id:c.id, t:c.t, exp:c.exp, used:false, created:c.created, src:c.src, spN:c.spN, spD:c.spD, spI:c.spI}); return MY_COUPONS.find(x=>x.id===c.id); }
+// 一般寶箱開出優惠券後，請伺服器決定「底層有沒有藏免單」
+function luckyCheck(){
+  if(!P || P.guest) return;
+  API.call('lucky').then(r=>{ if(!r || !r.win) return; const c = addSrvCoupon(r.coupon); logChest('寶箱底層驚喜', '免單券（上限 NT$500）'); Auth.save(); renderAll();
+    const show = (n=0)=>{ if((!$('#sheet').classList.contains('hide') || topOverlay()) && n<40) return setTimeout(()=>show(n+1), 1500);
+      SND.win(); openSheet(`${chestSvg('z')}<h2 class="h2 wk">寶箱底層還藏著驚喜！</h2><div class="coupon" style="text-align:left"><div class="cleft" style="background:#5B2346">免單<small>上限 NT$500</small></div><div class="cright"><b>免單券</b>已放進「優惠券」，有效 7 天</div></div><button class="btn main" onclick="closeSheet()">太幸運了</button>`, true); };
+    setTimeout(show, 1800);
+  }).catch(e=>console.warn('lucky', e));
+}
 
 /* ---------- Login：顧客用匿名登入，管理員用 Email ---------- */
 const Login = {
@@ -2283,11 +2324,14 @@ async function checkMessages(tries=0){
     <button class="btn ghost" onclick="closeSheet()">收到了</button>`, true);
   document.querySelectorAll('[data-gift]').forEach(b=>b.onclick=async()=>{ const m = msgs[+b.dataset.gift]; if(!m || !m.gift) return; b.disabled = true;
     try{
+      // V14.2：寶箱內容由伺服器發放，一則只能領一次
+      const src = m.k==='n' ? '農場公告寶箱' : '農場私訊寶箱', r = await API.call('gift', {kind:m.k, id:m.id, gift:m.gift});
       if(m.k==='n'){ P.giftGot = [...P.giftGot, m.id].slice(-30); }
-      else await DB.update(`players/${PID}/inbox/${m.id}`, {read:true, claimed:true});
-      const txt = giftGrant(m.gift, m.k==='n' ? '農場公告寶箱' : '農場私訊寶箱'); m.gift = null; SND.win();
+      else if(DEMO) await DB.update(`players/${PID}/inbox/${m.id}`, {read:true, claimed:true});
+      let txt; if(r.pts!=null){ addPts(r.pts, 'buy'); txt = `果友值 +${r.pts}`; } else { const c = addSrvCoupon(r.coupon); txt = c.t==='sp' ? (c.spN||'特別獎') : giftText({k:'cp', t:c.t}); }
+      logChest(src, txt); Auth.save(); renderAll(); m.gift = null; SND.win();
       $('#gb'+b.dataset.gift).innerHTML = `<p class="gift-ok">🎉 獲得 <b>${esc(txt)}</b>${txt.includes('果友值')?'':'<br><small>已放進「優惠券」，有效 14 天</small>'}</p>`;
-    }catch(e){ console.error(e); b.disabled = false; toast('領取失敗，請稍後再試'); } });
+    }catch(e){ console.error(e); if(e.code==='dup' || e.code==='gone'){ toast(e.message); $('#gb'+b.dataset.gift).innerHTML = `<p class="gift-ok">${esc(e.message)}</p>`; } else { b.disabled = false; toast('領取失敗，請稍後再試'); } } });
   const nn = msgs.find(m=>m.k==='n'); if(nn){ P.noticeSeen = nn.id; Auth.save(); }
   msgs.filter(m=>m.k==='m' && !m.gift).forEach(m=>DB.update(`players/${PID}/inbox/${m.id}`, {read:true}).catch(()=>{}));
 }
@@ -2687,11 +2731,13 @@ function result(icon, h, p){
 function makeCouponRaw(){
   const lv = lvIndex(P.points||0), w = COUPON_W[lv].slice(), sh=[0,3,6,9,12][P.tools.shears];
   const sh2 = sh + Math.min(P.chStreak||0,5)*2; const mv = Math.min(sh2, w[0]); w[0]-=mv; w[1]+=mv/2; w[2]+= (lv>=1?mv/2:0); if(lv<1) w[3]+=mv/2;
+  w[4] = 0;   // V14.2：免單不在手機上抽，改由伺服器決定（見 luckyCheck）
   const sum = w.reduce((a,b)=>a+b,0); let x = Math.random()*sum, k=0; while(x>w[k]){x-=w[k];k++;}
   const t = COUPON_T[k];
   const c = {id:rid(4), t:t.id, exp:Date.now()+7*864e5, used:false, created:Date.now()};
   MY_COUPONS.push(c);
   DB.set('players/'+PID+'/coupons/'+c.id, {t:c.t, exp:c.exp, used:false, created:c.created, name:P.name||''}).catch(()=>toast('優惠券同步失敗，請檢查網路'));
+  setTimeout(luckyCheck, 0);
   return c;
 }
 // V6.7：寶箱紀錄（存在玩家資料，保留最近 50 筆，後台可查）
@@ -4872,21 +4918,23 @@ function openEmerald(){
       <div class="card" style="text-align:left"><b>📦 今日獎池</b><span class="lvtxt">（所有玩家一起搶）</span>${poolTable(p)}</div>
       <div class="card" style="text-align:left"><b>🏃 走路速度</b><p class="sub" style="margin:4px 0 0">畫面左下可以切換「慢、中、快」，最快 ×${m.toFixed(1)}（跟摘果挑戰賽最佳過關指數成正比）。寶箱時間照 ×1 計算，走得快比較有餘裕，走慢比較好控制。</p><p class="lvtxt" style="margin:6px 0 0">今天還能玩 ${5-n} 次</p></div>
       <button class="btn main" id="chGo2">正式開始</button><button class="btn ghost" onclick="closeSheet()">等一下</button>`, true);
-    $('#chGo2').onclick = ()=>{ closeSheet(); startChase(p); };
+    $('#chGo2').onclick = async ()=>{ const b = $('#chGo2'); if(b.disabled) return; b.disabled = true; b.textContent = '準備寶箱中…'; await startChase(p); };
   }
-  function startChase(p){
-    const tiers = []; for(let i=0;i<3;i++){ const t = drawTier(p); if(t) tiers.push(t); }
+  async function startChase(p){
+    // V14.2：寶箱等級由伺服器抽，手機只負責顯示
+    let S; try{ S = await API.call('chaseStart'); }catch(e){ closeSheet(); toast(e.message || '連線失敗，請稍後再試', 3200); return; }
+    closeSheet();
+    const tiers = S.tiers || [];
     if(!tiers.length){ toast('今天的寶箱都被大家找光了，明天再來！'); return; }
-    if(!tiers.some(t=>!RARE_TIERS.includes(t)) && (p.e||p.d)) tiers[tiers.length-1] = p.e ? 'e' : 'd';   // 至少一個一般寶箱分散注意力
     P.daily.chase = (P.daily.chase||0)+1; Auth.save();
     const used = new Set(), now = performance.now();
-    const chests = tiers.map(tier=>{
+    const chests = tiers.map((tier, idx)=>{
       let zi, side; do{ zi = rnd(5); side = Math.random()<.5 ? -1 : 1; }while(used.has(zi*2+(side>0?1:0)) && used.size<10); used.add(zi*2+(side>0?1:0));
       const x = side*AISLE[rnd(4)], z = zi*EM_ZL + 3 + Math.random()*16, dist = Math.abs(z-EM.pz)+Math.abs(x-EM.px);
       const base = Math.max(16, Math.min(45, dist/6.6*1.3 + 6)), rare = RARE_TIERS.includes(tier), total = (rare ? base*.55 : base) + (roleBase(P.role)==='golden' ? 3 : 0);
-      return {x, z, tier, rare, total, end: now+total*1000, name:(side<0?'A':'B')+(zi+1), alive:true};
+      return {x, z, tier, rare, total, end: now+total*1000, name:(side<0?'A':'B')+(zi+1), alive:true, idx};
     });
-    EM.chase = {chests};
+    EM.chase = {chests, sid:S.sid};
     $('#emMini').classList.remove('hide'); $('#emChase').classList.remove('hide'); $('#emStrip').classList.add('hide');
     $('#emTip').classList.add('off'); MUSIC.start(); toast(`出現 ${chests.length} 個寶箱！選一個走過去，到面前點它打開`, 2800);
   }
@@ -4895,15 +4943,16 @@ function openEmerald(){
     $('#emMini').classList.add('hide'); $('#emChase').classList.add('hide'); $('#emStrip').classList.remove('hide');
     if(!c){ SND.lose(); openSheet(`<div class="big">💨</div><h2 class="h2 wk">寶箱都消失了</h2><p class="sub">獎項會留在獎池裡。下次先挑近的或等級高的，路線想好再走！今天還能玩 ${5-(P.daily.chase||0)} 次。</p><button class="btn main" onclick="closeSheet()">好</button>`, true); return; }
     SND.win();
-    let k = c.tier, ok = false;
-    try{ ok = await claimPrize(k); if(!ok && k!=='e'){ k='e'; ok = await claimPrize('e'); } }catch(e){ ok=false; }
-    const T = TIERS.find(t=>t.k===k), R = tc(k), noteHtml = R.note ? `<br><span class="lvtxt">${esc(R.note)}</span>` : '';
+    // V14.2：扣獎池、發券都在伺服器完成
+    let k = c.tier, ok = false, G = null;
+    try{ G = await API.call('chaseClaim', {sid:all && all.sid, idx:c.idx}); ok = !!G.ok; k = G.k || k; }catch(e){ ok = false; G = null; if(e.code && e.code!=='net') toast(e.message, 3000); }
+    const T = TIERS.find(t=>t.k===k), R = {...tc(k), ...(G && G.prize ? {prize:G.prize, note:G.note||''} : {})}, noteHtml = R.note ? `<br><span class="lvtxt">${esc(R.note)}</span>` : '';
     let body;
     if(!ok){ const pts = addPts(3,'buy'); body = `<p class="sub">這個獎項剛好被別人先搶走了，送你果友值 +${pts}。</p>`; }
-    else if(R.rw.pts){ const pts = addPts(R.rw.pts,'buy'); body = `<p class="sub">${T.icon} <b>${T.chest}</b>：${esc(R.prize)}${R.prize.includes('果友值')?'':`（果友值 +${pts}）`}${noteHtml}</p>`; }
-    else if(R.rw.cp==='sp'){ grantCoupon('sp', {spN:R.prize, spD:R.note||'到農場出示此券兌換', spI:T.icon, days:14});
+    else if(G.pts){ const pts = addPts(G.pts,'buy'); body = `<p class="sub">${T.icon} <b>${T.chest}</b>：${esc(R.prize)}${R.prize.includes('果友值')?'':`（果友值 +${pts}）`}${noteHtml}</p>`; }
+    else if(G.coupon && G.coupon.t==='sp'){ addSrvCoupon(G.coupon);
       body = `<p class="sub"><b>恭喜抽中 ${esc(R.prize)}！</b></p><div class="coupon" style="text-align:left"><div class="cleft" style="background:#D4A017">${T.icon}<small>${T.chest}</small></div><div class="cright"><b>${esc(R.prize)}</b>${esc(R.note||'到農場出示此券兌換')}<br>有效 14 天，到「優惠券」出示 QR 由農場核銷</div></div>`; }
-    else { const cp = grantCoupon(R.rw.cp), t = cpT(cp);
+    else { const cp = addSrvCoupon(G.coupon), t = cpT(cp);
       body = `<p class="sub">${T.icon} <b>${T.chest}</b>${c.rare?'（珍貴寶箱）':''}</p><div class="coupon" style="text-align:left"><div class="cleft" style="background:${t.c}">${t.big}<small>${t.sub}</small></div><div class="cright"><b>${esc(R.prize)}</b>${R.note?esc(R.note)+'<br>':''}已放進優惠券（追逐賽獎項不占每週 3 張的名額）</div></div>`; }
     logChest(`寶箱追逐賽・${c.name}`, !ok ? '被搶走，補償果友值 +3' : `${T.chest}・${R.prize}`);
     P.chaseWins = (P.chaseWins||0)+1; Auth.save(); renderAll(); curZone = z6;

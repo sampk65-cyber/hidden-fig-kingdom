@@ -1,0 +1,9 @@
+{
+  "name": "hidden-fig-kingdom",
+  "private": true,
+  "description": "今天在隱花王國尋寶：網頁遊戲＋後端抽獎（api/game.js）",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "firebase-admin": "12.7.0"
+  }
+}
