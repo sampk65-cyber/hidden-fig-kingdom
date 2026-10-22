@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.2</title>
+<title>今天在隱花王國尋寶 V14.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1036,7 +1036,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = true;
 
-const APP_VERSION = 'V14.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V14.3';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2361,9 +2361,15 @@ function renderMap(){
   $('#mapSvg').innerHTML = `<svg viewBox="0 0 360 580" aria-label="隱花王國地圖">
     <rect width="360" height="580" fill="#9CC8EE"/>
     <image href="kingdom-bg.webp" x="${-35.5*.3776}" y="0" width="${1024*.3776}" height="${1536*.3776}" preserveAspectRatio="none"/>
-    ${tone==='dusk' ? `<rect width="360" height="580" fill="#F08A5D" opacity=".22" style="mix-blend-mode:multiply"/><rect width="360" height="580" fill="#FFB27A" opacity=".12"/>` : ''}
-    ${tone==='dawn' ? `<rect width="360" height="580" fill="#F4B2A6" opacity=".18" style="mix-blend-mode:multiply"/>` : ''}
-    ${tone==='night' ? `<rect width="360" height="580" fill="#0E1A44" opacity=".62" style="mix-blend-mode:multiply"/><rect width="360" height="580" fill="#0B1636" opacity=".18"/>${MAP_LAMPS.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="7" fill="#FFC870" opacity=".35"><animate attributeName="opacity" values=".35;.18;.35" dur="${2.4+i%3*.7}s" repeatCount="indefinite"/></circle><circle cx="${x}" cy="${y}" r="1.8" fill="#FFE7B0"/>`).join('')}` : ''}
+    <defs>
+      <mask id="skyM" maskUnits="userSpaceOnUse" x="-20" y="0" width="400" height="580"><image href="kingdom-sky-mask.png" x="${-35.5*.3776}" y="0" width="${1024*.3776}" height="${1536*.3776}" preserveAspectRatio="none"/></mask>
+      <radialGradient id="ghGlow"><stop offset="0" stop-color="#FFD27A" stop-opacity="1"/><stop offset=".6" stop-color="#FFB24A" stop-opacity=".55"/><stop offset="1" stop-color="#FFB050" stop-opacity="0"/></radialGradient>
+    </defs>
+    ${tone==='dusk' ? `<g mask="url(#skyM)"><rect width="360" height="580" fill="#E87A5A" opacity=".32" style="mix-blend-mode:multiply"/><rect width="360" height="580" fill="#FFB27A" opacity=".18"/></g><rect width="360" height="580" fill="#FFB27A" opacity=".08"/>` : ''}
+    ${tone==='dawn' ? `<g mask="url(#skyM)"><rect width="360" height="580" fill="#F4B2A6" opacity=".28" style="mix-blend-mode:multiply"/></g>` : ''}
+    ${tone==='night' ? `<g mask="url(#skyM)"><rect width="360" height="580" fill="#0E1A44" opacity=".78" style="mix-blend-mode:multiply"/><rect width="360" height="580" fill="#0B1636" opacity=".25"/></g><rect width="360" height="580" fill="#1A2A5C" opacity=".12" style="mix-blend-mode:multiply"/>` : ''}
+    ${tone==='night'||tone==='dusk' ? `<g style="mix-blend-mode:screen" opacity="${tone==='night'?1:.45}"><ellipse cx="177.3" cy="168.0" rx="56.6" ry="35.9" fill="url(#ghGlow)"/><ellipse cx="107.4" cy="260.5" rx="44.6" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="270.6" cy="329.3" rx="45.3" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="106.7" cy="390.8" rx="37.8" ry="23.4" fill="url(#ghGlow)"/><ellipse cx="259.2" cy="450.1" rx="43.4" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="108.2" cy="524.1" rx="37.0" ry="22.7" fill="url(#ghGlow)"/></g>` : ''}
+    ${tone==='night' ? MAP_LAMPS.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="7" fill="#FFC870" opacity=".45"><animate attributeName="opacity" values=".45;.25;.45" dur="${2.4+i%3*.7}s" repeatCount="indefinite"/></circle><circle cx="${x}" cy="${y}" r="1.8" fill="#FFE7B0"/>`).join('') : ''}
     <path id="mapPath" d="${pathD}" fill="none" stroke="none"/>
     ${nodes}
     ${badgeHint()}
