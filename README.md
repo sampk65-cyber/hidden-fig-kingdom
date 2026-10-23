@@ -17,7 +17,6 @@ art/                  所有圖檔（只換圖不用改程式）
   chars/<角色>.webp          16 位 3D 角色（awu、alien、robot、hero、apo、knight、cat、teddy、
                              dog、kiki、turtle、hen、poodle、golden、shiba、bunny）
   gh/fig-<階段>.webp         溫室裡的樹：prune 剪枝、set 座果、ripe 採收、winter 度冬
-  gh/gh-bg-<階段>.webp       溫室寫實遠景（1080×1920），同樣四個階段
                              （可加 -2、-3 變化圖，自動輪流）
 
 firestore.rules       目前已發布的 Firestore 規則（存檔，改規則從這份接著改）
