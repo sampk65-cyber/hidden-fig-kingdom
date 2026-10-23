@@ -680,13 +680,13 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 #home:has(#tab-map.on){position:relative;isolation:isolate;background:transparent}
 #home:has(#tab-map.on)::before{content:'';position:fixed;inset:-30px;z-index:-1;pointer-events:none;
   background:linear-gradient(180deg,#5FA6EC 0%,#8EC2EE 38%,#B9D6EE 70%,#D9E6EE 100%);}
-#home:has(#tab-map.on)::after{content:'';position:fixed;inset:-40px;z-index:-1;pointer-events:none;opacity:.55;
-  background:url(art/map/kingdom-bg.webp) center 8%/150% auto no-repeat;filter:blur(16px) saturate(1.1)}
+#home:has(#tab-map.on)::after{content:'';position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:1;
+  background:url(art/map/kingdom-bg.webp) center 30%/cover no-repeat;filter:saturate(1.05)}
 :root[data-sky="dusk"] #home:has(#tab-map.on)::before{background:linear-gradient(180deg,#6E6FB8 0%,#D98F86 45%,#F2B98E 80%,#F6D3B0 100%)}
 :root[data-sky="dawn"] #home:has(#tab-map.on)::before{background:linear-gradient(180deg,#8EA8DA 0%,#E9B9B6 50%,#F6DCC4 100%)}
 :root[data-sky="night"] #home:has(#tab-map.on)::before{background:linear-gradient(180deg,#0C1330 0%,#17224A 45%,#24335F 100%)}
-:root[data-sky="night"] #home:has(#tab-map.on)::after{opacity:.28;filter:blur(16px) brightness(.35) saturate(.7)}
-:root[data-sky="dusk"] #home:has(#tab-map.on)::after{filter:blur(16px) sepia(.35) saturate(1.2)}
+:root[data-sky="night"] #home:has(#tab-map.on)::after{opacity:1;filter:brightness(.42) saturate(.75)}
+:root[data-sky="dusk"] #home:has(#tab-map.on)::after{filter:sepia(.3) saturate(1.15)}
 /* 浮在天上的卡片 */
 #home:has(#tab-map.on) .hud{background:color-mix(in srgb,var(--card) 80%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
   margin:6px 10px 0;border-radius:20px;padding:6px 12px;box-shadow:0 6px 18px #10204026;border:1px solid color-mix(in srgb,#fff 45%,transparent)}
@@ -714,10 +714,19 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 #tab-map.on .pill-row{margin:4px 0 0!important}
 /* 地圖：滿版、往上疊到卡片下方、上下邊緣融進天空 */
 #tab-map.on .mapwrap{position:relative;z-index:1;margin:-96px -14px 0;border:0;border-radius:0;background:transparent;
-  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 110px,#000 calc(100% - 50px),transparent 100%);
-          mask-image:linear-gradient(180deg,transparent 0,#000 110px,#000 calc(100% - 50px),transparent 100%)}
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 110px,#000 calc(100% - 18px),transparent 100%);
+          mask-image:linear-gradient(180deg,transparent 0,#000 110px,#000 calc(100% - 18px),transparent 100%)}
 #tab-map.on .tip,#tab-map.on .copy{color:#24364E;text-shadow:0 1px 2px #fff9}
 :root[data-sky="night"] #tab-map.on .tip,:root[data-sky="night"] #tab-map.on .copy{color:#DDE4F5;text-shadow:0 1px 2px #0008}
+
+/* V14.5：果友值與劇情收斂，背景清楚 */
+#tab-map.on .today{gap:6px;margin:6px 0}
+#tab-map.on .today div{padding:4px 8px!important;border-radius:12px;display:flex;align-items:baseline;justify-content:space-between;gap:4px;font-size:11px!important;line-height:1.3!important;white-space:nowrap}
+#tab-map.on .today div b{display:inline;font-size:14px!important}
+#tab-map.on .tip{font-size:11px!important;margin:2px 0 6px!important;line-height:1.4!important;padding:4px 10px;border-radius:10px;background:color-mix(in srgb,var(--card) 82%,transparent);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);color:var(--ink)!important;text-shadow:none!important}
+#tab-map.on #storyBox.card{padding:6px 12px}
+#tab-map.on #storyBox:not(.open) .st2-steps,#tab-map.on #storyBox:not(.open) .st2-p{display:none}
+#tab-map.on #feedBox.card{padding:5px 12px 4px}
 </style>
 </head>
 <body>
