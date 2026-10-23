@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.8</title>
+<title>今天在隱花王國尋寶 V14.9</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1133,7 +1133,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V14.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V14.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -4058,26 +4058,40 @@ function socialReward(n, label){
   else { const pts = addPts(Math.round(n*4)); toast(`${label}，果友值 +${pts}`); }
   Auth.save(); renderAll();
 }
+// V14.9: 90-day fig morphology, visual-only. Tree progress and care mechanics unchanged.
+function treeVisualStage(days){
+  const d=Math.max(0,Math.min(90,Number(days)||0));
+  return d<10?0:d<20?1:d<30?2:d<40?3:d<50?4:d<65?5:d<75?6:d<85?7:8;
+}
+const TREE_VISUAL_NAMES=['剪枝','發芽','幼苗','選芽','修剪','成長','整枝','座果','成熟'];
 function treeSvg3m(days){
-  const H0=286, PX=82, hM = .3 + 2.7*Math.min(1, days/80), top = H0 - hM*PX, x = 128, nodes = Math.floor((hM-.5)/.22);
-  let s = `<svg viewBox="0 0 230 310" class="tree3m" aria-label="我的無花果樹">`;
-  s += `<rect x="14" y="${H0-3*PX}" width="3" height="${3*PX}" fill="#C9C4BE"/>`;
-  for(let m=0;m<=3;m+=.5){ const y=H0-m*PX; s += `<path d="M14 ${y} h${m%1?6:10}" stroke="#8C847C" stroke-width="1.5"/>${m%1?'':`<text x="30" y="${y+4}" font-size="11" fill="#6E6470">${m}m</text>`}`; }
-  s += `<path d="M${x} 0 L${x} ${Math.max(0,top-8)}" stroke="#C9C4BE" stroke-width="1.2"/>`;
-  s += `<ellipse cx="${x}" cy="${H0+6}" rx="70" ry="10" fill="#6B4E3A"/><path d="M60 ${H0+4} Q${x} ${H0-6} 196 ${H0+4}" fill="#8C6A4E"/>`;
-  s += `<path d="M${x} ${H0} L${x} ${top}" stroke="#5E3B4A" stroke-width="${days<10?4:7}" stroke-linecap="round"/>`;
-  const fruitStart = days>=45, ripeN = days>=75 ? Math.floor((days-75)/15*nodes)+1 : 0;
-  for(let j=0;j<nodes;j++){
-    const y = H0 - (.5+j*.22)*PX, side = j%2 ? 1 : -1;
-    s += `<g transform="translate(${x+side*22} ${y-6}) rotate(${side*35}) scale(${days<25?.6:.95})"><path d="M0 0 C-12 -9 -18 3 -9 8 C-16 13 -7 22 0 15 C7 22 16 13 9 8 C18 3 12 -9 0 0Z" fill="${j%2?'#4F8A45':'#5E9A4E'}"/></g>`;
-    if(fruitStart && j < Math.min(nodes, Math.floor((days-40)/3))){
-      const col = j < ripeN ? '#7A2E52' : j===ripeN && days>=75 ? '#C2466E' : '#A9C85A';
-      s += `<path d="M${x-side*7} ${y-10} c5 0 7 6 6 10 c-1 5 -11 5 -12 0 c-1 -4 1 -10 6 -10z" fill="${col}"/>`;
+  const d=Math.max(0,Math.min(TREE_DAYS,Number(days)||0)), stage=treeVisualStage(d);
+  const H0=286,PX=82,x=128,hM=.3+2.7*Math.min(1,d/80),top=H0-hM*PX;
+  const leafCount=[0,2,4,6,8,12,15,17,19][stage];
+  const branchCount=[2,2,3,3,4,5,6,6,7][stage];
+  const fruitCount=stage>=7?Math.max(2,Math.min(10,Math.round((d-72)/2.2))):0;
+  let s=`<svg viewBox="0 0 230 310" class="tree3m" role="img" aria-label="無花果樹，${TREE_VISUAL_NAMES[stage]}，第${Math.floor(d)}天">`;
+  s+=`<rect x="14" y="${H0-3*PX}" width="3" height="${3*PX}" fill="#C9C4BE"/>`;
+  for(let m=0;m<=3;m+=.5){const y=H0-m*PX;s+=`<path d="M14 ${y} h${m%1?6:10}" stroke="#8C847C" stroke-width="1.5"/>${m%1?'':`<text x="30" y="${y+4}" font-size="11" fill="#8E858F">${m}m</text>`}`;}
+  s+=`<path d="M${x} 0 L${x} ${Math.max(0,top-8)}" stroke="#C9C4BE" stroke-width="1.2"/>`;
+  s+=`<ellipse cx="${x}" cy="${H0+6}" rx="70" ry="10" fill="#6B4E3A"/><path d="M60 ${H0+4} Q${x} ${H0-6} 196 ${H0+4}" fill="#8C6A4E"/>`;
+  s+=`<path d="M${x} ${H0} Q${x-2} ${(H0+top)/2} ${x} ${top}" stroke="#72523C" stroke-width="${stage<2?5:stage<5?7:9}" stroke-linecap="round" fill="none"/>`;
+  const spread=stage<3?22:stage<5?34:stage<7?46:54;
+  for(let j=0;j<branchCount;j++){
+    const side=j%2?-1:1, fraction=(j+1)/(branchCount+1), y=H0-(H0-top)*(.24+fraction*.68);
+    const reach=spread*(.52+.48*fraction), bx=x+side*reach, by=y-12-9*fraction;
+    s+=`<path d="M${x} ${y+7} Q${x+side*reach*.48} ${y-8} ${bx} ${by}" stroke="#816046" stroke-width="${stage<3?2.6:3.8}" stroke-linecap="round" fill="none"/>`;
+    if(stage===0||stage===1){s+=`<ellipse cx="${bx}" cy="${by}" rx="2.6" ry="4.2" fill="${stage===1?'#8EC76C':'#977D5E'}"/>`;continue;}
+    const per=Math.max(0,Math.ceil(leafCount/branchCount));
+    for(let k=0;k<per;k++){
+      if(j*per+k>=leafCount)break;
+      const lx=bx+side*(k%2?8:-3),ly=by-(k%2?8:0),size=stage<4?8:stage<6?11:13;
+      s+=`<g transform="translate(${lx} ${ly}) scale(${size/13})"><path d="M0 0 C-10 -12 -20 -5 -15 5 C-23 9 -12 19 -4 12 C0 23 8 19 8 12 C21 18 24 6 14 3 C19 -9 8 -14 0 0Z" fill="${(j+k)%3===0?'#508E43':(j+k)%3===1?'#69A853':'#79B35D'}" stroke="#467D3D" stroke-width=".9"/><path d="M0 1 L0 13 M0 6 L-9 5 M0 7 L9 4" fill="none" stroke="#C2D69B" stroke-width="1"/></g>`;
     }
-    if(j===Math.floor(nodes/2)) s += `<rect x="${x-4}" y="${y-3}" width="8" height="6" fill="#F2663A"/>`;
+    if(fruitCount>j){const ripe=stage===8&&j<Math.max(1,Math.round((d-84)/2)),fy=y+15,fx=x+side*(12+reach*.32);s+=`<path d="M${fx} ${fy-8}q7 1 7 8q0 9 -7 9q-7 0 -7 -9q0 -7 7 -8Z" fill="${ripe?'#823C68':'#9ABF60'}" stroke="${ripe?'#64304E':'#6E9545'}" stroke-width="1.1"/><path d="M${fx} ${fy-9}l2 -4" stroke="#648B48" stroke-width="1.4"/>`;}
   }
-  if(days<10) s += `<path d="M${x} ${top} c-8 -10 -16 -2 -10 4 M${x} ${top} c8 -10 16 -2 10 4" stroke="#6FAE55" stroke-width="3" fill="none"/>`;
-  s += `<text x="${x+40}" y="${Math.max(16,top)}" font-size="12" font-weight="700" fill="#14735A">${hM.toFixed(1)}m</text></svg>`;
+  if(stage===1)s+=`<path d="M${x} ${top}q-7 -11 -13 -3 M${x} ${top}q7 -11 13 -3" stroke="#A3C873" stroke-width="3" fill="none"/>`;
+  s+=`<text x="${x+37}" y="${Math.max(17,top)}" font-size="12" font-weight="700" fill="#56A384">${hM.toFixed(1)}m</text></svg>`;
   return s;
 }
 function renderTree(){
@@ -4085,7 +4099,7 @@ function renderTree(){
   const row = (ic, n, v, ok)=>`<tr><td>${ic} ${n}</td><td style="text-align:right;white-space:nowrap">${v} ${ok?'<b style="color:var(--leaf)">✓</b>':''}</td></tr>`;
   $('#treeBox').innerHTML = `<div class="card" style="text-align:center">
     ${treeSvg3m(T.days)}
-    <div class="pv-name wk">${TREE_STAGES[st]}</div>
+    <div class="pv-name wk">${TREE_VISUAL_NAMES[treeVisualStage(T.days)]}</div>
     <div class="bar bigbar"><i style="width:${Math.min(100,T.days/TREE_DAYS*100)}%"></i></div>
     <p class="lvtxt">第 ${Math.floor(T.days)} / ${TREE_DAYS} 天${ripe?'・可以採收了！':''}${T.delay?`・累計延遲 ${T.delay} 天`:''}</p>
     ${od.length?`<p class="kwarn bad" style="text-align:left">⚠️ ${od.map(c=>c.n).join('、')}太久沒做，樹長得比較慢（現在每天只長 ${f} 天）。</p>`:`<p class="lvtxt" style="color:var(--leaf)">照顧得很好，每天正常長大 🌱</p>`}
