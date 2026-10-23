@@ -4912,13 +4912,13 @@ function ghShadow(cx, pj, x, z, h){ const p = pj(x+.45, 0, z+.25); if(!p || p.s 
 // 素材只要換 art/gh/ 裡的圖檔即可，不用改程式：fig-<階段>.webp 為主圖，可另加 fig-<階段>-2.webp、-3.webp 當變化（沒有就自動略過）
 const GH_ART = (()=>{
   const out={};
-  for(const key of ['prune','set','ripe']){
+  for(const key of ['prune','set','ripe','winter']){
     out[key] = ['', '-2', '-3'].map(v=>{ const im=new Image(); im.decoding='async'; im.src='art/gh/fig-'+key+v+'.webp'; return im; });
   }
   return out;
 })();
 function drawFigTree(cx, pj, x, z, s, stage, seed, rustle){
-  const pool = GH_ART[(stage==='剪枝'||stage==='度冬')?'prune':stage==='座果'?'set':'ripe'].filter(im=>im.complete && im.naturalWidth>0);
+  const pool = GH_ART[stage==='度冬'?'winter':stage==='剪枝'?'prune':stage==='座果'?'set':'ripe'].filter(im=>im.complete && im.naturalWidth>0);
   const sprite = pool.length ? pool[Math.abs(seed|0) % pool.length] : {complete:false};
   if(sprite.complete && sprite.naturalWidth>0){
     const T=stageTree(stage), foot=pj(x,0,z), crown=pj(x,T.h,z);
