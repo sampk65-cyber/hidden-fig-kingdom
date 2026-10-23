@@ -4909,15 +4909,17 @@ function ghSky(cx, W, hz){
 }
 function ghShadow(cx, pj, x, z, h){ const p = pj(x+.45, 0, z+.25); if(!p || p.s < 3) return; cx.fillStyle = 'rgba(28,24,18,.22)'; cx.beginPath(); cx.ellipse(p.x, p.y, (h<1?.35:.95)*p.s, (h<1?.1:.24)*p.s, 0, 0, Math.PI*2); cx.fill(); }
 /* GH-ART（友軍）：溫室內的樹改用去背圖片；圖片沒載好或太遠時，退回原本程式畫的樹 */
+// 素材只要換 art/gh/ 裡的圖檔即可，不用改程式：fig-<階段>.webp 為主圖，可另加 fig-<階段>-2.webp、-3.webp 當變化（沒有就自動略過）
 const GH_ART = (()=>{
   const out={};
-  for(const [key,file] of Object.entries({prune:'fig-prune.webp',set:'fig-set.webp',ripe:'fig-ripe.webp'})){
-    const im=new Image(); im.decoding='async'; im.src='art/gh/'+file; out[key]=im;
+  for(const key of ['prune','set','ripe']){
+    out[key] = ['', '-2', '-3'].map(v=>{ const im=new Image(); im.decoding='async'; im.src='art/gh/fig-'+key+v+'.webp'; return im; });
   }
   return out;
 })();
 function drawFigTree(cx, pj, x, z, s, stage, seed, rustle){
-  const sprite = GH_ART[(stage==='剪枝'||stage==='度冬')?'prune':stage==='座果'?'set':'ripe'];
+  const pool = GH_ART[(stage==='剪枝'||stage==='度冬')?'prune':stage==='座果'?'set':'ripe'].filter(im=>im.complete && im.naturalWidth>0);
+  const sprite = pool.length ? pool[Math.abs(seed|0) % pool.length] : {complete:false};
   if(sprite.complete && sprite.naturalWidth>0){
     const T=stageTree(stage), foot=pj(x,0,z), crown=pj(x,T.h,z);
     if(foot && crown && foot.s>=6){
