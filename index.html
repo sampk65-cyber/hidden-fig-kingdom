@@ -5123,7 +5123,8 @@ function openEmerald(){
     [-.95,.95].forEach(x=>{ const a=pj(x,0,camZ+.6), b=pj(x,0,camZ+50); if(a&&b){ cx.strokeStyle='#E8DCC4'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } });
     [-19.8,19.8].forEach(x=>{ if(Math.abs(x-camX)<16){ const a=pj(x,0,camZ+.6), b=pj(x,0,camZ+48), c=pj(x,3.2,camZ+48), d=pj(x,3.2,camZ+.6); if(a&&b&&c&&d){ cx.fillStyle='rgba(235,245,232,.55)'; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); } } });
     const items = [];
-    ROWS.forEach(x=>{ if(Math.abs(x-camX)>13) return; for(let z=Math.ceil((camZ+1)/1.375)*1.375; z<camZ+32; z+=1.375) items.push({x, z, k:'t'}); });
+    // V14.5：株距 1.375→2.75 公尺（株數減半），樹長高不擁擠；寶藏在走道上，不受影響
+    ROWS.forEach(x=>{ if(Math.abs(x-camX)>13) return; for(let z=Math.ceil((camZ+1)/2.75)*2.75; z<camZ+40; z+=2.75) items.push({x, z, k:'t'}); });
     for(let i=0;i<5;i++) [['A',-1.15],['B',1.15]].forEach(([n,x])=>items.push({x, z:i*EM_ZL+1.2, k:'sign', n:n+(i+1)}));
     const tapped = (P.daily.tapped && P.daily.tapped[z6.id]) || [];
     SPARKS.forEach(s=>{ if(!tapped.includes(s.idx)) items.push({x:s.x, z:s.z, k:'spark', s}); });
@@ -5133,7 +5134,7 @@ function openEmerald(){
       if(it.k==='t'){
         const TH = stageTree(z6.stage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
         if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
-        ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0, .62);
+        ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0, 1.15);
         if(TH>1 && s>=16){ const cp=pj(it.x,Math.min(1.5,TH*.6),it.z); cx.fillStyle='#F2663A'; cx.fillRect(cp.x-.04*s, cp.y-.03*s, .08*s, .06*s); }
       } else if(it.k==='sign'){
         const p=pj(it.x,1.15,it.z), q=pj(it.x,0,it.z); if(!p||p.s<6) continue;
