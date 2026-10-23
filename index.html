@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.5-BG01</title>
+<title>今天在隱花王國尋寶 V14.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -3287,10 +3287,15 @@ const Admin = {
       <div class="card"><div class="lbl" style="margin-top:0">果友值前 10 名</div><table class="ladder">${top.map((p,i)=>`<tr class="pl-row" data-pid="${p.id}"><td>${i+1}. ${nm(p.name, p.id)}</td><td>${LEVELS[lvIndex(p.points)].icon} ${p.points} 分・${p.boxes||0} 盒 ›</td></tr>`).join('') || '<tr><td>還沒有玩家</td></tr>'}</table></div>
       <details class="card fold-c"><summary><b>🎁 寶箱紀錄（${logs.length} 筆）</b><small>依年月日整理，點開查看</small></summary>${logs.length ? logTree(logs, tm, nm) : '<p class="sub">還沒有紀錄</p>'}</details>
       <details class="card fold-c"><summary><b>👥 全部玩家（${players.length} 位）</b><small>點開後可搜尋，點名字看寶箱、私訊</small></summary>
+        <!-- V14.6: read-only fig tier counts -->
+        <div id="plTierStats" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin:9px 0">
+          ${[3,2,1,0].map(i=>`<button type="button" class="chip pl-tier" data-tier="${i}" aria-pressed="false" style="min-width:0;display:flex;flex-direction:column;gap:3px;align-items:center;justify-content:center;padding:8px 2px;white-space:normal"><span style="width:29px;height:29px;display:block">${FIG_ICON[i]}</span><span style="font-size:12px">${['小果','青果','熟果','摯愛'][i]}</span><b style="font-size:19px">${players.filter(p=>lvIndex(Number(p.points)||0)===i).length} 人</b></button>`).join('')}
+        </div>
+        <p class="lvtxt" style="margin:0 0 6px">依玩家現有果友值統計；點等級篩選，再點一次顯示全部</p>
         <input id="plQ" class="field" placeholder="搜尋暱稱或會員編號" style="margin:8px 0">
         <div class="seg" style="margin:0 0 8px"><button class="chip" id="plMulti">✉️ 勾選多人發訊</button><button class="chip hide" id="plAllSel">全選目前顯示</button><button class="chip hide" id="plClr">清除勾選</button></div>
         <div class="card hide" id="mcBox" style="text-align:left"><b>💬 發訊給 <span id="mcN">0</span> 位玩家</b><textarea id="mcText" class="field" rows="3" maxlength="200" placeholder="例如：感謝支持，送你一個寶箱！"></textarea>${giftSel('mg')}<button id="mcSend" class="btn main">送出</button></div>
-        <div class="pl-all" id="plAll">${players.map(p=>`<button class="chip pl-row" data-pid="${p.id}" data-q="${esc((p.name||'')+' '+p.id).toLowerCase()}">${LEVELS[lvIndex(p.points)].icon} ${nm(p.name, p.id)}</button>`).join('') || '<p class="sub">還沒有玩家</p>'}</div><p class="lvtxt hide" id="plNone">找不到符合的玩家</p></details>`;
+        <div class="pl-all" id="plAll">${players.map(p=>`<button class="chip pl-row" data-pid="${p.id}" data-tier="${lvIndex(Number(p.points)||0)}" data-q="${esc((p.name||'')+' '+p.id).toLowerCase()}">${LEVELS[lvIndex(p.points)].icon} ${nm(p.name, p.id)}</button>`).join('') || '<p class="sub">還沒有玩家</p>'}</div><p class="lvtxt hide" id="plNone">找不到符合的玩家</p></details>`;
     // V10.5：勾選多人一起發訊（可附寶箱）
     const picked = new Set(); let multi = false;
     const upd = ()=>{ $('#mcN').textContent = picked.size; document.querySelectorAll('#plAll .pl-row').forEach(b=>b.classList.toggle('picked', picked.has(b.dataset.pid))); };
@@ -3305,8 +3310,16 @@ const Admin = {
         toast(`已發訊給 ${ids.length} 位玩家`); $('#mcText').value=''; giftReset('mg'); picked.clear(); upd(); }
       catch(e){ console.error(e); toast('發送失敗：'+(e.code||e.message)); }
       btn.disabled = false; };
-    const q = $('#plQ'); if(q) q.oninput = ()=>{ const v = q.value.trim().toLowerCase(); let n = 0;
-      document.querySelectorAll('#plAll .pl-row').forEach(b=>{ const ok = !v || b.dataset.q.includes(v); b.classList.toggle('hide', !ok); if(ok) n++; }); $('#plNone').classList.toggle('hide', n>0); };
+    // V14.6: tier and name filters affect display only
+    let selectedTier = null;
+    const q = $('#plQ');
+    const filterPlayers = ()=>{ const v = q.value.trim().toLowerCase(); let n = 0;
+      document.querySelectorAll('#plAll .pl-row').forEach(b=>{ const ok = (!v || b.dataset.q.includes(v)) && (selectedTier===null || b.dataset.tier===selectedTier); b.classList.toggle('hide', !ok); if(ok) n++; });
+      $('#plNone').classList.toggle('hide', n>0);
+      document.querySelectorAll('#plTierStats .pl-tier').forEach(b=>{ const active=b.dataset.tier===selectedTier; b.classList.toggle('sel',active); b.setAttribute('aria-pressed',String(active)); });
+    };
+    if(q) q.oninput = filterPlayers;
+    document.querySelectorAll('#plTierStats .pl-tier').forEach(b=>b.onclick=()=>{ selectedTier=selectedTier===b.dataset.tier?null:b.dataset.tier; filterPlayers(); });
     $('#statBox').querySelectorAll('.pl-row').forEach(r=>{ if(!r.onclick) r.onclick=()=>Admin.player(r.dataset.pid); });
   },
   // V10.2：管理員帳號（Email＋密碼，各自登入）
