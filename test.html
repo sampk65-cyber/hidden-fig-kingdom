@@ -2593,6 +2593,8 @@ function openGH3D(zid){
     const moving = Math.abs(mvz)+Math.abs(mvx) > .01; if(moving) G.walk += (Math.abs(mvz)+Math.abs(mvx))*2.2;
     const camZ = G.pz-5.5, camX = G.px, camY = 2.1, hz = H*.4, f = W*.85;
     const pj = (x,y,zz)=>{ const dz = zz-camZ; if(dz<.4) return null; const s = f/dz; return {x:W/2+(x-camX)*s, y:hz+(camY-y)*s, s}; };
+    const quad = (x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,Math.min(LEN,camZ+46)), d=pj(x1,0,Math.min(LEN,camZ+46)); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
+    if(!ghBg(cx, W, H, hz, z.stage, G.pz/LEN, camX)){
     ghSky(cx, W, hz);
     cx.fillStyle = '#9C7C5A'; cx.fillRect(0,hz,W,H-hz);
     const halfW = XMAX + 1.5;
@@ -2600,11 +2602,11 @@ function openGH3D(zid){
       for(let x=-halfW; x<=halfW; x+=1){ const p = pj(x, 3.1+2.2*(1-(x/halfW)**2), az); if(!p) continue; st ? cx.lineTo(p.x,p.y) : cx.moveTo(p.x,p.y); st = true; }
       cx.strokeStyle = 'rgba(90,100,110,.35)'; cx.lineWidth = Math.max(1.4, 95/(az-camZ)); cx.stroke(); cx.strokeStyle = 'rgba(240,246,250,.95)'; cx.lineWidth = Math.max(1, 60/(az-camZ)); cx.stroke(); }
     for(let q=-4;q<=4;q++){ const x = q/4*halfW*.92, y = 3.1+2.2*(1-(x/halfW)**2), a = pj(x,y,camZ+.6), b = pj(x,y,Math.min(LEN+.5,camZ+44)); if(a&&b){ cx.strokeStyle = 'rgba(225,235,242,.55)'; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } }
-    const quad = (x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,Math.min(LEN,camZ+46)), d=pj(x1,0,Math.min(LEN,camZ+46)); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
     for(let i=0;i<ROWX.length-1;i++){ const m = (ROWX[i]+ROWX[i+1])/2; quad(m-.95, m+.95, '#E7D8B6'); quad(m-.95, m-.88, '#CDBB98'); quad(m+.88, m+.95, '#CDBB98'); }
     ROWX.forEach(x=>{ quad(x-.72, x+.72, '#2B2F33'); quad(x-.5, x-.38, '#4A5258'); quad(x+.3, x+.36, '#3E454B'); });
     [-halfW, halfW].forEach(x=>{ const a=pj(x,0,camZ+.6), b=pj(x,0,Math.min(LEN,camZ+44)), c=pj(x,3.1,Math.min(LEN,camZ+44)), d=pj(x,3.1,camZ+.6); if(a&&b&&c&&d){ cx.fillStyle='rgba(235,245,232,.55)'; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); } });
     const back = pj(0,0,LEN+.5); if(back){ const tl = pj(-halfW,3.1,LEN+.5), br = pj(halfW,0,LEN+.5); if(tl&&br){ cx.fillStyle='rgba(225,238,220,.9)'; cx.fillRect(tl.x, tl.y, br.x-tl.x, br.y-tl.y); } }
+    }
     const tapped = (P.daily.tapped && P.daily.tapped[zid]) || [], res = P.daily['res_'+zid] || {};
     const items = [];
     ROWX.forEach((x,r)=>{ if(Math.abs(x-camX) > 12) return; for(let k=0;k<L.n;k++){ const zz = 2.5 + k*GH_STEP; if(zz < camZ+.8 || zz > camZ+34) continue; items.push({x, z:zz, r, k, idx:TRE[r+'_'+k]}); } });
@@ -4922,11 +4924,21 @@ function ghShadow(cx, pj, x, z, h){ const p = pj(x+.45, 0, z+.25); if(!p || p.s 
 // 素材只要換 art/gh/ 裡的圖檔即可，不用改程式：fig-<階段>.webp 為主圖，可另加 fig-<階段>-2.webp、-3.webp 當變化（沒有就自動略過）
 const GH_ART = (()=>{
   const out={};
-  for(const key of ['prune','set','ripe']){
+  for(const key of ['prune','set','ripe','winter']){
     out[key] = ['', '-2', '-3'].map(v=>{ const im=new Image(); im.decoding='async'; im.src='art/gh/fig-'+key+v+'.webp'; return im; });
   }
   return out;
 })();
+/* V14.5：溫室寫實遠景（art/gh/gh-bg-<階段>.webp，1080×1920）。有圖就畫遠景、不畫程式的拱頂與地面；沒圖照舊 */
+const GH_BG = (()=>{ const o={}; ['prune','set','ripe','winter'].forEach(k=>{ const im=new Image(); im.decoding='async'; im.src='art/gh/gh-bg-'+k+'.webp'; o[k]=im; }); return o; })();
+const ghStageKey = st => st==='度冬'?'winter':st==='剪枝'?'prune':st==='座果'?'set':'ripe';
+function ghBg(cx, W, H, hz, stage, prog, camX){
+  const im = GH_BG[ghStageKey(stage)]; if(!im || !im.complete || !im.naturalWidth) return false;
+  const k = Math.max(W/im.naturalWidth, (H-hz)/(im.naturalHeight*.5), hz/(im.naturalHeight*.5)) * (1.04 + .22*Math.max(0,Math.min(1,prog)));
+  const dw = im.naturalWidth*k, dh = im.naturalHeight*k;
+  const dx = Math.max(W-dw, Math.min(0, W/2 - dw/2 - camX*k*30)), dy = hz - dh*.5;
+  cx.drawImage(im, dx, dy, dw, dh); return true;
+}
 /* 巡園 V14.3 視覺層：獨立度冬休眠枝條，不影響階段、判定或遊戲資料。 */
 function ghWinterTree(cx,pj,x,z,s,seed){
   const foot=pj(x,0,z), top=pj(x,.5,z); if(!foot||!top)return;
@@ -4948,11 +4960,11 @@ function ghWinterTree(cx,pj,x,z,s,seed){
   cx.restore();
 }
 function drawFigTree(cx, pj, x, z, s, stage, seed, rustle){
-  if(stage==='度冬'){ ghWinterTree(cx,pj,x,z,s,seed); return; }
-  const pool = GH_ART[stage==='剪枝'?'prune':stage==='座果'?'set':'ripe'].filter(im=>im.complete && im.naturalWidth>0);
+  if(stage==='度冬' && !(GH_ART.winter[0].complete && GH_ART.winter[0].naturalWidth)){ ghWinterTree(cx,pj,x,z,s,seed); return; }
+  const pool = GH_ART[ghStageKey(stage)].filter(im=>im.complete && im.naturalWidth>0);
   const sprite = pool.length ? pool[Math.abs(seed|0) % pool.length] : {complete:false};
   if(sprite.complete && sprite.naturalWidth>0){
-    const T=stageTree(stage), foot=pj(x,0,z), crown=pj(x,T.h,z);
+    const T=stageTree(stage), VH = {prune:1.6,set:2.1,ripe:2.6,winter:1.6}[ghStageKey(stage)], foot=pj(x,0,z), crown=pj(x,Math.max(T.h,VH),z);   // 寫實樹圖畫得跟遠景一樣高（只是外觀，點擊範圍不變）
     if(foot && crown && foot.s>=6){
       const height=foot.y-crown.y; const width=height*(sprite.naturalWidth/sprite.naturalHeight);
       cx.save(); cx.translate(foot.x,foot.y); cx.rotate((rustle||0)*.055);
@@ -5111,16 +5123,18 @@ function openEmerald(){
     const moving = Math.abs(mvz)+Math.abs(mvx) > .01; if(moving) EM.walk += (Math.abs(mvz)+Math.abs(mvx))*2.2;
     const camZ = EM.pz-5.5, camX = EM.px, camY = 2.1, hz = H*.4, f = W*.85;
     const pj = (x,y,z)=>{ const dz=z-camZ; if(dz<.4) return null; const s=f/dz; return {x:W/2+(x-camX)*s, y:hz+(camY-y)*s, s}; };
+    const quad=(x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,camZ+50), d=pj(x1,0,camZ+50); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
+    if(!ghBg(cx, W, H, hz, z6.stage, EM.pz/EM_LEN, camX)){
     ghSky(cx, W, hz);
     cx.fillStyle='#9C7C5A'; cx.fillRect(0,hz,W,H-hz);
     for(let az=Math.ceil(camZ/4)*4; az<camZ+48; az+=4){ cx.beginPath(); let st=false;
       for(let x=-20;x<=20;x+=2){ const p=pj(x, 3.2+4.6*(1-(x/20)**2), az); if(!p) continue; st ? cx.lineTo(p.x,p.y) : cx.moveTo(p.x,p.y); st=true; }
       cx.strokeStyle='rgba(90,100,110,.35)'; cx.lineWidth=Math.max(1.4, 105/(az-camZ)); cx.stroke(); cx.strokeStyle='rgba(240,246,250,.95)'; cx.lineWidth=Math.max(1, 66/(az-camZ)); cx.stroke(); }
     ROWS.filter(x=>Math.abs(x-camX)<14).forEach(x=>{ const a=pj(x,3.4,camZ+1), b=pj(x,3.4,camZ+48); if(a&&b){ cx.strokeStyle='rgba(120,130,130,.55)'; cx.lineWidth=1.3; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } });
-    const quad=(x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,camZ+50), d=pj(x1,0,camZ+50); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
     quad(-.95,.95,'#E7D8B6'); AISLE.forEach(x=>{ quad(-x-.15,-x+.15,'#2B2F33'); quad(x-.15,x+.15,'#2B2F33'); });
     [-.95,.95].forEach(x=>{ const a=pj(x,0,camZ+.6), b=pj(x,0,camZ+50); if(a&&b){ cx.strokeStyle='#E8DCC4'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } });
     [-19.8,19.8].forEach(x=>{ if(Math.abs(x-camX)<16){ const a=pj(x,0,camZ+.6), b=pj(x,0,camZ+48), c=pj(x,3.2,camZ+48), d=pj(x,3.2,camZ+.6); if(a&&b&&c&&d){ cx.fillStyle='rgba(235,245,232,.55)'; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); } } });
+    }
     const items = [];
     ROWS.forEach(x=>{ if(Math.abs(x-camX)>13) return; for(let z=Math.ceil((camZ+1)/1.375)*1.375; z<camZ+32; z+=1.375) items.push({x, z, k:'t'}); });
     for(let i=0;i<5;i++) [['A',-1.15],['B',1.15]].forEach(([n,x])=>items.push({x, z:i*EM_ZL+1.2, k:'sign', n:n+(i+1)}));
