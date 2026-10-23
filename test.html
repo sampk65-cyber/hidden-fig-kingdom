@@ -1270,8 +1270,8 @@ const ROLE_BASE = {
   alien:{n:'吃貨外星人',    perk:'說好話感化黑騎士，威力 ×1.6'},
   awu:{n:'阿無',            perk:'知識卡答對多 3 點果友值'},
   robot:{n:'苔蘚古機器人',  perk:'每天第一棵樹必出寶箱'},
-  hero:{n:'英雄',           perk:'守護寶物，黑騎士搶不走'},
-  apo:{n:'ㄚ波',            perk:'能量用完時，每天還能多找 1 棵樹'},
+  hero:{n:'橘子',           perk:'守護寶物，黑騎士搶不走'},
+  apo:{n:'五毛',            perk:'能量用完時，每天還能多找 1 棵樹'},
   knight:{n:'黑騎士',       perk:'寶箱機率 +3%，自己人不會被搶'},
   cat:{n:'小呱',            perk:'晚上 6 點到早上 6 點，寶箱機率 +6%'},
   teddy:{n:'碰氣',          perk:'稀有收藏更容易發現'},
@@ -1607,7 +1607,7 @@ function rhythmGame(done){
     clearInterval(ci); $('#rhJ').textContent = '🎵 開始！'; useAudio = player.start(); pt0 = performance.now(); started = true; raf = requestAnimationFrame(loop); }, 700);
 }
 /* ---------- V10.6：農場翻牌（角色配對＋計時條＋連擊＋中途洗牌） ---------- */
-const MEM_CHARS = [['🍇','阿無'],['🐱','小呱'],['🐿️','碰氣'],['🐕','黑熊'],['🐈‍⬛','奇奇'],['🐢','小葵'],['🐔','一虎'],['🦜','英雄'],['👽','外星人'],['🛡️','黑騎士'],['🎁','禮盒'],['🌿','無花果葉']];
+const MEM_CHARS = [['🍇','阿無'],['🐱','小呱'],['🐿️','碰氣'],['🐕','黑熊'],['🐈‍⬛','奇奇'],['🐢','小葵'],['🐔','一虎'],['🦜','橘子'],['👽','外星人'],['🛡️','黑騎士'],['🎁','禮盒'],['🌿','無花果葉']];
 function memoryGame(done){
   const d = diffOf('memory'), C = [3,4,4][d], R = [4,4,5][d], pairs = C*R/2, LIMIT = [60,70,80][d], peek = [3,2,2][d];
   const pick = [...MEM_CHARS].sort(()=>Math.random()-.5).slice(0,pairs);
@@ -1887,7 +1887,7 @@ function avatarVec(roleId, mat, color){
       : `<path d="M70 4 C78 -2 88 2 88 8 C80 10 74 8 70 4Z" fill="#5E9A4E"/>`;
     return wrap('阿無');
   }
-  if(role.base==='hero' || role.base==='apo'){ // Q版鸚鵡：英雄（金太陽）、ㄚ波（藍和尚）
+  if(role.base==='hero' || role.base==='apo'){ // Q版鸚鵡：橘子（金太陽）、五毛（藍和尚）
     if(role.base==='hero'){
       s += `<path d="M48 112 C36 130 30 144 34 150 C44 146 52 132 58 118Z" fill="#2F7FA8"/><path d="M52 114 C44 130 42 142 46 148 C52 140 58 128 60 118Z" fill="#5FA05A"/>
         <ellipse cx="60" cy="102" rx="26" ry="28" fill="#F8C93A"/>
@@ -1902,7 +1902,7 @@ function avatarVec(roleId, mat, color){
         <path d="M80 62 C92 60 96 70 90 80 C88 74 84 72 80 74Z" fill="#3C3C42"/><path d="M80 74 C84 72 88 74 90 80 L82 78Z" fill="#26262A"/>
         <circle cx="64" cy="70" r="4" fill="#E8452C" opacity=".6"/>
         <path d="M52 132 l-4 8 M56 132 l0 8 M66 132 l0 8 M70 132 l4 8" stroke="#9A9AA2" stroke-width="3" stroke-linecap="round"/>`;
-      return wrap('英雄');
+      return wrap('橘子');
     }
     s += `<path d="M50 114 C40 130 36 144 40 150 C50 144 56 130 60 118Z" fill="#7FA82E"/>
       <ellipse cx="60" cy="104" rx="26" ry="27" fill="#A9CC3E"/>
@@ -1916,7 +1916,7 @@ function avatarVec(roleId, mat, color){
       <circle cx="70" cy="52" r="4.6" fill="#111"/><circle cx="71.6" cy="50.6" r="1.5" fill="#fff"/>
       <path d="M80 60 C92 60 94 72 86 80 C84 74 80 72 78 72Z" fill="#F2A98A"/>
       <path d="M52 132 l-4 8 M56 132 l0 8 M66 132 l0 8 M70 132 l4 8" stroke="#A8B0B6" stroke-width="3" stroke-linecap="round"/>`;
-    return wrap('ㄚ波');
+    return wrap('五毛');
   }
   if(role.base==='robot'){ // 苔蘚古機器人：原創設計，銅綠外殼長出青苔與新芽
     const cu='#5E9C90', cuD='#3D6B63', brass='#C9A24A';
@@ -2645,7 +2645,7 @@ const CHAPTERS = [
   {from:5,  to:9,  icon:'🌅', t:'清晨・晨露巡園', p:'阿無揉揉眼睛醒來，溫室裡的果子掛滿露水。先報到，再出門走一走鍛鍊體力，能量會多一些。'},
   {from:9,  to:12, icon:'☀️', t:'上午・採收時間', p:'碰氣在晨曦溫室跳來跳去，說今天的果子特別甜。產季的溫室，寶箱比較多。'},
   {from:12, to:17, icon:'🛸', t:'午後・外星訪客', p:'一艘飛碟停在翡翠溫室屋頂。外星人探出頭說：聽說這裡的無花果，好吃到銀河都知道。'},
-  {from:17, to:19, icon:'🌇', t:'傍晚・黑騎士出沒', p:'天色暗了，黑騎士在金葉小徑上徘徊，想搶走大家的寶箱。英雄和ㄚ波飛出去巡邏。'},
+  {from:17, to:19, icon:'🌇', t:'傍晚・黑騎士出沒', p:'天色暗了，黑騎士在金葉小徑上徘徊，想搶走大家的寶箱。橘子和五毛飛出去巡邏。'},
   {from:19, to:29, icon:'🌙', t:'夜晚・小呱夜巡', p:'小呱睜大黃眼睛巡園，夜裡的寶箱特別多。睡前把今天的冒險收尾吧。'}
 ];
 function chapter(){ let h=new Date().getHours(); if(h<5) h+=24; return CHAPTERS.find(c=>h>=c.from && h<c.to) || CHAPTERS[4]; }
@@ -2756,7 +2756,7 @@ function tapTree(i){
   if(tapped.includes(i)){ toast('這棵樹今天找過了，換一棵試試'); return; }
   let apoFree = false;
   if(stamina()<1){
-    if(roleBase(P.role)==='apo' && !P.daily.apoExtra){ apoFree = true; P.daily.apoExtra = true; toast('ㄚ波拍拍翅膀，多找一棵樹'); }
+    if(roleBase(P.role)==='apo' && !P.daily.apoExtra){ apoFree = true; P.daily.apoExtra = true; toast('五毛拍拍翅膀，多找一棵樹'); }
     else { toast('今天的巡園次數用完了，走走路或照顧樹就能補充'); return; }
   }
   if(!apoFree) P.daily.used++;
@@ -2767,7 +2767,7 @@ function tapTree(i){
   const forceChest = (base==='robot' && !P.daily.firstTap) || (P.daily.chests===0 && before>=2);   // 保底：每天第 3 棵樹前一定開到寶箱
   P.daily.firstTap = true;
   const h = new Date().getHours();
-  // 黑騎士搶寶：傍晚比較常出現；英雄和黑騎士不會被搶
+  // 黑騎士搶寶：傍晚比較常出現；橘子和黑騎士不會被搶
   if(!forceChest && !P.daily.knightMet && base!=='hero' && base!=='knight' && Math.random() < (h>=17&&h<19 ? .10 : .05)){
     res[i]='🏴'; const lf=gainLeaves(1); save(); openZone(z.id);
     return result('🏴','黑騎士偷走了寶物！',`他從${kzName()}溫室溜過來，只掉下一點點果友值（+${lf}）。去${kzName()}溫室把他趕走，今天就不會再被偷。`);
@@ -3643,7 +3643,7 @@ function knightBattle(zid){
     $('#kCtl').querySelectorAll('[data-q]').forEach(b=>b.onclick=()=>say(b.dataset.q));
     $('#kSend').onclick = ()=>{ say($('#kIn').value); $('#kIn').value=''; };
     $('#kIn').onkeydown = e=>{ if(e.key==='Enter'){ e.preventDefault(); $('#kSend').click(); } };
-    const npc = [`小呱：${P.name} 加油！`,'英雄：好話也是一種力量！','ㄚ波：他肚子餓了啦～','阿無：分他一顆熟無花果','碰氣：吱吱！我來幫忙','外星人：銀河都在看你！'];
+    const npc = [`小呱：${P.name} 加油！`,'橘子：好話也是一種力量！','五毛：他肚子餓了啦～','阿無：分他一顆熟無花果','碰氣：吱吱！我來幫忙','外星人：銀河都在看你！'];
     const tm = setInterval(()=>{ if(!document.getElementById('khp')){ clearInterval(tm); over=true; return; } left--; upd(); if(left%3===0) danmaku(npc[rnd(npc.length)],'npc'); if(left<=0){ clearInterval(tm); if(!over && hp>0) lose(); } }, 1000);
     danmaku('守護者出動！大家一起說好話','npc'); upd();
     function win(){
