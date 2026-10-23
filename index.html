@@ -2629,7 +2629,7 @@ function openGH3D(zid){
       const mid = pj(it.x, TH*.55, it.z); if(mid) G.hit.push({x:mid.x, y:mid.y, r:Math.max(26, (TH<1?.4:.55)*s), dist, idx:it.idx});
     }
     G.fall = G.fall.filter(l=>{ l.y -= l.vy; if(l.y < 0) return false; const p = pj(l.x + Math.sin(t*3+l.ph)*.2, l.y, l.z); if(p && p.s > 8){ cx.fillStyle = '#7FB560'; cx.beginPath(); cx.ellipse(p.x, p.y, .06*p.s, .03*p.s, t*3+l.ph, 0, Math.PI*2); cx.fill(); } return true; });
-    const ah = Math.min(H*.24, 200), aw = ah*.8, bob = moving ? Math.sin(G.walk*3)*4 : 0, ax = W/2;
+    const ah = Math.min(H*.15, 125), aw = ah*.8, bob = moving ? Math.sin(G.walk*3)*4 : 0, ax = W/2;
     cx.fillStyle = 'rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(ax, H-24, aw*.32, 8, 0, 0, Math.PI*2); cx.fill();
     if(img.complete){ cx.save(); if(mvx < -.01){ cx.translate(ax*2,0); cx.scale(-1,1); } cx.drawImage(img, ax-aw/2, H-24-ah+bob, aw, ah); cx.restore(); }
     const k = Math.max(1, Math.min(L.n, Math.round((G.pz-2.5)/GH_STEP)+1)), ri = rowName(G.px);
@@ -5168,7 +5168,7 @@ function openEmerald(){
     }
     ROWS.filter(x=>Math.abs(x-camX)<8).forEach(x=>{ const a=pj(x,2.55,camZ+.8), b=pj(x,2.55,camZ+32); if(!a||!b) return; cx.strokeStyle='#9AA3AA'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke();
       for(let k=0;k<8;k++){ const mz = camZ + 2 + ((k*3.6 + t*1.5) % 30); const p=pj(x,2.45-((t*0.7+k)%1)*.5,mz); if(!p) continue; cx.fillStyle='rgba(255,255,255,.33)'; cx.beginPath(); cx.arc(p.x,p.y,.18*p.s,0,Math.PI*2); cx.fill(); } });
-    const ah = Math.min(H*.24, 200), aw = ah*.8, bob = moving ? Math.sin(EM.walk*3)*4 : 0, ax = W/2;
+    const ah = Math.min(H*.15, 125), aw = ah*.8, bob = moving ? Math.sin(EM.walk*3)*4 : 0, ax = W/2;
     cx.fillStyle='rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(ax, H-24, aw*.32, 8, 0, 0, Math.PI*2); cx.fill();
     if(img.complete){ cx.save(); if(mvx<-.01){ cx.translate(ax*2,0); cx.scale(-1,1); } cx.drawImage(img, ax-aw/2, H-24-ah+bob, aw, ah); cx.restore(); }
     const wh = where(EM.px, EM.pz);
