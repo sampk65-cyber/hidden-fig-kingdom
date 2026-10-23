@@ -681,7 +681,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 #home:has(#tab-map.on)::before{content:'';position:fixed;inset:-30px;z-index:-1;pointer-events:none;
   background:linear-gradient(180deg,#5FA6EC 0%,#8EC2EE 38%,#B9D6EE 70%,#D9E6EE 100%);}
 #home:has(#tab-map.on)::after{content:'';position:fixed;inset:-40px;z-index:-1;pointer-events:none;opacity:.55;
-  background:url(kingdom-bg.webp) center 8%/150% auto no-repeat;filter:blur(16px) saturate(1.1)}
+  background:url(art/map/kingdom-bg.webp) center 8%/150% auto no-repeat;filter:blur(16px) saturate(1.1)}
 :root[data-sky="dusk"] #home:has(#tab-map.on)::before{background:linear-gradient(180deg,#6E6FB8 0%,#D98F86 45%,#F2B98E 80%,#F6D3B0 100%)}
 :root[data-sky="dawn"] #home:has(#tab-map.on)::before{background:linear-gradient(180deg,#8EA8DA 0%,#E9B9B6 50%,#F6DCC4 100%)}
 :root[data-sky="night"] #home:has(#tab-map.on)::before{background:linear-gradient(180deg,#0C1330 0%,#17224A 45%,#24335F 100%)}
@@ -1248,7 +1248,7 @@ const ZONES = [
 // V8.2：溫室雅名＋期別，例如「晨曦溫室・一期」（資料仍以 id 對應，改名不影響既有資料）
 function zName(z){ return z ? `${z.g||z.n}溫室` : ''; }              // V8.4：玩家端只顯示雅名，例如「晨曦溫室」
 function zAdm(z){ return z ? `${z.g||''}溫室（${z.n}）` : ''; }        // 後台保留期別，方便農場對照
-// V14.3：天空之城插畫地圖——溫室標籤、入口對齊背景圖 kingdom-bg.webp（1024×1536）上畫好的溫室與石板路
+// V14.3：天空之城插畫地圖——溫室標籤、入口對齊背景圖 art/map/kingdom-bg.webp（1024×1536）上畫好的溫室與石板路
 const MAP_ART = {"z6": {"x": 177.3, "y": 162.1, "ex": 177.3, "ey": 204.7}, "z5": {"x": 107.4, "y": 253.5, "ex": 157.3, "ey": 271.9}, "z4": {"x": 270.6, "y": 325.3, "ex": 210.1, "ey": 341.7}, "z3": {"x": 106.7, "y": 385.7, "ex": 159.5, "ey": 405.9}, "z2": {"x": 259.2, "y": 444.2, "ex": 210.1, "ey": 470.1}, "z1": {"x": 108.2, "y": 519.7, "ex": 164.8, "ey": 530.5}};
 ZONES.forEach(z=>Object.assign(z, MAP_ART[z.id]||{}));
 const MAP_LAMPS = [[316.2, 449.3], [339.7, 467.5], [53.8, 520.3], [270.6, 185.8], [346.1, 219.8], [201.8, 306.6], [86.3, 383.3], [159.5, 264.3]];
@@ -2415,10 +2415,10 @@ function renderMap(){
   }).join('');
   $('#mapSvg').innerHTML = `<svg viewBox="0 0 360 580" aria-label="隱花王國地圖">
     <rect width="360" height="580" fill="#9CC8EE"/>
-    <image href="kingdom-bg.webp" x="${-35.5*.3776}" y="0" width="${1024*.3776}" height="${1536*.3776}" preserveAspectRatio="none"/>
+    <image href="art/map/kingdom-bg.webp" x="${-35.5*.3776}" y="0" width="${1024*.3776}" height="${1536*.3776}" preserveAspectRatio="none"/>
     <g pointer-events="none">${MAP_BRIDGE}</g>
     <defs>
-      <mask id="skyM" maskUnits="userSpaceOnUse" x="-20" y="0" width="400" height="580"><image href="kingdom-sky-mask.png" x="${-35.5*.3776}" y="0" width="${1024*.3776}" height="${1536*.3776}" preserveAspectRatio="none"/></mask>
+      <mask id="skyM" maskUnits="userSpaceOnUse" x="-20" y="0" width="400" height="580"><image href="art/map/kingdom-sky-mask.png" x="${-35.5*.3776}" y="0" width="${1024*.3776}" height="${1536*.3776}" preserveAspectRatio="none"/></mask>
       <radialGradient id="ghGlow"><stop offset="0" stop-color="#FFD27A" stop-opacity="1"/><stop offset=".6" stop-color="#FFB24A" stop-opacity=".55"/><stop offset="1" stop-color="#FFB050" stop-opacity="0"/></radialGradient>
     </defs>
     ${tone==='dusk' ? `<g mask="url(#skyM)"><rect width="360" height="580" fill="#E87A5A" opacity=".32" style="mix-blend-mode:multiply"/><rect width="360" height="580" fill="#FFB27A" opacity=".18"/></g><rect width="360" height="580" fill="#FFB27A" opacity=".08"/>` : ''}
