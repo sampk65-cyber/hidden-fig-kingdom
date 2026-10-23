@@ -727,6 +727,24 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 #tab-map.on #storyBox.card{padding:6px 12px}
 #tab-map.on #storyBox:not(.open) .st2-steps,#tab-map.on #storyBox:not(.open) .st2-p{display:none}
 #tab-map.on #feedBox.card{padding:5px 12px 4px}
+/* 2026-10-23 首頁視覺限定：保留原互動及資料讀寫 */
+#tab-map.on{position:relative;isolation:isolate;padding-bottom:28px}
+#tab-map.on::before{content:"";position:absolute;z-index:-1;pointer-events:none;left:-14px;right:-14px;top:340px;bottom:0;background:linear-gradient(180deg,rgba(220,239,252,0),rgba(220,239,252,.08)),url("kingdom-bg.webp") center top/100% auto repeat-y;opacity:.95}
+#tab-map.on #feedBox,#tab-map.on #famBox,#tab-map.on #storyBox{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.92);box-shadow:0 7px 22px rgba(25,41,67,.18);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+#tab-map.on .today{gap:7px;margin:9px 0}
+#tab-map.on .today>div{background:rgba(255,255,255,.95);box-shadow:0 4px 12px rgba(25,41,67,.12);border:1px solid #fff;padding:8px 7px;color:#48566A}
+#tab-map.on .today b{color:#29253C}
+#tab-map.on #feedBox{position:relative;z-index:2;margin-top:8px}
+#tab-map.on #famBox{padding:11px 12px 9px}
+#tab-map.on #famBox .story-h{gap:8px}
+#tab-map.on #famBox .story-i{font-size:25px}
+#tab-map.on #famBox .bar{margin:6px 0!important}
+#tab-map.on #famBox>.sub{font-size:12px;line-height:1.4;margin:3px 0 6px!important}
+#tab-map.on #famBox .fam-g{gap:7px}
+#tab-map.on #famBox .fam-g button{padding:8px 3px;gap:2px;border-radius:14px}
+#tab-map.on #famBox .fam-g button b{font-size:22px}
+#tab-map.on #famBox .linkbtn{margin-top:3px;padding:2px 0}
+#tab-map.on #famBox .lvtxt{color:#4B5062}
 </style>
 </head>
 <body>
@@ -812,6 +830,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <div class="pill-row"><button class="visit-pill rank-pill" id="rankPill">🏆 積分前 10 名</button><div class="visit-pill hide" id="visitPill"></div></div>
     <div class="card kcal" id="kCal" role="button" aria-label="隱花王國曆"></div>
     <div class="mapwrap" id="mapSvg"></div>
+    <div class="card" id="feedBox"></div>
     <div class="today">
       <div>今日果友值<b id="tdPts">0/80</b></div>
       <div>今日寶箱<b id="tdChest">0/3</b></div>
@@ -819,7 +838,6 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     </div>
     <p class="sub tip">點溫室巡園尋寶，每棵樹每天找一次；能量用完了，就幫忙照顧溫室補充能量。</p>
     <div class="card story" id="storyBox"></div>
-    <div class="card" id="feedBox"></div>
     <div class="card" id="famBox"></div>
     <p class="copy">Copyright © 2026 Sam pksun. All rights reserved.</p>
   </div>
