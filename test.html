@@ -2525,7 +2525,7 @@ function openZone(zid){
    每天 12 棵「藏寶樹」（沙沙作響）仍對應原本的 0–11 號，玩家既有資料不受影響
    ========================================================= */
 const GH_LAYOUT = {z1:{r:4,n:12}, z2:{r:4,n:12}, z3:{r:6,n:12}, z4:{r:5,n:20}, z5:{r:5,n:20}};
-const GH_ROWGAP = 3.2, GH_STEP = 1.45;
+const GH_ROWGAP = 3.2, GH_STEP = 3.2;   // V14.5：株距加大（1.45→3.2 公尺），寫實樹之間保有距離；藏寶樹編號不變
 function ghLayout(zid){ return GH_LAYOUT[zid] || {r:4, n:12}; }
 function ghTreasures(zid){   // 每天、每座溫室固定的 12 棵藏寶樹位置
   const L = ghLayout(zid), all = []; for(let r=0;r<L.r;r++) for(let k=0;k<L.n;k++) all.push([r,k]);
@@ -2612,7 +2612,7 @@ function openGH3D(zid){
     }
     const tapped = (P.daily.tapped && P.daily.tapped[zid]) || [], res = P.daily['res_'+zid] || {};
     const items = [];
-    ROWX.forEach((x,r)=>{ if(Math.abs(x-camX) > 12) return; for(let k=0;k<L.n;k++){ const zz = 2.5 + k*GH_STEP; if(zz < camZ+.8 || zz > camZ+34) continue; items.push({x, z:zz, r, k, idx:TRE[r+'_'+k]}); } });
+    ROWX.forEach((x,r)=>{ if(Math.abs(x-camX) > 12) return; for(let k=0;k<L.n;k++){ const zz = 2.5 + k*GH_STEP; if(zz < camZ+.8 || zz > camZ+44) continue; items.push({x, z:zz, r, k, idx:TRE[r+'_'+k]}); } });
     items.sort((a,b)=>b.z-a.z); G.hit = []; G.nearHit = null;
     let near = null, nd = 4.2; items.forEach(it=>{ if(it.idx==null || tapped.includes(it.idx)) return; const d = Math.hypot(it.x-G.px, it.z-G.pz); if(d < nd){ nd = d; near = it; } });
     for(const it of items){
@@ -4964,12 +4964,12 @@ function ghWinterTree(cx,pj,x,z,s,seed){
   cx.fillStyle='#b58e67';cx.beginPath();cx.ellipse(top.x,top.y,Math.max(1,s*.052),Math.max(1,s*.018),0,0,Math.PI*2);cx.fill();
   cx.restore();
 }
-function drawFigTree(cx, pj, x, z, s, stage, seed, rustle){
+function drawFigTree(cx, pj, x, z, s, stage, seed, rustle, vs){
   if(stage==='度冬' && !(GH_ART.winter[0].complete && GH_ART.winter[0].naturalWidth)){ ghWinterTree(cx,pj,x,z,s,seed); return; }
   const pool = GH_ART[ghStageKey(stage)].filter(im=>im.complete && im.naturalWidth>0);
   const sprite = pool.length ? pool[Math.abs(seed|0) % pool.length] : {complete:false};
   if(sprite.complete && sprite.naturalWidth>0){
-    const T=stageTree(stage), VH = {prune:1.6,set:2.1,ripe:2.6,winter:1.6}[ghStageKey(stage)], foot=pj(x,0,z), crown=pj(x,Math.max(T.h,VH),z);   // 寫實樹圖畫得跟遠景一樣高（只是外觀，點擊範圍不變）
+    const T=stageTree(stage), VH = {prune:1.3,set:1.6,ripe:2.0,winter:1.3}[ghStageKey(stage)]*(vs||1), foot=pj(x,0,z), crown=pj(x,Math.max(T.h,VH),z);   // 寫實樹圖畫得跟遠景一樣高（只是外觀，點擊範圍不變）
     if(foot && crown && foot.s>=6){
       const height=foot.y-crown.y; const width=height*(sprite.naturalWidth/sprite.naturalHeight);
       cx.save(); cx.translate(foot.x,foot.y); cx.rotate((rustle||0)*.055);
@@ -5154,7 +5154,7 @@ function openEmerald(){
       if(it.k==='t'){
         const TH = stageTree(z6.stage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
         if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
-        ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0);
+        ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0, .62);
         if(TH>1 && s>=16){ const cp=pj(it.x,Math.min(1.5,TH*.6),it.z); cx.fillStyle='#F2663A'; cx.fillRect(cp.x-.04*s, cp.y-.03*s, .08*s, .06*s); }
       } else if(it.k==='sign'){
         const p=pj(it.x,1.15,it.z), q=pj(it.x,0,it.z); if(!p||p.s<6) continue;
