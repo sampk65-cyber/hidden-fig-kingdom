@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.9</title>
+<title>今天在隱花王國尋寶 V15.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1133,7 +1133,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V14.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -5473,7 +5473,7 @@ const THEME = {
   mel:[[67,0,71,74,79,0,78,76],[74,0,69,0,74,0,78,0],[76,0,71,0,67,71,76,79],[79,0,76,0,72,0,76,0],
        [74,76,79,0,83,0,81,79],[78,0,74,0,81,0,78,74],[76,0,79,0,84,0,83,81],[79,0,78,0,74,0,78,0],[79,0,0,0,0,0,0,0]],
   au:null, synth:false, fadeT:null, off:false, wasWant:false,
-  /* V11.8：主題曲只在「王國地圖」和「我」頁播放（循環、接續上次位置、淡入淡出）；玩遊戲時換遊戲音樂；其他頁、切到背景就停
+  /* V15.0：主題曲在王國五個主分頁持續播放（由聲音按鈕控制）；原 V11.8 僅在「王國地圖」和「我」頁播放（循環、接續上次位置、淡入淡出）；玩遊戲時換遊戲音樂；其他頁、切到背景就停
      音檔 theme.mp3（Pixabay〈Hope That Always Remains〉，和 index.html 放同一層）；讀不到才用合成版（每次進頁播一次） */
   gn:null, pauseT:null, fading:false,
   /* V11.9：iPhone（iOS Safari）不能用程式調整 audio 音量，原本的淡出永遠不會結束、音樂停不下來。
@@ -5490,8 +5490,8 @@ const THEME = {
         .catch(err=>{ if(err && err.name==='NotAllowedError') this.pending = true; else if(err && err.name!=='AbortError'){ this.synth = true; } });
     }catch(e){ this.synth = true; } },
   want(){ const home = $('#home'), tab = document.querySelector('nav button.on');
-    return !!(P && home && home.classList.contains('on') && tab && ['map','me'].includes(tab.dataset.tab) && !document.hidden
-      && !MUSIC.timer && !document.querySelector('[id$="Ov"]:not(#ghOv):not(#emOv), #mg')); },   // V13.1：走進溫室也播主題曲
+    return !!(P && home && home.classList.contains('on') && tab && ['map','move','tools','bag','me'].includes(tab.dataset.tab) && !document.hidden
+      && !MUSIC.timer && !document.querySelector('[id$="Ov"]:not(#ghOv):not(#emOv), #mg')); },   // V15.0：五個主分頁保留主題曲；遊戲音樂及背景切換維持原規則
   sync(){ const w = this.want();
     if(w && (!this.synth || !this.wasWant)) this.play(); else if(!w) this.stop();
     this.wasWant = w; },
