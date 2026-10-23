@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.5</title>
+<title>今天在隱花王國尋寶 V14.5-BG01</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -729,7 +729,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 #tab-map.on #feedBox.card{padding:5px 12px 4px}
 /* 2026-10-23 首頁視覺限定：保留原互動及資料讀寫 */
 #tab-map.on{position:relative;isolation:isolate;padding-bottom:28px}
-#tab-map.on::before{content:"";position:absolute;z-index:-1;pointer-events:none;left:-14px;right:-14px;top:340px;bottom:0;background:linear-gradient(180deg,rgba(220,239,252,0),rgba(220,239,252,.08)),url("kingdom-bg.webp") center top/100% auto repeat-y;opacity:.95}
+#tab-map.on::before{content:"";position:absolute;z-index:-1;pointer-events:none;left:-14px;right:-14px;top:340px;bottom:0;background:linear-gradient(180deg,rgba(226,241,251,0) 0%,rgba(226,241,251,.10) 45%,rgba(226,241,251,.22) 100%);opacity:1}
 #tab-map.on #feedBox,#tab-map.on #famBox,#tab-map.on #storyBox{background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.92);box-shadow:0 7px 22px rgba(25,41,67,.18);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
 #tab-map.on .today{gap:7px;margin:9px 0}
 #tab-map.on .today>div{background:rgba(255,255,255,.95);box-shadow:0 4px 12px rgba(25,41,67,.12);border:1px solid #fff;padding:8px 7px;color:#48566A}
@@ -745,6 +745,26 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 #tab-map.on #famBox .fam-g button b{font-size:22px}
 #tab-map.on #famBox .linkbtn{margin-top:3px;padding:2px 0}
 #tab-map.on #famBox .lvtxt{color:#4B5062}
+
+/* V14.5-BG01 — only decorative kingdom background; map and sky switching unchanged */
+#home:has(#tab-map.on)::after{
+  background-position:center 32%;
+  background-size:cover;
+  background-repeat:no-repeat;
+  opacity:.26;
+  filter:blur(3px) saturate(.83);
+}
+:root[data-sky="dusk"] #home:has(#tab-map.on)::after{
+  opacity:.25;filter:blur(3px) sepia(.30) saturate(.9);
+}
+:root[data-sky="dawn"] #home:has(#tab-map.on)::after{
+  opacity:.24;filter:blur(3px) saturate(.85);
+}
+:root[data-sky="night"] #home:has(#tab-map.on)::after{
+  opacity:.30;filter:blur(3px) brightness(.42) saturate(.65);
+}
+/* Keep interactive six-greenhouse map sharp; only peripheral scenery is subdued */
+#tab-map.on .mapwrap{filter:none}
 </style>
 </head>
 <body>
