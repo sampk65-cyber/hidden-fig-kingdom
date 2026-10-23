@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.7</title>
+<title>今天在隱花王國尋寶 V14.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -771,7 +771,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 #plAll .pl-row{display:inline-flex;align-items:center;gap:5px}
 #mapSvg .nature-rain{animation:natureDrizzle 2.8s linear infinite}
 #mapSvg .nature-wind{animation:natureBreeze 4.5s ease-in-out infinite alternate}
-@keyframes natureDrizzle{from{transform:translateY(-12px)}to{transform:translateY(16px)}}
+@keyframes natureDrizzle{from{transform:translateY(-14px)}to{transform:translateY(22px)}}
 @keyframes natureBreeze{from{transform:translateX(-3px)}to{transform:translateX(5px)}}
 @media(prefers-reduced-motion:reduce){#mapSvg .nature-rain,#mapSvg .nature-wind{animation:none}}
 </style>
@@ -1133,7 +1133,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V14.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V14.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2469,12 +2469,20 @@ function renderMap(){
   const cloudyVisual = !rainVisual && Number(wxVisual.temp)<23;
   const seasonTint = {spring:'#f9c7dc',summer:'#d4ed9d',autumn:'#e9b86f',winter:'#bfd6e7'}[season];
   const seasonAlpha = {spring:'.035',summer:'.028',autumn:'.043',winter:'.045'}[season];
+  // V14.8: subtle autumn foliage remains green; gentle rain is visible even on small screens.
+  const natureMotionOff = typeof matchMedia==='function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rainPaths = Array.from({length:64},(_,i)=>{
+    const x=8+(i*67)%348, y=15+(i*113)%550, len=9+(i%4)*3;
+    return `<path d="M${x} ${y} l-3 ${len}"/>`;
+  }).join('');
+  const rainLayer = rainVisual ? `<g class="nature-rain" stroke="#e2f2ff" stroke-width="1.05" stroke-linecap="round" opacity="${tone==='night'?'.63':'.53'}">${rainPaths}</g>` : '';
+  const autumnAccents = season==='autumn' ? '<g fill="#b67b47" opacity=".8"><path d="M42 384q5-6 9 0l-4 5z"/><path d="M311 444q5-6 9 0l-4 5z"/><path d="M61 525q5-6 9 0l-4 5z"/><path d="M296 272q4-5 7 0l-3 4z"/><path d="M114 195q4-5 7 0l-3 4z"/></g>' : '';
   const mapAtmosphere = `<g pointer-events="none" aria-hidden="true">
     <rect x="0" y="0" width="360" height="580" fill="${seasonTint}" opacity="${seasonAlpha}"/>
-    ${season==='autumn'?'<g fill="#b66d40" opacity=".62"><path d="M34 385q5-6 9 0l-4 5z"/><path d="M312 448q5-6 9 0l-4 5z"/><path d="M45 522q5-6 9 0l-4 5z"/></g>':''}
+    ${autumnAccents}
     ${season==='spring'?'<g fill="#f6cad8" opacity=".60"><circle cx="46" cy="375" r="1.8"/><circle cx="307" cy="447" r="1.7"/><circle cx="57" cy="514" r="1.6"/></g>':''}
     ${cloudyVisual?'<rect width="360" height="580" fill="#8799b5" opacity=".045"/>':''}
-    ${rainVisual?'<g class="nature-rain" stroke="#d5e8f4" stroke-width=".7" opacity=".28"><path d="M32 80l-4 13M84 120l-4 13M149 60l-4 13M210 105l-4 13M276 65l-4 13M333 140l-4 13M65 290l-4 13M180 340l-4 13M300 310l-4 13M120 475l-4 13M245 510l-4 13"/></g>':''}
+    ${rainLayer}
     ${windyVisual?'<g class="nature-wind" fill="#a9b86a" opacity=".5"><path d="M46 345q5-7 9 0l-4 5z"/><path d="M300 412q5-7 9 0l-4 5z"/></g>':''}
   </g>`;
 
