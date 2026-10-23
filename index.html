@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.3</title>
+<title>今天在隱花王國尋寶 V14.4</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -777,10 +777,6 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
   </div>
   <div class="lbl">玩法</div>
   <div class="seg" id="routeSeg"></div>
-  <div class="lbl">衣服質感</div>
-  <div class="seg" id="matSeg"></div>
-  <div class="lbl">衣服顏色</div>
-  <div class="seg" id="colorSeg"></div>
   <label class="lbl" for="nick">暱稱</label>
   <input id="nick" class="field" maxlength="10" placeholder="例如：大甲果友">
   <div class="dock"><button id="btnCreate" class="btn main">進入隱花王國</button></div>
@@ -869,7 +865,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
         <div class="pv-perk" id="mePerk"></div>
         <div class="me-route" id="meRoute"></div>
         <div class="rt-now" id="meRouteNow"></div>
-        <button id="btnEdit" class="chip" style="margin-top:6px">換裝</button>
+        <button id="btnEdit" class="chip" style="margin-top:6px">換角色</button>
       </div>
     </div>
     <details class="card fold">
@@ -1081,7 +1077,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V14.3';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V14.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1218,10 +1214,10 @@ function fmtDate(s){ if(!s) return ''; const p=String(s).split('-'); return p.le
 
 /* ---------- 遊戲設定（農場可調） ---------- */
 const LEVELS = [
-  {n:'小果粉絲',min:0,    icon:'🌱', perk:'寶箱開一般券、可選棉麻與皮革衣服'},
-  {n:'青果粉絲',min:500,  icon:'🌿', perk:'絲綢衣服、生日券、寶箱好券變多'},
-  {n:'熟果粉絲',min:1500, icon:'🍇', perk:'金屬衣服、產季優先預購、寶箱可開免單'},
-  {n:'摯愛粉絲',min:6000, icon:'👑', perk:'翡翠錦衣服、果樹命名、到園採果日'}
+  {n:'小果粉絲',min:0,    icon:'🌱', perk:'寶箱開一般券'},
+  {n:'青果粉絲',min:500,  icon:'🌿', perk:'生日券、寶箱好券變多'},
+  {n:'熟果粉絲',min:1500, icon:'🍇', perk:'產季優先預購、寶箱可開免單'},
+  {n:'摯愛粉絲',min:6000, icon:'👑', perk:'果樹命名、到園採果日'}
 ];
 
 // 果粉等級圖示：全部用無花果
@@ -1659,7 +1655,7 @@ function closeSheet(){$('#sheet').classList.add('hide'); if(typeof stopMG==='fun
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
 
 /* =========================================================
-   角色繪製（SVG，含衣服質感）
+   舊版手繪角色（SVG）：只在 3D 圖載不到時當備用
    ========================================================= */
 let uidN = 0;
 function matDef(mat, color, id){
@@ -1674,7 +1670,20 @@ function matDef(mat, color, id){
   }
   return '';
 }
+
+/* V14.4：角色一律用 3D 立體圖（art/chars/<角色>.webp），不再換衣服質感與顏色。
+   玩家舊資料裡的 mat、color 欄位保留不刪，只是不再使用。圖片載不到時退回下面的 avatarVec（舊版手繪角色）。 */
+const CHAR_ART = {"awu":[0.1,2.0,119.8,148.0,58.8,102.6,34.7],"alien":[10.1,2.0,99.8,148.0,70.0,81.9,37.9],"robot":[0.0,8.5,120.0,141.5,56.4,84.9,40.8],"hero":[0.0,9.2,120.0,140.8,73.2,86.6,42.0],"apo":[0.0,10.2,120.0,139.8,62.4,82.9,44.4],"knight":[0.0,17.5,120.0,132.5,58.8,86.4,36.0],"cat":[4.1,2.0,111.7,148.0,44.4,79.0,45.8],"teddy":[5.0,2.0,110.0,148.0,56.7,71.6,41.8],"dog":[0.0,6.6,120.0,143.4,78.0,91.2,54.0],"kiki":[0.0,3.8,120.0,146.2,67.2,93.0,55.2],"turtle":[0.0,39.6,120.0,110.4,62.4,122.4,30.0],"hen":[0.0,9.9,120.0,140.1,42.0,72.9,34.8],"poodle":[0.0,22.1,120.0,127.9,55.2,97.6,49.2],"golden":[0.0,17.7,120.0,132.3,57.6,98.4,57.6],"shiba":[4.0,2.0,111.9,148.0,47.7,83.4,59.3],"bunny":[4.0,2.0,112.1,148.0,60.0,93.8,56.0]};   // [x,y,寬,高,…]：角色圖在 120×150 畫布上的位置
+const CHAR_DATA = {};
+(function(){ try{ Object.keys(CHAR_ART).forEach(b=>{ fetch('art/chars/'+b+'.webp').then(r=>r.ok?r.blob():null).then(bl=>{ if(!bl) return; const fr = new FileReader(); fr.onload = ()=>{ CHAR_DATA[b] = fr.result; }; fr.readAsDataURL(bl); }).catch(()=>{}); }); }catch(e){} })();
 function avatar(roleId, mat, color){
+  const role = ROLES.find(r=>r.id===roleId) || ROLES[0], A = CHAR_ART[role.base];
+  if(!A) return avatarVec(roleId, mat, color);
+  const [x,y,w,h] = A;
+  const href = CHAR_DATA[role.base] || ('art/chars/'+role.base+'.webp');
+  return `<svg viewBox="0 0 120 150" role="img" aria-label="${ROLE_BASE[role.base].n}"><image href="${href}" x="${x}" y="${y}" width="${w}" height="${h}" preserveAspectRatio="none"/></svg>`;
+}
+function avatarVec(roleId, mat, color){
   const role = ROLES.find(r=>r.id===roleId) || ROLES[0];
   const id = 'm'+(uidN++), F = `url(#${id})`, g = role.g;
   const trim = mat==='emerald' ? ' stroke="#D9B03A" stroke-width="1.6"' : ' stroke="#00000022" stroke-width="1"';
@@ -2202,14 +2211,14 @@ $('#btnCode').onclick = async ()=>{
 };
 
 /* =========================================================
-   角色建立／換裝
+   角色建立／換角色
    ========================================================= */
 let draft = null;
 function lvIndex(pts){ let i=0; LEVELS.forEach((l,k)=>{ if(pts>=l.min) i=k; }); return i; }
 function openCreate(){
   draft = { route:P.route||'active', role:P.role||'awu_f', mat:P.mat||'linen', color:P.color||COLORS[3], nick:P.name||'' };
   $('#nick').value = draft.nick;
-  $('#btnCreate').textContent = P.role ? '儲存換裝' : '進入隱花王國';
+  $('#btnCreate').textContent = P.role ? '儲存角色' : '進入隱花王國';
   renderCreate(); show('create');
 }
 function renderCreate(){
@@ -2229,10 +2238,7 @@ function renderCreate(){
     $('#genderSeg').innerHTML = ['f','m'].map(g=>`<button class="chip ${r.g===g?'sel':''}" data-g="${g}">${g==='f'?'女':'男'}</button>`).join('');
     $('#genderSeg').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{draft.role=r.base+'_'+b.dataset.g;renderCreate();});
   }
-  $('#matSeg').innerHTML = MATS.map(m=>{const lock=m.lv>lv;return `<button class="chip ${draft.mat===m.id?'sel':''} ${lock?'lock':''}" data-m="${m.id}" ${lock?`aria-disabled="true"`:''}>${lock?'🔒':''}${m.n}</button>`;}).join('');
-  $('#matSeg').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{const m=MATS.find(x=>x.id===b.dataset.m); if(m.lv>lv){toast(`${m.n}需要「${LEVELS[m.lv].n}」才能穿`);return;} draft.mat=m.id; renderCreate();});
-  $('#colorSeg').innerHTML = COLORS.map(c=>`<button class="sw ${draft.color===c?'sel':''}" style="background:${c}" data-c="${c}" aria-label="顏色 ${c}"></button>`).join('');
-  $('#colorSeg').querySelectorAll('.sw').forEach(b=>b.onclick=()=>{draft.color=b.dataset.c;renderCreate();});
+
 }
 $('#nick').oninput = e=>draft.nick=e.target.value;
 $('#btnCreate').onclick = async()=>{
@@ -2587,15 +2593,16 @@ function openGH3D(zid){
     const moving = Math.abs(mvz)+Math.abs(mvx) > .01; if(moving) G.walk += (Math.abs(mvz)+Math.abs(mvx))*2.2;
     const camZ = G.pz-5.5, camX = G.px, camY = 2.1, hz = H*.4, f = W*.85;
     const pj = (x,y,zz)=>{ const dz = zz-camZ; if(dz<.4) return null; const s = f/dz; return {x:W/2+(x-camX)*s, y:hz+(camY-y)*s, s}; };
-    const g = cx.createLinearGradient(0,0,0,hz); g.addColorStop(0,'#F7FCF4'); g.addColorStop(1,'#D9EED3'); cx.fillStyle = g; cx.fillRect(0,0,W,hz+2);
-    cx.fillStyle = '#7C5E45'; cx.fillRect(0,hz,W,H-hz);
+    ghSky(cx, W, hz);
+    cx.fillStyle = '#9C7C5A'; cx.fillRect(0,hz,W,H-hz);
     const halfW = XMAX + 1.5;
     for(let az = Math.ceil(camZ/4)*4; az < Math.min(camZ+44, LEN+2); az += 4){ cx.beginPath(); let st = false;    // 拱形骨架
       for(let x=-halfW; x<=halfW; x+=1){ const p = pj(x, 3.1+2.2*(1-(x/halfW)**2), az); if(!p) continue; st ? cx.lineTo(p.x,p.y) : cx.moveTo(p.x,p.y); st = true; }
-      cx.strokeStyle = 'rgba(255,255,255,.85)'; cx.lineWidth = Math.max(1, 70/(az-camZ)); cx.stroke(); }
+      cx.strokeStyle = 'rgba(90,100,110,.35)'; cx.lineWidth = Math.max(1.4, 95/(az-camZ)); cx.stroke(); cx.strokeStyle = 'rgba(240,246,250,.95)'; cx.lineWidth = Math.max(1, 60/(az-camZ)); cx.stroke(); }
+    for(let q=-4;q<=4;q++){ const x = q/4*halfW*.92, y = 3.1+2.2*(1-(x/halfW)**2), a = pj(x,y,camZ+.6), b = pj(x,y,Math.min(LEN+.5,camZ+44)); if(a&&b){ cx.strokeStyle = 'rgba(225,235,242,.55)'; cx.lineWidth = 1; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } }
     const quad = (x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,Math.min(LEN,camZ+46)), d=pj(x1,0,Math.min(LEN,camZ+46)); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
-    ROWX.forEach(x=>quad(x-.55, x+.55, '#6B4E3A'));
-    for(let i=0;i<ROWX.length-1;i++){ const m = (ROWX[i]+ROWX[i+1])/2; quad(m-.6, m+.6, '#CDBB9A'); }
+    for(let i=0;i<ROWX.length-1;i++){ const m = (ROWX[i]+ROWX[i+1])/2; quad(m-.95, m+.95, '#E7D8B6'); quad(m-.95, m-.88, '#CDBB98'); quad(m+.88, m+.95, '#CDBB98'); }
+    ROWX.forEach(x=>{ quad(x-.72, x+.72, '#2B2F33'); quad(x-.5, x-.38, '#4A5258'); quad(x+.3, x+.36, '#3E454B'); });
     [-halfW, halfW].forEach(x=>{ const a=pj(x,0,camZ+.6), b=pj(x,0,Math.min(LEN,camZ+44)), c=pj(x,3.1,Math.min(LEN,camZ+44)), d=pj(x,3.1,camZ+.6); if(a&&b&&c&&d){ cx.fillStyle='rgba(235,245,232,.55)'; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); } });
     const back = pj(0,0,LEN+.5); if(back){ const tl = pj(-halfW,3.1,LEN+.5), br = pj(halfW,0,LEN+.5); if(tl&&br){ cx.fillStyle='rgba(225,238,220,.9)'; cx.fillRect(tl.x, tl.y, br.x-tl.x, br.y-tl.y); } }
     const tapped = (P.daily.tapped && P.daily.tapped[zid]) || [], res = P.daily['res_'+zid] || {};
@@ -2610,7 +2617,7 @@ function openGH3D(zid){
           const gr = cx.createLinearGradient(0, tp.y, 0, b0.y); gr.addColorStop(0,'rgba(255,214,90,0)'); gr.addColorStop(.5,`rgba(255,214,90,${.42*pulse})`); gr.addColorStop(1,`rgba(255,236,150,${.7*pulse})`);
           cx.fillStyle = gr; cx.beginPath(); cx.moveTo(b0.x-bw*.7, b0.y); cx.lineTo(tp.x-bw*.35, tp.y); cx.lineTo(tp.x+bw*.35, tp.y); cx.lineTo(b0.x+bw*.7, b0.y); cx.fill();
           cx.fillStyle = `rgba(255,236,150,${.45*pulse})`; cx.beginPath(); cx.ellipse(b0.x, b0.y, bw, bw*.25, 0, 0, Math.PI*2); cx.fill(); } }
-      drawFigTree(cx, pj, it.x, it.z, s, z.stage, it.k*7 + it.r*3, rustle);
+      ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z.stage, it.k*7 + it.r*3, rustle);
       if(rustle && TH > 1 && Math.random() < .02) G.fall.push({x:it.x+(Math.random()-.5)*.6, y:TH-.2, z:it.z, vy:.012+Math.random()*.01, ph:Math.random()*6});
       const top = pj(it.x, TH+.3, it.z);
       if(it.idx!=null && tapped.includes(it.idx) && res[it.idx] && top && s > 10 && dist < 14){ const fs = Math.min(26, Math.max(12, .32*s));
@@ -4873,7 +4880,7 @@ function rainGame(k, d){
 let EM = null;
 const EM_LEN = 110, EM_ZL = 22;
 function emAvatarImg(){
-  const svg = avatar(P.role, P.mat, P.color).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="300"');
+  const b = roleBase(P.role), svg = (CHAR_ART[b] && !CHAR_DATA[b] ? avatarVec : avatar)(P.role, P.mat, P.color).replace('<svg', '<svg xmlns="http://www.w3.org/2000/svg" width="240" height="300"');
   const img = new Image(); img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); return img;
 }
 function lerpC(a, b, t){ const pa=parseInt(a.slice(1),16), pb=parseInt(b.slice(1),16); t=Math.max(0,Math.min(1,t));
@@ -4892,7 +4899,67 @@ function stageTree(stage){
   if(stage==='座果') return {h:1.5, n:4, fruit:'green'};
   return {h:2.6, n:7, fruit:'ripe'};
 }
+/* V14.3：溫室內的藍天白雲（畫一次快取起來），兩個溫室場景共用 */
+function ghSky(cx, W, hz){
+  const k = W+'x'+Math.round(hz);
+  if(!ghSky.c || ghSky.k!==k){
+    const c = document.createElement('canvas'), dpr = Math.min(2, window.devicePixelRatio||1); c.width = W*dpr; c.height = (Math.ceil(hz)+2)*dpr;
+    const g = c.getContext('2d'); g.scale(dpr,dpr);
+    const gr = g.createLinearGradient(0,0,0,hz); gr.addColorStop(0,'#5DA6E6'); gr.addColorStop(.65,'#A6D1F1'); gr.addColorStop(1,'#E4F1F5'); g.fillStyle = gr; g.fillRect(0,0,W,hz+2);
+    let r = 7; const rnd = ()=>{ r = (r*16807)%2147483647; return r/2147483647; };
+    for(let i=0;i<12;i++){ const x = rnd()*W, y = rnd()*hz*.75, w = 50+rnd()*100; g.fillStyle = 'rgba(255,255,255,.8)';
+      for(let j=0;j<5;j++){ g.beginPath(); g.ellipse(x+(j-2)*w*.2, y+(j%2?-1:1)*w*.035, w*.24, w*.12, 0, 0, Math.PI*2); g.fill(); } }
+    // 溫室透明拱頂的柔和陽光與天空漸層（只作用於繪圖快取）。
+    const sun=g.createRadialGradient(W*.83,hz*.12,4,W*.83,hz*.12,W*.55);
+    sun.addColorStop(0,'rgba(255,252,215,.58)');sun.addColorStop(.32,'rgba(255,248,218,.18)');sun.addColorStop(1,'rgba(255,255,255,0)');
+    g.fillStyle=sun;g.fillRect(0,0,W,hz);
+    ghSky.c = c; ghSky.k = k;
+  }
+  cx.drawImage(ghSky.c, 0, 0, W, Math.ceil(hz)+2);
+}
+function ghShadow(cx, pj, x, z, h){ const p = pj(x+.45, 0, z+.25); if(!p || p.s < 3) return; cx.fillStyle = 'rgba(28,24,18,.22)'; cx.beginPath(); cx.ellipse(p.x, p.y, (h<1?.35:.95)*p.s, (h<1?.1:.24)*p.s, 0, 0, Math.PI*2); cx.fill(); }
+/* GH-ART（友軍）：溫室內的樹改用去背圖片；圖片沒載好或太遠時，退回原本程式畫的樹 */
+// 素材只要換 art/gh/ 裡的圖檔即可，不用改程式：fig-<階段>.webp 為主圖，可另加 fig-<階段>-2.webp、-3.webp 當變化（沒有就自動略過）
+const GH_ART = (()=>{
+  const out={};
+  for(const key of ['prune','set','ripe']){
+    out[key] = ['', '-2', '-3'].map(v=>{ const im=new Image(); im.decoding='async'; im.src='art/gh/fig-'+key+v+'.webp'; return im; });
+  }
+  return out;
+})();
+/* 巡園 V14.3 視覺層：獨立度冬休眠枝條，不影響階段、判定或遊戲資料。 */
+function ghWinterTree(cx,pj,x,z,s,seed){
+  const foot=pj(x,0,z), top=pj(x,.5,z); if(!foot||!top)return;
+  const h=foot.y-top.y; if(h<=0)return;
+  cx.save();cx.lineCap='round';cx.lineJoin='round';
+  const bark=cx.createLinearGradient(foot.x-h*.1,top.y,foot.x+h*.12,foot.y);
+  bark.addColorStop(0,'#937050');bark.addColorStop(.48,'#674830');bark.addColorStop(1,'#4c3527');
+  cx.strokeStyle=bark;cx.lineWidth=Math.max(1.2,s*.11);
+  cx.beginPath();cx.moveTo(foot.x,foot.y);cx.lineTo(top.x,top.y);cx.stroke();
+  for(let i=0;i<4;i++){
+    const yy=.20+i*.075, a=pj(x,yy,z), side=i%2?1:-1;
+    const b=pj(x+side*(.13+(i%2)*.04),Math.min(.52,yy+.095),z);
+    if(!a||!b)continue;
+    cx.strokeStyle=i%2?'#745238':'#846044';cx.lineWidth=Math.max(1,s*.045);
+    cx.beginPath();cx.moveTo(a.x,a.y);cx.quadraticCurveTo((a.x+b.x)/2,b.y+3,b.x,b.y);cx.stroke();
+    if(s>15){cx.fillStyle='#a77c55';cx.beginPath();cx.ellipse(b.x,b.y,Math.max(1,s*.024),Math.max(1.5,s*.042),-.3,0,Math.PI*2);cx.fill();}
+  }
+  cx.fillStyle='#b58e67';cx.beginPath();cx.ellipse(top.x,top.y,Math.max(1,s*.052),Math.max(1,s*.018),0,0,Math.PI*2);cx.fill();
+  cx.restore();
+}
 function drawFigTree(cx, pj, x, z, s, stage, seed, rustle){
+  if(stage==='度冬'){ ghWinterTree(cx,pj,x,z,s,seed); return; }
+  const pool = GH_ART[stage==='剪枝'?'prune':stage==='座果'?'set':'ripe'].filter(im=>im.complete && im.naturalWidth>0);
+  const sprite = pool.length ? pool[Math.abs(seed|0) % pool.length] : {complete:false};
+  if(sprite.complete && sprite.naturalWidth>0){
+    const T=stageTree(stage), foot=pj(x,0,z), crown=pj(x,T.h,z);
+    if(foot && crown && foot.s>=6){
+      const height=foot.y-crown.y; const width=height*(sprite.naturalWidth/sprite.naturalHeight);
+      cx.save(); cx.translate(foot.x,foot.y); cx.rotate((rustle||0)*.055);
+      if(seed%2) cx.scale(-1,1);
+      cx.drawImage(sprite,-width/2,-height,width,height); cx.restore(); return;
+    }
+  }
   const T = stageTree(stage), b0 = pj(x,0,z), b1 = pj(x,T.h,z); if(!b0||!b1) return;
   cx.strokeStyle = '#5E3B4A'; cx.lineWidth = Math.max(1, (T.h<1 ? .1 : .07)*s); cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(b0.x,b0.y); cx.lineTo(b1.x,b1.y); cx.stroke();
   if(T.n===0){   // 剪枝：短短的主幹，剪口和兩三個新芽
@@ -5044,14 +5111,14 @@ function openEmerald(){
     const moving = Math.abs(mvz)+Math.abs(mvx) > .01; if(moving) EM.walk += (Math.abs(mvz)+Math.abs(mvx))*2.2;
     const camZ = EM.pz-5.5, camX = EM.px, camY = 2.1, hz = H*.4, f = W*.85;
     const pj = (x,y,z)=>{ const dz=z-camZ; if(dz<.4) return null; const s=f/dz; return {x:W/2+(x-camX)*s, y:hz+(camY-y)*s, s}; };
-    const g = cx.createLinearGradient(0,0,0,hz); g.addColorStop(0,'#F7FCF4'); g.addColorStop(1,'#D9EED3'); cx.fillStyle=g; cx.fillRect(0,0,W,hz+2);
-    cx.fillStyle='#7C5E45'; cx.fillRect(0,hz,W,H-hz);
+    ghSky(cx, W, hz);
+    cx.fillStyle='#9C7C5A'; cx.fillRect(0,hz,W,H-hz);
     for(let az=Math.ceil(camZ/4)*4; az<camZ+48; az+=4){ cx.beginPath(); let st=false;
       for(let x=-20;x<=20;x+=2){ const p=pj(x, 3.2+4.6*(1-(x/20)**2), az); if(!p) continue; st ? cx.lineTo(p.x,p.y) : cx.moveTo(p.x,p.y); st=true; }
-      cx.strokeStyle='rgba(255,255,255,.85)'; cx.lineWidth=Math.max(1, 80/(az-camZ)); cx.stroke(); }
+      cx.strokeStyle='rgba(90,100,110,.35)'; cx.lineWidth=Math.max(1.4, 105/(az-camZ)); cx.stroke(); cx.strokeStyle='rgba(240,246,250,.95)'; cx.lineWidth=Math.max(1, 66/(az-camZ)); cx.stroke(); }
     ROWS.filter(x=>Math.abs(x-camX)<14).forEach(x=>{ const a=pj(x,3.4,camZ+1), b=pj(x,3.4,camZ+48); if(a&&b){ cx.strokeStyle='rgba(120,130,130,.55)'; cx.lineWidth=1.3; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } });
     const quad=(x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,camZ+50), d=pj(x1,0,camZ+50); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
-    quad(-.95,.95,'#CDBB9A'); AISLE.forEach(x=>{ quad(-x-.15,-x+.15,'#5E4A3A'); quad(x-.15,x+.15,'#5E4A3A'); });
+    quad(-.95,.95,'#E7D8B6'); AISLE.forEach(x=>{ quad(-x-.15,-x+.15,'#2B2F33'); quad(x-.15,x+.15,'#2B2F33'); });
     [-.95,.95].forEach(x=>{ const a=pj(x,0,camZ+.6), b=pj(x,0,camZ+50); if(a&&b){ cx.strokeStyle='#E8DCC4'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke(); } });
     [-19.8,19.8].forEach(x=>{ if(Math.abs(x-camX)<16){ const a=pj(x,0,camZ+.6), b=pj(x,0,camZ+48), c=pj(x,3.2,camZ+48), d=pj(x,3.2,camZ+.6); if(a&&b&&c&&d){ cx.fillStyle='rgba(235,245,232,.55)'; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); } } });
     const items = [];
@@ -5065,7 +5132,7 @@ function openEmerald(){
       if(it.k==='t'){
         const TH = stageTree(z6.stage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
         if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
-        drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0);
+        ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0);
         if(TH>1 && s>=16){ const cp=pj(it.x,Math.min(1.5,TH*.6),it.z); cx.fillStyle='#F2663A'; cx.fillRect(cp.x-.04*s, cp.y-.03*s, .08*s, .06*s); }
       } else if(it.k==='sign'){
         const p=pj(it.x,1.15,it.z), q=pj(it.x,0,it.z); if(!p||p.s<6) continue;

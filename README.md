@@ -16,7 +16,7 @@ art/                  所有圖檔（只換圖不用改程式）
   map/kingdom-sky-mask.png   地圖遮罩：晚上只讓天空變暗
   chars/<角色>.webp          16 位 3D 角色（awu、alien、robot、hero、apo、knight、cat、teddy、
                              dog、kiki、turtle、hen、poodle、golden、shiba、bunny）
-  gh/fig-<階段>.webp         溫室裡的樹：prune 剪枝、set 座果、ripe 採收、winter 度冬
+  gh/fig-<階段>.webp         溫室裡的樹：prune 剪枝、set 座果、ripe 採收（度冬由程式畫枯枝）
                              （可加 -2、-3 變化圖，自動輪流）
 
 firestore.rules       目前已發布的 Firestore 規則（存檔，改規則從這份接著改）
@@ -34,5 +34,5 @@ docs/                 交接說明與參考圖（不會部署到網站）
 
 ## 角色名稱
 
-阿無、吃貨外星人、苔蘚古機器人、橘子（hero）、五毛（apo）、黑騎士、小呱、碰氣、
+阿無、吃貨外星人、苔蘚古機器人、英雄（hero）、ㄚ波（apo）、黑騎士、小呱、碰氣、
 黑熊、奇奇、小葵、一虎、小雪、golden、柴柴、邦尼
