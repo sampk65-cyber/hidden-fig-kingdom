@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>今天在隱花王國尋寶 V15.0</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-<style id="pageStyle"></style>
+<style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
+</style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
@@ -1055,7 +1056,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
           <div><label class="lbl" for="wHours">氣候持續時數（1–72 小時）</label><input id="wHours" class="field" type="number" min="1" max="72" step="1" value="3" inputmode="numeric"></div>
         </div>
         <div class="lbl">病蟲害</div>
-        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> 🦟 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> 🍂 銹病</label><label class="chip"><input type="checkbox" value="myna"> 🐦 八哥</label></div>
+        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> <span class="pest-ico">🪰</span> 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> <span class="pest-ico">🍁</span> 鏽病</label><label class="chip"><input type="checkbox" value="myna"> <span class="pest-ico">🐦</span> 八哥</label></div>
         <p class="lvtxt">規則：33°C 以上高溫、30°C 以上且沒下雨為乾旱、風速 10m/s 以上強風、雨量 20mm 以上豪雨。越熱果況越好，雨和風讓果況變差。</p>
         <button id="btnWx" class="btn main">發布</button>
       </div>
@@ -2782,9 +2783,10 @@ function czName(){ return zName(ZONES.find(z=>z.id===chZone())); }
 function chMark(){
   const k = pendingCh()[0]; if(!k) return '';
   const z = ZONES.find(x=>x.id===chZone()), x = z.x<180 ? z.x-52 : z.x+52, y = z.y-26;
+  const symbol = k==='whitefly'?'🪰':k==='rust'?'🍁':k==='myna'?'🐦':typeof CH[k].i==='string'&&CH[k].i.startsWith('<svg')?'⚠️':CH[k].i;
   return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="${zName(z)}出現${CH[k].n}">
     <circle cx="${x}" cy="${y}" r="19" fill="#F59A2A" opacity=".3"><animate attributeName="r" values="16;23;16" dur="1.5s" repeatCount="indefinite"/></circle>
-    <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${CH[k].i}</text></g>`;
+    <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${symbol}</text></g>`;
 }
 const CH_PAL = {e:['#A0703C','#7A5228','#BC8A52','#5E3E1E'], d:['#7C8A96','#56626C','#97A5B1','#3E474E'], c:['#C77A3C','#93501F','#E39A5E','#F0C46A'],
   b:['#AFC4D6','#8AA2B6','#CCDCE8','#F4F8FB'], a:['#E2B23A','#B8892A','#F2CB5B','#FFF1B0'], z:['#4FC3F7','#2B8FC0','#8EDDFB','#FFFFFF']};
