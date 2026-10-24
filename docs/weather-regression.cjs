@@ -75,7 +75,7 @@ check('manual heavy-rain visuals retain all existing effects',()=>{
   assert.ok(nodes['#mapSvg'].innerHTML.includes('class="wx-ground-spray"'));
   assert.equal(run('weatherVisual().wet'),1);
 });
-check('2 m/s rotation remains playable but is identified as a drill',()=>{
+check('2 m/s rotation remains playable but is identified as a new challenge',()=>{
   setup(observed,{ch:{rain:'ok'},chTried:['rain'],chTry:4,tapped:{}});
   // Fixed date/slot yields wind after rain has been completed.
   assert.equal(run('activeCh()[0]'),'wind');
@@ -83,8 +83,9 @@ check('2 m/s rotation remains playable but is identified as a drill',()=>{
   run('renderWeather()');
   assert.match(nodes['#wxBox'].innerHTML,/data-ch="wind"/);
   assert.ok(!nodes['#wxBox'].innerHTML.includes('出現強風'));
-  assert.match(nodes['#wxBox'].innerHTML,/演練/);
-  assert.match(run('chMark()'),/演練/);
+  assert.match(nodes['#wxBox'].innerHTML,/新挑戰/);
+  assert.match(run('chMark()'),/新挑戰/);
+  assert.ok(!nodes['#wxBox'].innerHTML.includes('演練'));
 });
 check('real strong wind keeps weather-triggered wording',()=>{
   setup({...observed,rain:0,wind:12});run('renderWeather()');
@@ -114,6 +115,12 @@ check('manual and fallback weather never receive a measured daily-rain label',()
 check('non-weather pest challenges retain their original caption',()=>{
   setup({...observed,rain:0});
   assert.equal(run("chCaption('whitefly')"),'松濤溫室出現銀葉粉蝨！');
+});
+check('weather title changes while Shenkang source stays visible',()=>{
+  setup(observed);run('renderWeather()');
+  assert.match(nodes['#wxBox'].innerHTML,/王國天氣/);
+  assert.match(nodes['#wxBox'].innerHTML,/神岡實測/);
+  assert.ok(!nodes['#wxBox'].innerHTML.includes('今日神岡'));
 });
 console.log(`${passed} passed; ${failures} failed`);
 process.exitCode=failures?1:0;
