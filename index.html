@@ -3544,8 +3544,8 @@ function simWeather(){
   return {temp, rain, wind, pests, src:'模擬天氣'};
 }
 async function loadWeather(){
-  let o=null;try{o=JSON.parse(localStorage.getItem('hfk_wx_test')||'null');}catch(e){}
-  if(o){WX={...o,src:'測試天氣'};return;}
+  // V15.1: 舊版測試值不再覆蓋正式天氣或後台發布
+  try{localStorage.removeItem('hfk_wx_test');}catch(e){}
   try{
     const c=await DB.get('config/weather');
     if(c&&c.mode==='manual'&&c.date===today()){
