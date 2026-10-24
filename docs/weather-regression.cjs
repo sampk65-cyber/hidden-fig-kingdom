@@ -122,5 +122,15 @@ check('weather title changes while Shenkang source stays visible',()=>{
   assert.match(nodes['#wxBox'].innerHTML,/神岡實測/);
   assert.ok(!nodes['#wxBox'].innerHTML.includes('今日神岡'));
 });
+check('publishing and expiring a challenge updates the map with unchanged weather',()=>{
+  setup(observed);run('startWeatherTransition()');
+  run("WX.challenges=['wind'];renderWeather();startWeatherTransition()");
+  assert.match(nodes['#wxBox'].innerHTML,/data-ch="wind"/);
+  assert.match(nodes['#mapSvg'].innerHTML,/aria-label="松濤溫室出現新挑戰：強風！"/);
+  run('WX.challenges=[];renderWeather();startWeatherTransition()');
+  assert.match(nodes['#mapSvg'].innerHTML,/aria-label="松濤溫室出現新挑戰：豪雨！"/);
+  nodes['#mapSvg'].innerHTML='unchanged map';run('startWeatherTransition()');
+  assert.equal(nodes['#mapSvg'].innerHTML,'unchanged map','unchanged polling must not rebuild the map');
+});
 console.log(`${passed} passed; ${failures} failed`);
 process.exitCode=failures?1:0;

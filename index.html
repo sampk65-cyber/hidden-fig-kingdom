@@ -669,6 +669,7 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
 .play-list button{border:1.5px solid var(--line);background:var(--card);border-radius:16px;padding:12px 4px;font-size:var(--fs-b);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px}
 .play-list button b{font-size:26px;font-weight:400}
 .play-list button b svg{width:32px;height:32px;display:block}
+.prac-result-icon svg{width:1.3em;height:1.3em;display:inline-block;vertical-align:middle}
 
 .mn-hud{position:absolute;left:8px;right:8px;top:6px;font-size:12px;color:#2A1F2D;background:#ffffffcc;border-radius:10px;padding:3px 8px;pointer-events:none}
 
@@ -3648,7 +3649,7 @@ async function loadWeather(){
 }
 // V15.4: smoothly interpolate visual weather only; WX remains the authoritative
 // measured/manual value for labels, challenges, and fruit calculations.
-let WX_VIS=null, wxTransitionFrame=0, wxTransitionTimer=null;
+let WX_VIS=null, wxTransitionFrame=0, wxTransitionTimer=null, wxChallengeState='';
 // V15.6.1: CWA Now.Precipitation is daily accumulation, not current intensity.
 // These values select existing visual tiers only; they are not measured mm/hour.
 function visualRainAmount(){
@@ -3659,9 +3660,11 @@ function visualRainAmount(){
 }
 function startWeatherTransition(){
   if(!P)return;
+  const challengeState=JSON.stringify(WX.challenges||[]), challengesChanged=challengeState!==wxChallengeState;
+  wxChallengeState=challengeState;
   const target={temp:Number(WX.temp)||0,rain:visualRainAmount(),wind:Math.max(0,Number(WX.wind)||0)};
   if(!WX_VIS){WX_VIS={...target};renderMap();return;}
-  if(['temp','rain','wind'].every(k=>Math.abs(WX_VIS[k]-target[k])<0.001)){return;}
+  if(['temp','rain','wind'].every(k=>Math.abs(WX_VIS[k]-target[k])<0.001)){if(challengesChanged)renderMap();return;}
   if(wxTransitionTimer)clearInterval(wxTransitionTimer);
   const from={...WX_VIS},start=Date.now(),duration=8000;
   wxTransitionTimer=setInterval(()=>{
@@ -5726,7 +5729,7 @@ function practiceEnd(k, ok, detail, score){
   P.prac = P.prac || {}; P.prac[k] = P.prac[k] || {}; const best = Math.max(pracBest(k,d), score), nb = score > pracBest(k,d); P.prac[k][d] = best; Auth.save();
   openSheet(`<div class="big pop">${ok?'🎉':'😊'}</div><h2 class="h2">${ok?'練習成功！':'再接再厲！'}</h2>
     <div class="prac-sc"><b>${score}</b><small>練習分數・${DIFF_N[d]}${nb?'・🆕 新紀錄':''}</small></div>
-    <p class="sub">${g.i} ${g.n}・最佳 ${best} 分${detail?`<br>${detail}`:''}<br><span class="lvtxt">練習不增加果友值，也不影響正式難度</span></p>
+    <p class="sub"><span class="prac-result-icon">${g.i}</span> ${g.n}・最佳 ${best} 分${detail?`<br>${detail}`:''}<br><span class="lvtxt">練習不增加果友值，也不影響正式難度</span></p>
     <button class="btn main" id="pAgain">再玩一次（${DIFF_N[d]}）</button><button class="btn ghost" id="pDiff">換難度</button><button class="btn ghost" id="pMenu">換一個遊戲</button><button class="btn ghost" onclick="closeSheet()">結束</button>`, true);
   $('#pAgain').onclick = ()=>practice(k, d); $('#pDiff').onclick = ()=>pracPick(k); $('#pMenu').onclick = playMenu;
 }
