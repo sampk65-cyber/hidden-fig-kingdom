@@ -1039,10 +1039,10 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     </div>
     <div class="admpane hide" id="ap-weather">
       <h2 class="h2 wk">今日天氣與挑戰</h2>
-      <p class="sub">自動模擬會依季節產生天氣。選「手動發布」可以公告今天神岡農場的真實狀況，也能觸發粉蝨、銹病。之後可以改成自動讀取氣象資料。</p>
+      <p class="sub">自動天氣獨立讀取中央氣象署神岡站；選「手動模擬」並發布可覆蓋今天的天氣與王國景觀。觀測不可用時會明確標示模擬備援。</p>
       <div class="card">
         <label class="lbl" for="wMode" style="margin-top:0">模式</label>
-        <select id="wMode" class="field"><option value="sim">自動模擬</option><option value="manual">手動發布（只限今天）</option></select>
+        <select id="wMode" class="field"><option value="sim">自動天氣（神岡觀測）</option><option value="manual">手動模擬（只限今天）</option></select>
         <div class="grid2">
           <div><label class="lbl" for="wTemp">最高溫 °C</label><input id="wTemp" class="field" type="number" inputmode="decimal"></div>
           <div><label class="lbl" for="wRain">雨量 mm</label><input id="wRain" class="field" type="number" inputmode="decimal"></div>
@@ -1133,7 +1133,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.0';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2515,7 +2515,7 @@ function renderMap(){
     ${tone==='night' ? `<g mask="url(#skyM)"><rect width="360" height="580" fill="#0E1A44" opacity=".78" style="mix-blend-mode:multiply"/><rect width="360" height="580" fill="#0B1636" opacity=".25"/></g><rect width="360" height="580" fill="#1A2A5C" opacity=".12" style="mix-blend-mode:multiply"/>` : ''}
     ${tone==='night'||tone==='dusk' ? `<g style="mix-blend-mode:screen" opacity="${tone==='night'?1:.45}"><ellipse cx="177.3" cy="168.0" rx="56.6" ry="35.9" fill="url(#ghGlow)"/><ellipse cx="107.4" cy="260.5" rx="44.6" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="270.6" cy="329.3" rx="45.3" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="106.7" cy="390.8" rx="37.8" ry="23.4" fill="url(#ghGlow)"/><ellipse cx="259.2" cy="450.1" rx="43.4" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="108.2" cy="524.1" rx="37.0" ry="22.7" fill="url(#ghGlow)"/></g>` : ''}
     ${tone==='night' ? MAP_LAMPS.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="7" fill="#FFC870" opacity=".45"><animate attributeName="opacity" values=".45;.25;.45" dur="${2.4+i%3*.7}s" repeatCount="indefinite"/></circle><circle cx="${x}" cy="${y}" r="1.8" fill="#FFE7B0"/>`).join('') : ''}
-    ${(()=>{ let still=false; try{ still = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){} return still ? '' : `<g pointer-events="none">${MAP_FALLS}${MAP_MILLS}${tone==='night' ? '' : MAP_BIRDS}</g>`; })()}
+    ${(()=>{ let still=false; try{ still = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){} return still ? '' : `<g pointer-events="none"><g opacity="${weatherVisual().opacity}" style="filter:drop-shadow(${weatherVisual().wet*.5}px 0 ${weatherVisual().wet*2}px rgba(220,245,255,.6))">${MAP_FALLS}</g>${MAP_MILLS}${tone==='night' ? '' : MAP_BIRDS}</g>`; })()}
     ${MAP_CASTLE_LB}
     ${tone==='night' ? `<g pointer-events="none">${MAP_BRIDGE_GLOW}</g>` : ''}
     <path id="mapPath" d="${pathD}" fill="none" stroke="none"/>
@@ -3507,7 +3507,8 @@ $('#btnPoolReset').onclick = async()=>{
 $('#btnWx').onclick = async()=>{
   const pests=[...document.querySelectorAll('#wxPests input:checked')].map(x=>x.value);
   await DB.set('config/weather', {mode:$('#wMode').value, temp:+$('#wTemp').value, rain:+$('#wRain').value, wind:+$('#wWind').value, pests, date:today()});
-  toast('天氣已發布，玩家重新開啟就會看到');
+  await loadWeather(); if(P) renderAll();
+  toast('天氣設定已發布；其他玩家重新載入後生效');
 };
 
 /* ---------- 登入頁照片輪播 ---------- */
@@ -3543,10 +3544,31 @@ function simWeather(){
   return {temp, rain, wind, pests, src:'模擬天氣'};
 }
 async function loadWeather(){
-  let o = null; try{ o = JSON.parse(localStorage.getItem('hfk_wx_test')||'null'); }catch(e){}
-  if(o){ WX = {...o, src:'測試天氣'}; return; }
-  try{ const c = await DB.get('config/weather'); if(c && c.mode==='manual' && c.date===today()){ WX = {temp:+c.temp, rain:+c.rain, wind:+c.wind, pests:c.pests||[], src:'農場公告'}; return; } }catch(e){}
-  WX = simWeather();
+  let o=null;try{o=JSON.parse(localStorage.getItem('hfk_wx_test')||'null');}catch(e){}
+  if(o){WX={...o,src:'測試天氣'};return;}
+  try{
+    const c=await DB.get('config/weather');
+    if(c&&c.mode==='manual'&&c.date===today()){
+      WX={temp:+c.temp,rain:+c.rain,wind:+c.wind,pests:c.pests||[],src:'手動模擬'};
+      return;
+    }
+  }catch(e){console.warn('天氣公告讀取失敗',e);}
+  try{
+    const response=await fetch('/api/weather',{cache:'no-store',signal:AbortSignal.timeout(10000)});
+    if(!response.ok)throw Error('weather_http_'+response.status);
+    const w=await response.json();
+    if(w.stationId!=='C0F9I0'||!Number.isFinite(w.temperature))throw Error('invalid_weather');
+    WX={temp:w.temperature,rain:Number.isFinite(w.rainfall)?w.rainfall:0,
+      wind:Number.isFinite(w.windSpeed)?w.windSpeed:0,pests:[],
+      src:'神岡實測',weather:w.weather||'',observedAt:w.observedAt};
+    return;
+  }catch(e){console.warn('神岡實測暫不可用，改用模擬備援',e);}
+  WX={...simWeather(),src:'模擬備援'};
+}
+function weatherVisual(){
+  const rain=Math.max(0,Number(WX.rain)||0),wind=Math.max(0,Number(WX.wind)||0);
+  const wet=Math.min(1,rain/20),breeze=Math.min(1,wind/12);
+  return {wet,breeze,opacity:(.8+wet*.2).toFixed(2),speed:(1-wet*.3).toFixed(2)+'s'};
 }
 const CH = {
   heat:    {i:'🔥', n:'高溫', when:w=>w.temp>=33,                 hint:'葉片下垂，果子怕曬傷', tip:'中午陽光最強，溫室用遮陰網像撐陽傘一樣擋掉部分陽光，再配合噴霧降溫，果子就不容易曬傷。'},
@@ -3580,7 +3602,7 @@ function clampN(x,a,b){ return Math.max(a,Math.min(b,x)); }
 function renderWeather(){
   const act = activeCh(), m = fruitMult();
   $('#wxBox').innerHTML = `<div class="card wx2">
-    <div class="wx2-r"><b class="wx2-t">${WX.temp}°</b><span class="wx2-n">今日神岡</span><small>🌧️${WX.rain}mm・🍃${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div>
+    <div class="wx2-r"><b class="wx2-t">${WX.temp}°</b><span class="wx2-n">今日神岡</span><small>${WX.src==='神岡實測'?'📡':'🎭'}${WX.src}・🌧️${WX.rain}mm・🍃${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div>
     <div class="wx2-r">${act.map(k=>`<button class="wx2-ch ${chDone(k)?'ok':''}" data-ch="${k}"><span>${CH[k].i}</span><b>${chDone(k)?CH[k].n+'・已處理 ✓':czName()+'出現'+CH[k].n+'！'}</b>${chDone(k)?'':'<i>›</i>'}</button>`).join('')}<button class="wx2-play" id="btnPlay">🎮 玩遊戲</button></div>
   </div>`;   // V14.0：精簡版
   $('#btnPlay').onclick = playMenu;
