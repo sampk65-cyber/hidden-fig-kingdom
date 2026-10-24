@@ -2473,7 +2473,7 @@ function renderMap(){
   // V14.7: visual-only seasonal and existing-weather decorations; no new API or game rules
   const month = new Date().getMonth();
   const season = month>=2&&month<=4?'spring':month>=5&&month<=7?'summer':month>=8&&month<=10?'autumn':'winter';
-  const wxVisual = typeof WX==='object' && WX ? WX : {rain:0,wind:0,temp:25};
+  // WX_VIS controls only rendering; WX stays authoritative for all game logic.
   const rainAmount=Math.max(0,Number(wxVisualState.rain)||0), rainStrength=Math.min(1,rainAmount/20);
   const rainVisual = rainAmount>0;
   const windAmount=Math.max(0,Number(wxVisualState.wind)||0);
@@ -3537,7 +3537,7 @@ $('#btnWx').onclick = async()=>{
   const hours=Number($('#wHours').value);
   if(mode==='manual'&&(!Number.isInteger(hours)||hours<1||hours>72)){toast('持續時數必須為 1–72 小時');return;}
   await DB.set('config/weather', {mode, temp:+$('#wTemp').value, rain:+$('#wRain').value, wind:+$('#wWind').value, pests, date:today(),durationHours:hours, publishedAt:Date.now(),expiresAt:mode==='manual'?Date.now()+hours*3600000:null});
-  await loadWeather(); if(P){renderAll();startWeatherTransition();}
+  await loadWeather(); if(P){renderWeather();startWeatherTransition();}
   toast(mode==='sim'?'已切回自動天氣，不必等待手動時數結束':'手動氣候已立即生效');
 };
 
@@ -3609,6 +3609,7 @@ function startWeatherTransition(){
   if(!P)return;
   const target={temp:Number(WX.temp)||0,rain:Math.max(0,Number(WX.rain)||0),wind:Math.max(0,Number(WX.wind)||0)};
   if(!WX_VIS){WX_VIS={...target};renderMap();return;}
+  if(['temp','rain','wind'].every(k=>Math.abs(WX_VIS[k]-target[k])<0.001)){return;}
   if(wxTransitionTimer)clearInterval(wxTransitionTimer);
   const from={...WX_VIS},start=Date.now(),duration=8000;
   wxTransitionTimer=setInterval(()=>{
