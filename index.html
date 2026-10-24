@@ -1043,7 +1043,12 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div class="card">
         <label class="lbl" for="wMode" style="margin-top:0">模式</label>
         <select id="wMode" class="field"><option value="sim">自動天氣（神岡觀測）</option><option value="manual">手動模擬（只限今天）</option></select>
-        <div class="grid2">
+        <div class="grid2" id="wxGradeControls" style="align-items:end">
+<div><label class="lbl" for="wTempGrade">氣溫程度</label><select id="wTempGrade" class="field"><option value="8">寒冷（8°C）</option><option value="18">微冷（18°C）</option><option value="26">適中（26°C）</option><option value="36">酷熱（36°C）</option></select></div>
+<div><label class="lbl" for="wRainGrade">雨量程度</label><select id="wRainGrade" class="field"><option value="1">微雨（1 mm）</option><option value="5">小雨（5 mm）</option><option value="15">大雨（15 mm）</option><option value="40">豪雨（40 mm）</option></select></div>
+<div><label class="lbl" for="wWindGrade">風速程度</label><select id="wWindGrade" class="field"><option value="1">微風（1 m/s）</option><option value="3">小風（3 m/s）</option><option value="8">大風（8 m/s）</option><option value="15">狂風（15 m/s）</option></select></div></div>
+<p class="lvtxt">選擇程度會帶入下方數值；也可自行微調數值。只有手動模擬發布後才覆蓋前台。</p>
+        <div class="grid2" style="align-items:end">
           <div><label class="lbl" for="wTemp">最高溫 °C</label><input id="wTemp" class="field" type="number" inputmode="decimal"></div>
           <div><label class="lbl" for="wRain">雨量 mm</label><input id="wRain" class="field" type="number" inputmode="decimal"></div>
           <div><label class="lbl" for="wWind">風速 m/s</label><input id="wWind" class="field" type="number" inputmode="decimal"></div>
@@ -2467,15 +2472,19 @@ function renderMap(){
   const wxVisual = typeof WX==='object' && WX ? WX : {rain:0,wind:0,temp:25};
   const rainAmount=Math.max(0,Number(wxVisual.rain)||0), rainStrength=Math.min(1,rainAmount/20);
   const rainVisual = rainAmount>0;
-  const windyVisual = Number(wxVisual.wind)>=7;
+  const windAmount=Math.max(0,Number(wxVisual.wind)||0);
+  const windTier=windAmount>=12?4:windAmount>=7?3:windAmount>=2?2:1;
+  const tempAmount=Number(wxVisual.temp)||0;
+  const windyVisual = windTier>=3;
   const cloudyVisual = !rainVisual && Number(wxVisual.temp)<23;
   const seasonTint = {spring:'#f9c7dc',summer:'#d4ed9d',autumn:'#e9b86f',winter:'#bfd6e7'}[season];
   const seasonAlpha = {spring:'.035',summer:'.028',autumn:'.043',winter:'.045'}[season];
   // V14.8: subtle autumn foliage remains green; gentle rain is visible even on small screens.
   const natureMotionOff = typeof matchMedia==='function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const rainPaths = Array.from({length:rainStrength>.7?160:rainStrength>.3?100:48},(_,i)=>{
-    const x=8+(i*67)%348, y=15+(i*113)%550, len=9+(i%4)*3;
-    return `<path d="M${x} ${y} l-3 ${len}"/>`;
+  const rainPaths = Array.from({length:rainAmount>=20?160:rainAmount>=10?110:rainAmount>=3?65:30},(_,i)=>{
+    const x=8+(i*67)%348, y=15+(i*113)%550, len=8+(i%4)*3;
+    const drift=windTier===4?-11:windTier===3?-7:windTier===2?-4:-2;
+    return `<path d="M${x} ${y} l${drift} ${len}"/>`;
   }).join('');
   const rainLayer = rainVisual ? `<g class="nature-rain" stroke="#e2f2ff" stroke-width="1.05" stroke-linecap="round" opacity="${tone==='night'?'.7':(.48+rainStrength*.35).toFixed(2)}">${rainPaths}</g>` : '';
   const autumnAccents = season==='autumn' ? '<g fill="#b67b47" opacity=".8"><path d="M42 384q5-6 9 0l-4 5z"/><path d="M311 444q5-6 9 0l-4 5z"/><path d="M61 525q5-6 9 0l-4 5z"/><path d="M296 272q4-5 7 0l-3 4z"/><path d="M114 195q4-5 7 0l-3 4z"/></g>' : '';
@@ -2485,9 +2494,9 @@ function renderMap(){
     ${season==='spring'?'<g fill="#f6cad8" opacity=".60"><circle cx="46" cy="375" r="1.8"/><circle cx="307" cy="447" r="1.7"/><circle cx="57" cy="514" r="1.6"/></g>':''}
     ${cloudyVisual?'<rect width="360" height="580" fill="#8799b5" opacity=".045"/>':''}
     ${rainVisual?'<rect width="360" height="580" fill="#43596f" opacity="'+(.08+rainStrength*.23).toFixed(2)+'"/>':''}
-    ${Number(wxVisual.temp)>=33?'<rect width="360" height="580" fill="#ffce79" opacity=".07"/>':''}
+    ${tempAmount<=12?'<rect width="360" height="580" fill="#b4dcff" opacity=".19"/>':tempAmount<=21?'<rect width="360" height="580" fill="#c3d9ef" opacity=".10"/>':tempAmount>=33?'<rect width="360" height="580" fill="#ffbb65" opacity=".16"/>':''}
     ${rainLayer}
-    ${windyVisual?'<g class="nature-wind" fill="#a9b86a" opacity=".5"><path d="M46 345q5-7 9 0l-4 5z"/><path d="M300 412q5-7 9 0l-4 5z"/></g>':''}
+    ${windTier>=2?'<g class="nature-wind" fill="#a9b86a" opacity="'+(windTier===4?'.85':windTier===3?'.65':'.3')+'"><path d="M46 345q5-7 9 0l-4 5z"/><path d="M300 412q5-7 9 0l-4 5z"/></g>':''}
   </g>`;
 
   try{ document.documentElement.dataset.sky = tone; }catch(e){}
@@ -3306,6 +3315,7 @@ const Admin = {
     let c=null; try{ c=await DB.get('config/weather'); }catch(e){}
     const s = (c && c.date===today()) ? c : {...simWeather(), mode:'sim'};
     $('#wMode').value = s.mode||'sim'; $('#wTemp').value=s.temp; $('#wRain').value=s.rain; $('#wWind').value=s.wind; $('#wHours').value=s.durationHours||3;
+    [['wTempGrade','wTemp'],['wRainGrade','wRain'],['wWindGrade','wWind']].forEach(([grade,input])=>{const el=$('#'+grade),value=Number($('#'+input).value);el.value=[...el.options].reduce((a,b)=>Math.abs(Number(b.value)-value)<Math.abs(Number(a.value)-value)?b:a).value;});
     document.querySelectorAll('#wxPests input').forEach(x=>x.checked=(s.pests||[]).includes(x.value));
   },
   async stats(){
@@ -3508,6 +3518,7 @@ $('#btnPoolReset').onclick = async()=>{
   }catch(e){ console.error(e); toast('套用失敗：'+(e.code||e.message||'請稍後再試')); }
   btn.disabled = false;
 };
+[['wTempGrade','wTemp'],['wRainGrade','wRain'],['wWindGrade','wWind']].forEach(([grade,input])=>{$('#'+grade).addEventListener('change',()=>{$('#'+input).value=$('#'+grade).value;});});
 $('#btnWx').onclick = async()=>{
   const pests=[...document.querySelectorAll('#wxPests input:checked')].map(x=>x.value);
   const hours=Number($('#wHours').value);
