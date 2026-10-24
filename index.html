@@ -2486,14 +2486,14 @@ function renderMap(){
     const drift=windTier===4?-11:windTier===3?-7:windTier===2?-4:-2;
     return `<path d="M${x} ${y} l${drift} ${len}"/>`;
   }).join('');
-  const rainLayer = rainVisual ? `<g class="nature-rain" stroke="#e2f2ff" stroke-width="1.05" stroke-linecap="round" opacity="${tone==='night'?'.7':(.48+rainStrength*.35).toFixed(2)}">${rainPaths}</g>` : '';
+  const rainLayer = rainVisual ? `<g class="nature-rain" stroke="#e2f2ff" stroke-width="1.05" stroke-linecap="round" opacity="${tone==='night'?'.55':(.35+rainStrength*.25).toFixed(2)}">${rainPaths}</g>` : '';
   const autumnAccents = season==='autumn' ? '<g fill="#b67b47" opacity=".8"><path d="M42 384q5-6 9 0l-4 5z"/><path d="M311 444q5-6 9 0l-4 5z"/><path d="M61 525q5-6 9 0l-4 5z"/><path d="M296 272q4-5 7 0l-3 4z"/><path d="M114 195q4-5 7 0l-3 4z"/></g>' : '';
   const mapAtmosphere = `<g pointer-events="none" aria-hidden="true">
     <rect x="0" y="0" width="360" height="580" fill="${seasonTint}" opacity="${seasonAlpha}"/>
     ${autumnAccents}
     ${season==='spring'?'<g fill="#f6cad8" opacity=".60"><circle cx="46" cy="375" r="1.8"/><circle cx="307" cy="447" r="1.7"/><circle cx="57" cy="514" r="1.6"/></g>':''}
     ${cloudyVisual?'<rect width="360" height="580" fill="#8799b5" opacity=".045"/>':''}
-    ${rainVisual?'<rect width="360" height="580" fill="#43596f" opacity="'+(.08+rainStrength*.23).toFixed(2)+'"/>':''}
+    ${rainVisual?'<rect width="360" height="580" fill="#43596f" opacity="'+(.05+rainStrength*.13).toFixed(2)+'"/>':''}
     ${tempAmount<=12?'<rect width="360" height="580" fill="#b4dcff" opacity=".19"/>':tempAmount<=21?'<rect width="360" height="580" fill="#c3d9ef" opacity=".10"/>':tempAmount>=33?'<rect width="360" height="580" fill="#ffbb65" opacity=".16"/>':''}
     ${rainLayer}
     ${windTier>=2?'<g class="nature-wind" fill="#a9b86a" opacity="'+(windTier===4?'.85':windTier===3?'.65':'.3')+'"><path d="M46 345q5-7 9 0l-4 5z"/><path d="M300 412q5-7 9 0l-4 5z"/></g>':''}
@@ -2528,7 +2528,7 @@ function renderMap(){
     ${tone==='night' ? `<g mask="url(#skyM)"><rect width="360" height="580" fill="#0E1A44" opacity=".78" style="mix-blend-mode:multiply"/><rect width="360" height="580" fill="#0B1636" opacity=".25"/></g><rect width="360" height="580" fill="#1A2A5C" opacity=".12" style="mix-blend-mode:multiply"/>` : ''}
     ${tone==='night'||tone==='dusk' ? `<g style="mix-blend-mode:screen" opacity="${tone==='night'?1:.45}"><ellipse cx="177.3" cy="168.0" rx="56.6" ry="35.9" fill="url(#ghGlow)"/><ellipse cx="107.4" cy="260.5" rx="44.6" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="270.6" cy="329.3" rx="45.3" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="106.7" cy="390.8" rx="37.8" ry="23.4" fill="url(#ghGlow)"/><ellipse cx="259.2" cy="450.1" rx="43.4" ry="20.8" fill="url(#ghGlow)"/><ellipse cx="108.2" cy="524.1" rx="37.0" ry="22.7" fill="url(#ghGlow)"/></g>` : ''}
     ${tone==='night' ? MAP_LAMPS.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="7" fill="#FFC870" opacity=".45"><animate attributeName="opacity" values=".45;.25;.45" dur="${2.4+i%3*.7}s" repeatCount="indefinite"/></circle><circle cx="${x}" cy="${y}" r="1.8" fill="#FFE7B0"/>`).join('') : ''}
-    ${(()=>{ let still=false; try{ still = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){} return still ? '' : `<g pointer-events="none"><g opacity="${weatherVisual().opacity}" style="filter:drop-shadow(${weatherVisual().wet*.5}px 0 ${weatherVisual().wet*2}px rgba(220,245,255,.6))">${MAP_FALLS}</g>${rainVisual?'<g pointer-events="none" fill="#d9f5ff" opacity="'+(.25+rainStrength*.3).toFixed(2)+'"><ellipse cx="251" cy="291" rx="'+(7+rainStrength*7)+'" ry="3"/><ellipse cx="319" cy="438" rx="'+(6+rainStrength*5)+'" ry="3"/></g>':''}${MAP_MILLS}${tone==='night' ? '' : MAP_BIRDS}</g>`; })()}
+    ${(()=>{ let still=false; try{ still = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){} return still ? '' : `<g pointer-events="none"><g opacity="${weatherVisual().opacity}" style="filter:drop-shadow(${weatherVisual().wet*.5}px 0 ${weatherVisual().wet*2}px rgba(220,245,255,.6))">${MAP_FALLS}</g>${rainVisual?'<g pointer-events="none" fill="#d9f5ff" opacity="'+(.18+rainStrength*.25).toFixed(2)+'"><ellipse cx="251" cy="291" rx="'+(7+rainStrength*7)+'" ry="3"/><ellipse cx="319" cy="438" rx="'+(6+rainStrength*5)+'" ry="3"/></g>':''}${MAP_MILLS}${tone==='night' ? '' : MAP_BIRDS}</g>`; })()}
     ${MAP_CASTLE_LB}
     ${tone==='night' ? `<g pointer-events="none">${MAP_BRIDGE_GLOW}</g>` : ''}
     <path id="mapPath" d="${pathD}" fill="none" stroke="none"/>
@@ -3521,13 +3521,20 @@ $('#btnPoolReset').onclick = async()=>{
 [['wTempGrade','wTemp'],['wRainGrade','wRain'],['wWindGrade','wWind']].forEach(([grade,input])=>{$('#'+grade).addEventListener('change',()=>{$('#'+input).value=$('#'+grade).value;});});
 $('#btnWx').onclick = async()=>{
   const pests=[...document.querySelectorAll('#wxPests input:checked')].map(x=>x.value);
-  const hours=Number($('#wHours').value);
-  if(!Number.isInteger(hours)||hours<1||hours>72){toast('持續時數必須為 1–72 小時');return;}
   const mode=$('#wMode').value;
+  const hours=Number($('#wHours').value);
+  if(mode==='manual'&&(!Number.isInteger(hours)||hours<1||hours>72)){toast('持續時數必須為 1–72 小時');return;}
   await DB.set('config/weather', {mode, temp:+$('#wTemp').value, rain:+$('#wRain').value, wind:+$('#wWind').value, pests, date:today(),durationHours:hours, publishedAt:Date.now(),expiresAt:mode==='manual'?Date.now()+hours*3600000:null});
   await loadWeather(); if(P) renderAll();
-  toast('天氣設定已發布；其他玩家重新載入後生效');
+  toast(mode==='sim'?'已切回自動天氣，不必等待手動時數結束':'手動氣候已立即生效');
 };
+
+// Keep the active climate in sync while the kingdom remains open.
+// One shared timer: no additional Firestore writes or gameplay changes.
+setInterval(async()=>{
+  if(!P||document.hidden)return;
+  try{await loadWeather();renderWeather();renderMap();}catch(e){console.warn('weather refresh',e);}
+},60000);
 
 /* ---------- 登入頁照片輪播 ---------- */
 (function(){ const imgs=document.querySelectorAll('#hero img'), dots=document.querySelectorAll('#heroDots i'); let k=0;
