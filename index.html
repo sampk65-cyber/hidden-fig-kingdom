@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.5</title>
+<title>今天在隱花王國尋寶 V15.6</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -18,6 +18,16 @@
 #ap-weather .pest-ico{width:36px;height:36px;background:#f4f8ef;border:1px solid #d9e7d1;border-radius:11px;flex-shrink:0}
 #ap-weather .pest-ico svg{width:31px;height:31px;display:block}
 @media(max-width:380px){#ap-weather .wx-grade-icons{gap:1px}#ap-weather .wx-emoji{font-size:20px}#ap-weather .wx-grade-icon small{font-size:9px}}
+/* V15.6 front-map weather effects only */
+#mapSvg .wx-heat-shimmer{animation:wxHeatPulse 5s ease-in-out infinite alternate;transform-origin:300px 75px}
+#mapSvg .wx-cold-haze{animation:wxColdFloat 7s ease-in-out infinite alternate}
+#mapSvg .wx-gust-lines{animation:wxGustSweep 2.5s ease-in-out infinite alternate}
+#mapSvg .wx-ground-spray{animation:wxGroundSpray 1.6s ease-in-out infinite alternate}
+@keyframes wxHeatPulse{to{opacity:.08;transform:scale(1.05)}}
+@keyframes wxColdFloat{to{transform:translateX(9px);opacity:.11}}
+@keyframes wxGustSweep{to{transform:translateX(-16px);opacity:.16}}
+@keyframes wxGroundSpray{to{opacity:.13;transform:translateY(-3px)}}
+@media(prefers-reduced-motion:reduce){#mapSvg .wx-heat-shimmer,#mapSvg .wx-cold-haze,#mapSvg .wx-gust-lines,#mapSvg .wx-ground-spray{animation:none}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1152,7 +1162,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2495,7 +2505,7 @@ function renderMap(){
   const seasonAlpha = {spring:'.035',summer:'.028',autumn:'.043',winter:'.045'}[season];
   // V14.8: subtle autumn foliage remains green; gentle rain is visible even on small screens.
   const natureMotionOff = typeof matchMedia==='function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const rainPaths = Array.from({length:rainAmount>=20?180:rainAmount>=10?115:rainAmount>=3?65:30},(_,i)=>{
+  const rainPaths = Array.from({length:rainAmount>=20?205:rainAmount>=10?125:rainAmount>=3?70:24},(_,i)=>{
     const x=8+(i*67)%348, y=15+(i*113)%550, len=8+(i%4)*3;
     const drift=windTier===4?-11:windTier===3?-7:windTier===2?-4:-2;
     return `<path d="M${x} ${y} l${drift} ${len}"/>`;
@@ -2505,6 +2515,15 @@ function renderMap(){
   const rainMist = rainAmount>=10 ? `<g class="wx-mist" fill="#dcecf4" opacity="${rainAmount>=20?'.21':'.11'}"><ellipse cx="60" cy="528" rx="92" ry="21"/><ellipse cx="285" cy="510" rx="83" ry="18"/><ellipse cx="208" cy="320" rx="55" ry="13"/></g>` : '';
   const stormClouds = rainAmount>=10 ? `<g class="wx-clouds" fill="#53647b" opacity="${rainAmount>=20?'.25':'.13'}"><ellipse cx="54" cy="35" rx="96" ry="27"/><ellipse cx="248" cy="42" rx="120" ry="31"/></g>` : '';
   const windLeaves = windTier>=3 ? `<g class="wx-leaves" fill="#9bb867" opacity="${windTier===4?'.9':'.6'}">${Array.from({length:windTier===4?18:9},(_,i)=>{const x=13+(i*71)%345,y=75+(i*91)%450;return `<path d="M${x} ${y} q5 -5 9 0 q-5 6 -9 0z"/>`;}).join('')}</g>` : '';
+  // V15.6 visual-only climate layers; all pointer events pass through.
+  const rainTier=rainAmount>=20?4:rainAmount>=10?3:rainAmount>=3?2:rainAmount>0?1:0;
+  const coldTier=tempAmount<=12?2:tempAmount<=21?1:0;
+  const heatTier=tempAmount>=33?2:tempAmount>=29?1:0;
+  const sunHaze=heatTier && tone!=='night' ? `<g class="wx-heat-shimmer" opacity="${rainTier>=3?'.10':heatTier===2?'.26':'.13'}"><ellipse cx="302" cy="75" rx="94" ry="66" fill="#ffe9a5"/><ellipse cx="308" cy="81" rx="53" ry="37" fill="#fff6c9"/></g>` : '';
+  const coldHaze=coldTier ? `<g class="wx-cold-haze" opacity="${coldTier===2?'.31':'.17'}" fill="#e6f5ff"><ellipse cx="35" cy="475" rx="91" ry="29"/><ellipse cx="300" cy="365" rx="83" ry="22"/></g>` : '';
+  const gustLines=windTier>=2 ? `<g class="wx-gust-lines" fill="none" stroke="#e4f8ff" stroke-linecap="round" opacity="${windTier===4?'.72':windTier===3?'.52':'.29'}" stroke-width="${windTier===4?1.8:1.1}">${Array.from({length:windTier===4?14:windTier===3?9:4},(_,i)=>{const x=12+(i*79)%330,y=95+(i*71)%425;return `<path d="M${x} ${y} q12 -5 28 -3 t23 -3"/>`;}).join('')}</g>` : '';
+  const stormVeil=rainTier>=3 ? `<rect width="360" height="580" fill="#344d70" opacity="${rainTier===4?'.10':'.055'}"/>` : '';
+  const heavySpray=rainTier>=3 ? `<g class="wx-ground-spray" fill="#f2fcff" opacity="${rainTier===4?'.48':'.26'}">${Array.from({length:rainTier===4?25:12},(_,i)=>{const x=10+(i*61)%340,y=340+(i*37)%215;return `<ellipse cx="${x}" cy="${y}" rx="${2+i%3}" ry=".8"/>`;}).join('')}</g>` : '';
   const autumnAccents = season==='autumn' ? '<g fill="#b67b47" opacity=".8"><path d="M42 384q5-6 9 0l-4 5z"/><path d="M311 444q5-6 9 0l-4 5z"/><path d="M61 525q5-6 9 0l-4 5z"/><path d="M296 272q4-5 7 0l-3 4z"/><path d="M114 195q4-5 7 0l-3 4z"/></g>' : '';
   const mapAtmosphere = `<g pointer-events="none" aria-hidden="true">
     <rect x="0" y="0" width="360" height="580" fill="${seasonTint}" opacity="${seasonAlpha}"/>
@@ -2513,9 +2532,14 @@ function renderMap(){
     ${cloudyVisual?'<rect width="360" height="580" fill="#8799b5" opacity=".045"/>':''}
     ${rainVisual?'<rect width="360" height="580" fill="#43596f" opacity="'+(.05+rainStrength*.13).toFixed(2)+'"/>':''}
     ${tempAmount<=12?'<rect width="360" height="580" fill="#b4dcff" opacity=".19"/>':tempAmount<=21?'<rect width="360" height="580" fill="#c3d9ef" opacity=".10"/>':tempAmount>=33?'<rect width="360" height="580" fill="#ffbb65" opacity=".16"/>':''}
+    ${stormVeil}
+    ${sunHaze}
+    ${coldHaze}
     ${stormClouds}
     ${rainMist}
     ${rainLayer}
+    ${heavySpray}
+    ${gustLines}
     ${windLeaves}
     ${windTier>=2?'<g class="nature-wind" fill="#a9b86a" opacity="'+(windTier===4?'.85':windTier===3?'.65':'.3')+'"><path d="M46 345q5-7 9 0l-4 5z"/><path d="M300 412q5-7 9 0l-4 5z"/></g>':''}
   </g>`;
