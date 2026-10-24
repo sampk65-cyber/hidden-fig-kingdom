@@ -3,11 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.2</title>
+<title>今天在隱花王國尋寶 V15.5</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
 #mapSvg .wx-fall-spray{animation:wxFallSpray 2.7s ease-in-out infinite alternate}@keyframes wxFallSpray{to{transform:translateX(var(--wx-drift,0px));opacity:.45}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-fall-spray{animation:none}#mapSvg .wx-falls animate{display:none}}
+/* V15.5 admin weather artwork only; original select/input ids and values are unchanged */
+#ap-weather .wx-grade-card{padding:10px;border-radius:14px;background:linear-gradient(140deg,#f3f9f6,#edf5fc);border:1px solid #cddfd8;min-width:0}
+#ap-weather .wx-grade-icons{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;margin:7px 0 10px}
+#ap-weather .wx-grade-icon{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;padding:5px 1px;border-radius:9px;background:#fff;border:1px solid #e2e9e8}
+#ap-weather .wx-emoji{font-size:23px;line-height:1.5}
+#ap-weather .wx-grade-icon small{font-size:10px;color:#53666a;white-space:nowrap}
+#ap-weather #wxPests .chip{display:inline-flex;align-items:center;gap:4px;padding:6px 9px;border-radius:12px}
+#ap-weather .pest-ico{width:36px;height:36px;background:#f4f8ef;border:1px solid #d9e7d1;border-radius:11px;flex-shrink:0}
+#ap-weather .pest-ico svg{width:31px;height:31px;display:block}
+@media(max-width:380px){#ap-weather .wx-grade-icons{gap:1px}#ap-weather .wx-emoji{font-size:20px}#ap-weather .wx-grade-icon small{font-size:9px}}
 </style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1047,9 +1057,9 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
         <label class="lbl" for="wMode" style="margin-top:0">模式</label>
         <select id="wMode" class="field"><option value="sim">自動天氣（神岡觀測）</option><option value="manual">手動模擬（只限今天）</option></select>
         <div class="grid2" id="wxGradeControls" style="align-items:end">
-<div><label class="lbl" for="wTempGrade">氣溫程度</label><select id="wTempGrade" class="field"><option value="8">寒冷（8°C）</option><option value="18">微冷（18°C）</option><option value="26">適中（26°C）</option><option value="36">酷熱（36°C）</option></select></div>
-<div><label class="lbl" for="wRainGrade">雨量程度</label><select id="wRainGrade" class="field"><option value="1">微雨（1 mm）</option><option value="5">小雨（5 mm）</option><option value="15">大雨（15 mm）</option><option value="40">豪雨（40 mm）</option></select></div>
-<div><label class="lbl" for="wWindGrade">風速程度</label><select id="wWindGrade" class="field"><option value="1">微風（1 m/s）</option><option value="3">小風（3 m/s）</option><option value="8">大風（8 m/s）</option><option value="15">狂風（15 m/s）</option></select></div></div>
+<div class="wx-grade-card"><label class="lbl" for="wTempGrade">🌡️ 氣溫程度</label><div class="wx-grade-icons" aria-hidden="true"><span class="wx-grade-icon"><span class="wx-emoji">🥶</span><small>寒冷</small></span><span class="wx-grade-icon"><span class="wx-emoji">🧣</span><small>微冷</small></span><span class="wx-grade-icon"><span class="wx-emoji">🌤️</span><small>適中</small></span><span class="wx-grade-icon"><span class="wx-emoji">🥵</span><small>酷熱</small></span></div><select id="wTempGrade" class="field"><option value="8">🥶 寒冷（8°C）</option><option value="18">🧣 微冷（18°C）</option><option value="26">🌤️ 適中（26°C）</option><option value="36">🥵 酷熱（36°C）</option></select></div>
+<div class="wx-grade-card"><label class="lbl" for="wRainGrade">💧 雨量程度</label><div class="wx-grade-icons" aria-hidden="true"><span class="wx-grade-icon"><span class="wx-emoji">🌦️</span><small>微雨</small></span><span class="wx-grade-icon"><span class="wx-emoji">🌧️</span><small>小雨</small></span><span class="wx-grade-icon"><span class="wx-emoji">☔</span><small>大雨</small></span><span class="wx-grade-icon"><span class="wx-emoji">⛈️</span><small>豪雨</small></span></div><select id="wRainGrade" class="field"><option value="1">🌦️ 微雨（1 mm）</option><option value="5">🌧️ 小雨（5 mm）</option><option value="15">☔ 大雨（15 mm）</option><option value="40">⛈️ 豪雨（40 mm）</option></select></div>
+<div class="wx-grade-card"><label class="lbl" for="wWindGrade">🌀 風速程度</label><div class="wx-grade-icons" aria-hidden="true"><span class="wx-grade-icon"><span class="wx-emoji">🍃</span><small>微風</small></span><span class="wx-grade-icon"><span class="wx-emoji">🌬️</span><small>小風</small></span><span class="wx-grade-icon"><span class="wx-emoji">💨</span><small>大風</small></span><span class="wx-grade-icon"><span class="wx-emoji">🌪️</span><small>狂風</small></span></div><select id="wWindGrade" class="field"><option value="1">🍃 微風（1 m/s）</option><option value="3">🌬️ 小風（3 m/s）</option><option value="8">💨 大風（8 m/s）</option><option value="15">🌪️ 狂風（15 m/s）</option></select></div></div>
 <p class="lvtxt">選擇程度會帶入下方數值；也可自行微調數值。只有手動模擬發布後才覆蓋前台。</p>
         <div class="grid2" style="align-items:end">
           <div><label class="lbl" for="wTemp">最高溫 °C</label><input id="wTemp" class="field" type="number" inputmode="decimal"></div>
@@ -1058,7 +1068,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
           <div><label class="lbl" for="wHours">氣候持續時數（1–72 小時）</label><input id="wHours" class="field" type="number" min="1" max="72" step="1" value="3" inputmode="numeric"></div>
         </div>
         <div class="lbl">病蟲害</div>
-        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> <span class="pest-ico">🪰</span> 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> <span class="pest-ico">🍁</span> 鏽病</label><label class="chip"><input type="checkbox" value="myna"> <span class="pest-ico">🐦</span> 八哥</label></div>
+        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> <span class="pest-ico"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M19 18Q5 2 4 18Q5 28 18 23M21 18Q35 2 36 18Q35 28 22 23" fill="#fff" stroke="#7b9aa1" stroke-width="1.5"/><ellipse cx="20" cy="23" rx="4" ry="9" fill="#e0b85c" stroke="#7e6836"/><circle cx="20" cy="13" r="3" fill="#746048"/><path d="M17 11L12 6M23 11L28 6M16 25L9 29M24 25L31 29" stroke="#746048" stroke-width="1.3" stroke-linecap="round"/></svg></span> 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> <span class="pest-ico"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 35Q3 27 8 13Q17 2 34 7Q36 28 20 35Z" fill="#8ac879" stroke="#397b4a" stroke-width="1.8"/><path d="M13 29Q20 18 31 11" stroke="#d8f2ae" stroke-width="2"/><g fill="#bf6536" stroke="#8e452c" stroke-width=".7"><circle cx="14" cy="16" r="3"/><circle cx="23" cy="23" r="4"/><circle cx="28" cy="14" r="2.5"/><circle cx="15" cy="26" r="2"/></g></svg></span> 鏽病</label><label class="chip"><input type="checkbox" value="myna"> <span class="pest-ico"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 30Q3 21 13 13Q24 6 32 16Q36 26 26 31Z" fill="#594331" stroke="#352a24" stroke-width="1.5"/><path d="M11 25Q19 17 29 25Q21 32 11 25Z" fill="#fff4d6"/><circle cx="26" cy="16" r="2.2" fill="#f9c842"/><circle cx="26" cy="16" r=".9" fill="#201a15"/><path d="M31 18L39 21L31 23Z" fill="#edb32e"/><path d="M15 31L13 37M23 31L24 37" stroke="#e0b12d" stroke-width="2" stroke-linecap="round"/></svg></span> 八哥</label></div>
         <p class="lvtxt">規則：33°C 以上高溫、30°C 以上且沒下雨為乾旱、風速 10m/s 以上強風、雨量 20mm 以上豪雨。越熱果況越好，雨和風讓果況變差。</p>
         <button id="btnWx" class="btn main">發布</button>
       </div>
@@ -1142,7 +1152,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.4';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
