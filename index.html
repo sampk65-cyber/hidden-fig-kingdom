@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.6</title>
+<title>今天在隱花王國尋寶 V15.6.1</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -1162,7 +1162,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.6.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2489,7 +2489,7 @@ function newPhotoToast(){ const z = ZONES.filter(z=>phNew(z.id)); if(z.length) t
 function renderMap(){
   const pathD = 'M192.4 580.0 C189.9 575.9 181.9 563.4 177.3 555.1 C172.7 546.9 166.7 538.4 164.8 530.5 C162.9 522.6 163.0 515.4 166.0 507.9 C169.0 500.3 175.6 491.5 182.9 485.2 C190.2 478.9 205.1 476.7 210.1 470.1 C215.1 463.5 215.2 452.8 213.2 445.6 C211.2 438.4 204.1 432.1 198.1 426.7 C192.1 421.3 183.7 417.0 177.3 413.5 C170.9 410.0 163.6 411.2 159.5 405.9 C155.4 400.5 153.1 389.3 152.7 381.4 C152.3 373.5 152.8 364.7 157.3 358.7 C161.8 352.7 171.1 348.3 179.9 345.5 C188.7 342.7 203.8 345.2 210.1 341.7 C216.4 338.2 217.2 331.3 217.7 324.7 C218.2 318.1 216.2 309.3 213.2 302.1 C210.2 294.9 205.9 286.0 199.9 281.3 C193.9 276.6 184.4 275.7 177.3 274.1 C170.2 272.5 163.3 274.8 157.3 271.9 C151.3 269.0 145.6 263.1 141.4 256.8 C137.2 250.5 133.2 240.7 132.3 234.1 C131.4 227.5 132.7 221.2 136.1 217.1 C139.5 213.0 145.8 211.7 152.7 209.6 C159.6 207.5 173.2 205.5 177.3 204.7';
   const tone = skyTone(), leaves = '';
-  const wxVisualState = WX_VIS || WX;
+  const wxVisualState = WX_VIS || {...WX,rain:visualRainAmount()};
   // V14.7: visual-only seasonal and existing-weather decorations; no new API or game rules
   const month = new Date().getMonth();
   const season = month>=2&&month<=4?'spring':month>=5&&month<=7?'summer':month>=8&&month<=10?'autumn':'winter';
@@ -2828,9 +2828,9 @@ function chMark(){
   const k = pendingCh()[0]; if(!k) return '';
   const z = ZONES.find(x=>x.id===chZone()), x = z.x<180 ? z.x-52 : z.x+52, y = z.y-26;
   const symbol = k==='whitefly'?'🪰':k==='rust'?'🍁':k==='myna'?'🐦':typeof CH[k].i==='string'&&CH[k].i.startsWith('<svg')?'⚠️':CH[k].i;
-  return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="${zName(z)}出現${CH[k].n}">
+  return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="${esc(chCaption(k,zName(z)))}">
     <circle cx="${x}" cy="${y}" r="19" fill="#F59A2A" opacity=".3"><animate attributeName="r" values="16;23;16" dur="1.5s" repeatCount="indefinite"/></circle>
-    <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${symbol}</text></g>`;
+    <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${symbol}</text>${chIsDrill(k)?`<rect x="${x-14}" y="${y+17}" width="28" height="13" rx="6" fill="#fff"/><text x="${x}" y="${y+27}" text-anchor="middle" font-size="9" fill="#6B4E3A">演練</text>`:''}</g>`;
 }
 const CH_PAL = {e:['#A0703C','#7A5228','#BC8A52','#5E3E1E'], d:['#7C8A96','#56626C','#97A5B1','#3E474E'], c:['#C77A3C','#93501F','#E39A5E','#F0C46A'],
   b:['#AFC4D6','#8AA2B6','#CCDCE8','#F4F8FB'], a:['#E2B23A','#B8892A','#F2CB5B','#FFF1B0'], z:['#4FC3F7','#2B8FC0','#8EDDFB','#FFFFFF']};
@@ -3639,9 +3639,17 @@ async function loadWeather(){
 // V15.4: smoothly interpolate visual weather only; WX remains the authoritative
 // measured/manual value for labels, challenges, and fruit calculations.
 let WX_VIS=null, wxTransitionFrame=0, wxTransitionTimer=null;
+// V15.6.1: CWA Now.Precipitation is daily accumulation, not current intensity.
+// These values select existing visual tiers only; they are not measured mm/hour.
+function visualRainAmount(){
+  if(WX.src!=='神岡實測')return Math.max(0,Number(WX.rain)||0);
+  const weather=String(WX.weather||'');
+  if(/大雷雨|大雨|豪雨|暴雨/.test(weather))return 20;
+  return /雨/.test(weather)?3:0;
+}
 function startWeatherTransition(){
   if(!P)return;
-  const target={temp:Number(WX.temp)||0,rain:Math.max(0,Number(WX.rain)||0),wind:Math.max(0,Number(WX.wind)||0)};
+  const target={temp:Number(WX.temp)||0,rain:visualRainAmount(),wind:Math.max(0,Number(WX.wind)||0)};
   if(!WX_VIS){WX_VIS={...target};renderMap();return;}
   if(['temp','rain','wind'].every(k=>Math.abs(WX_VIS[k]-target[k])<0.001)){return;}
   if(wxTransitionTimer)clearInterval(wxTransitionTimer);
@@ -3655,7 +3663,7 @@ function startWeatherTransition(){
   },250);
 }
 function weatherVisual(){
-  const rain=Math.max(0,Number(WX.rain)||0),wind=Math.max(0,Number(WX.wind)||0);
+  const rain=WX_VIS?WX_VIS.rain:visualRainAmount(),wind=Math.max(0,Number(WX.wind)||0);
   const wet=Math.min(1,rain/20),breeze=Math.min(1,wind/12);
   return {wet,breeze,opacity:(.8+wet*.2).toFixed(2),speed:(1-wet*.3).toFixed(2)+'s'};
 }
@@ -3679,6 +3687,13 @@ function activeCh(){
   for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!chDone(k) && k!==tried[tried.length-1]) return [k]; }
   return [];
 }
+// Presentation only: keep the existing rotation, completion records and rewards.
+function chIsDrill(k){
+  return (k==='wind'||k==='rain')&&(!CH[k].when(WX)||(k==='rain'&&WX.src==='神岡實測'&&visualRainAmount()<20));
+}
+function chCaption(k,zone=czName()){
+  return chIsDrill(k)?zone+'・輪值演練：'+CH[k].n:zone+'出現'+CH[k].n+'！';
+}
 function chDone(k){ return P.daily && P.daily.ch && P.daily.ch[k]==='ok'; }
 function pendingCh(){ return activeCh().filter(k=>!chDone(k)); }
 // 越熱果越多；雨和風讓果子變少（沒處理的挑戰不扣分，隔天自動換）
@@ -3691,8 +3706,8 @@ function clampN(x,a,b){ return Math.max(a,Math.min(b,x)); }
 function renderWeather(){
   const act = activeCh(), m = fruitMult();
   $('#wxBox').innerHTML = `<div class="card wx2">
-    <div class="wx2-r"><b class="wx2-t">${WX.temp}°</b><span class="wx2-n">今日神岡</span><small>${WX.src==='神岡實測'?'📡':'🎭'}${WX.src}・🌧️${WX.rain}mm・🍃${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div>
-    <div class="wx2-r">${act.map(k=>`<button class="wx2-ch ${chDone(k)?'ok':''}" data-ch="${k}"><span>${CH[k].i}</span><b>${chDone(k)?CH[k].n+'・已處理 ✓':czName()+'出現'+CH[k].n+'！'}</b>${chDone(k)?'':'<i>›</i>'}</button>`).join('')}<button class="wx2-play" id="btnPlay">🎮 玩遊戲</button></div>
+    <div class="wx2-r"><b class="wx2-t">${WX.temp}°</b><span class="wx2-n">今日神岡</span><small>${WX.src==='神岡實測'?'📡':'🎭'}${WX.src}・🌧️${WX.src==='神岡實測'?'日累積 ':''}${WX.rain}mm・🍃${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div>
+    <div class="wx2-r">${act.map(k=>`<button class="wx2-ch ${chDone(k)?'ok':''}" data-ch="${k}"><span>${CH[k].i}</span><b>${chDone(k)?CH[k].n+'・已處理 ✓':esc(chCaption(k))}</b>${chDone(k)?'':'<i>›</i>'}</button>`).join('')}<button class="wx2-play" id="btnPlay">🎮 玩遊戲</button></div>
   </div>`;   // V14.0：精簡版
   $('#btnPlay').onclick = playMenu;
   $('#wxBox').querySelectorAll('[data-ch]').forEach(b=>b.onclick=()=>{ if(chDone(b.dataset.ch)){ toast('這個挑戰今天已經處理好了'); return; } startChallenge(b.dataset.ch); });
