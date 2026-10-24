@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.6.1</title>
+<title>今天在隱花王國尋寶 V15.6.2</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -711,7 +711,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 :root[data-sky="night"] #home:has(#tab-map.on)::after{opacity:1;filter:brightness(.42) saturate(.75)}
 :root[data-sky="dusk"] #home:has(#tab-map.on)::after{filter:sepia(.3) saturate(1.15)}
 /* 浮在天上的卡片 */
-#home:has(#tab-map.on) .hud{background:color-mix(in srgb,var(--card) 80%,transparent);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+#home:has(#tab-map.on) .hud{background:var(--card);-webkit-backdrop-filter:none;backdrop-filter:none;
   margin:6px 10px 0;border-radius:20px;padding:6px 12px;box-shadow:0 6px 18px #10204026;border:1px solid color-mix(in srgb,#fff 45%,transparent)}
 #home:has(#tab-map.on) #hudAv svg{width:36px;height:44px}
 #home:has(#tab-map.on) .hud .lvtxt svg{width:16px!important;height:16px!important;vertical-align:-3px}
@@ -1162,7 +1162,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.6.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.6.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2417,14 +2417,19 @@ let poolChecked = false;
 function renderAll(){ if(!poolChecked && P){ poolChecked = true; setTimeout(checkPoolNews, 1200); setTimeout(countVisit, 800); } renderSound(); renderHud(); renderLevel(); renderFamily(); renderGuard(); renderFeed(); renderCal(); renderWeather(); renderStory(); renderMap(); renderRoute(); renderTestTools(); renderMove(); renderDex(); renderBag(); renderMe(); }
 function renderHud(){
   const lv = lvIndex(P.points||0), L = LEVELS[lv], N = LEVELS[lv+1];
-  $('#hudAv').innerHTML = avatar(P.role, P.mat, P.color);
-  $('#hudName').textContent = P.name + (P.guest?'（訪客）':'');
-  $('#hudBar').style.width = N ? Math.min(100,(P.points-L.min)/(N.min-L.min)*100)+'%' : '100%';
-  $('#hudLv').innerHTML = `${L.icon} ${L.n}・${P.points||0} 分`;
-  $('#hudSt').textContent = '⚡'+stamina(); $('#hudLeaf').textContent = '🎟️'+holdN()+'/'+HOLD_CAP;
-  $('#tdPts').textContent = `${P.daily.pts}/${DAILY_CAP}`;
-  $('#tdChest').textContent = `${P.daily.chests}/${CHEST_CAP}`;
-  $('#tdStreak').textContent = `${P.streak} 天`;
+  // V15.6.2: retain unchanged nodes during step/status updates; no player data changes.
+  const text=(id,value)=>{const el=$(id),next=String(value);if(el.textContent!==next)el.textContent=next;};
+  const av=$('#hudAv'),avKey=JSON.stringify([P.role,P.mat,P.color,CHAR_DATA[roleBase(P.role)]||'']);
+  if(av._hudKey!==avKey){av.innerHTML=avatar(P.role,P.mat,P.color);av._hudKey=avKey;}
+  text('#hudName',P.name + (P.guest?'（訪客）':''));
+  const bar=$('#hudBar'),width=N ? Math.min(100,(P.points-L.min)/(N.min-L.min)*100)+'%' : '100%';
+  if(bar.style.width!==width)bar.style.width=width;
+  const label=$('#hudLv'),levelHTML=`${L.icon} ${L.n}・${P.points||0} 分`;
+  if(label._hudHTML!==levelHTML){label.innerHTML=levelHTML;label._hudHTML=levelHTML;}
+  text('#hudSt','⚡'+stamina());text('#hudLeaf','🎟️'+holdN()+'/'+HOLD_CAP);
+  text('#tdPts',`${P.daily.pts}/${DAILY_CAP}`);
+  text('#tdChest',`${P.daily.chests}/${CHEST_CAP}`);
+  text('#tdStreak',`${P.streak} 天`);
 }
 document.querySelector('.hud-mid').onclick = ()=>howSheet();
 document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{
@@ -2830,7 +2835,7 @@ function chMark(){
   const symbol = k==='whitefly'?'🪰':k==='rust'?'🍁':k==='myna'?'🐦':typeof CH[k].i==='string'&&CH[k].i.startsWith('<svg')?'⚠️':CH[k].i;
   return `<g class="zone-node" data-z="${z.id}" role="button" aria-label="${esc(chCaption(k,zName(z)))}">
     <circle cx="${x}" cy="${y}" r="19" fill="#F59A2A" opacity=".3"><animate attributeName="r" values="16;23;16" dur="1.5s" repeatCount="indefinite"/></circle>
-    <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${symbol}</text>${chIsDrill(k)?`<rect x="${x-14}" y="${y+17}" width="28" height="13" rx="6" fill="#fff"/><text x="${x}" y="${y+27}" text-anchor="middle" font-size="9" fill="#6B4E3A">演練</text>`:''}</g>`;
+    <circle cx="${x}" cy="${y}" r="15" fill="#fff" stroke="#F59A2A" stroke-width="2"/><text x="${x}" y="${y+6}" text-anchor="middle" font-size="16">${symbol}</text>${chIsDrill(k)?`<rect x="${x-19}" y="${y+17}" width="38" height="13" rx="6" fill="#fff"/><text x="${x}" y="${y+27}" text-anchor="middle" font-size="9" fill="#6B4E3A">新挑戰</text>`:''}</g>`;
 }
 const CH_PAL = {e:['#A0703C','#7A5228','#BC8A52','#5E3E1E'], d:['#7C8A96','#56626C','#97A5B1','#3E474E'], c:['#C77A3C','#93501F','#E39A5E','#F0C46A'],
   b:['#AFC4D6','#8AA2B6','#CCDCE8','#F4F8FB'], a:['#E2B23A','#B8892A','#F2CB5B','#FFF1B0'], z:['#4FC3F7','#2B8FC0','#8EDDFB','#FFFFFF']};
@@ -3692,7 +3697,7 @@ function chIsDrill(k){
   return (k==='wind'||k==='rain')&&(!CH[k].when(WX)||(k==='rain'&&WX.src==='神岡實測'&&visualRainAmount()<20));
 }
 function chCaption(k,zone=czName()){
-  return chIsDrill(k)?zone+'・輪值演練：'+CH[k].n:zone+'出現'+CH[k].n+'！';
+  return chIsDrill(k)?zone+'出現新挑戰：'+CH[k].n+'！':zone+'出現'+CH[k].n+'！';
 }
 function chDone(k){ return P.daily && P.daily.ch && P.daily.ch[k]==='ok'; }
 function pendingCh(){ return activeCh().filter(k=>!chDone(k)); }
@@ -3706,7 +3711,7 @@ function clampN(x,a,b){ return Math.max(a,Math.min(b,x)); }
 function renderWeather(){
   const act = activeCh(), m = fruitMult();
   $('#wxBox').innerHTML = `<div class="card wx2">
-    <div class="wx2-r"><b class="wx2-t">${WX.temp}°</b><span class="wx2-n">今日神岡</span><small>${WX.src==='神岡實測'?'📡':'🎭'}${WX.src}・🌧️${WX.src==='神岡實測'?'日累積 ':''}${WX.rain}mm・🍃${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div>
+    <div class="wx2-r"><b class="wx2-t">${WX.temp}°</b><span class="wx2-n">王國天氣</span><small>${WX.src==='神岡實測'?'📡':'🎭'}${WX.src}・🌧️${WX.src==='神岡實測'?'日累積 ':''}${WX.rain}mm・🍃${WX.wind}m/s・果況 <b style="color:${m>=1?'var(--leaf)':'var(--rose)'}">×${m}</b></small></div>
     <div class="wx2-r">${act.map(k=>`<button class="wx2-ch ${chDone(k)?'ok':''}" data-ch="${k}"><span>${CH[k].i}</span><b>${chDone(k)?CH[k].n+'・已處理 ✓':esc(chCaption(k))}</b>${chDone(k)?'':'<i>›</i>'}</button>`).join('')}<button class="wx2-play" id="btnPlay">🎮 玩遊戲</button></div>
   </div>`;   // V14.0：精簡版
   $('#btnPlay').onclick = playMenu;
