@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.6.2</title>
+<title>今天在隱花王國尋寶 V15.6.3</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -580,7 +580,7 @@ textarea.field{resize:vertical;font-family:inherit}
 .gauge{position:absolute;left:50%;top:16px;transform:translateX(-50%);width:70px;height:190px;border:3px solid #8C7461;border-radius:14px;background:#F4E6CF;overflow:hidden}
 .gz{position:absolute;left:0;right:0;background:#9BD08A88}
 .gf{position:absolute;left:0;right:0;bottom:0;height:0;background:#4FA3D8cc}
-.holdb{position:absolute;left:16px;right:16px;bottom:14px;width:auto;user-select:none;-webkit-user-select:none;touch-action:none}
+.holdb{-webkit-touch-callout:none;position:absolute;left:16px;right:16px;bottom:14px;width:auto;user-select:none;-webkit-user-select:none;touch-action:none}
 .shadebox{position:relative;height:100px;margin:14px;border-radius:14px;background:#BFE3F2;overflow:hidden}
 .net{position:absolute;left:0;top:0;bottom:0;width:0;background:repeating-linear-gradient(45deg,#2A1F2D55 0 4px,transparent 4px 9px)}
 .sun{position:absolute;right:12px;top:10px;font-size:40px}
@@ -668,6 +668,7 @@ h2,.h2,.pv-name,.lv-n,.wxc-t{font-size:var(--fs-t)!important;font-weight:800!imp
 .play-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
 .play-list button{border:1.5px solid var(--line);background:var(--card);border-radius:16px;padding:12px 4px;font-size:var(--fs-b);font-weight:700;display:flex;flex-direction:column;align-items:center;gap:4px}
 .play-list button b{font-size:26px;font-weight:400}
+.play-list button b svg{width:32px;height:32px;display:block}
 
 .mn-hud{position:absolute;left:8px;right:8px;top:6px;font-size:12px;color:#2A1F2D;background:#ffffffcc;border-radius:10px;padding:3px 8px;pointer-events:none}
 
@@ -1075,10 +1076,11 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
           <div><label class="lbl" for="wTemp">最高溫 °C</label><input id="wTemp" class="field" type="number" inputmode="decimal"></div>
           <div><label class="lbl" for="wRain">雨量 mm</label><input id="wRain" class="field" type="number" inputmode="decimal"></div>
           <div><label class="lbl" for="wWind">風速 m/s</label><input id="wWind" class="field" type="number" inputmode="decimal"></div>
-          <div><label class="lbl" for="wHours">氣候持續時數（1–72 小時）</label><input id="wHours" class="field" type="number" min="1" max="72" step="1" value="3" inputmode="numeric"></div>
+          <div><label class="lbl" for="wHours">天氣／挑戰持續時數（1–72 小時）</label><input id="wHours" class="field" type="number" min="1" max="72" step="1" value="3" inputmode="numeric"></div>
         </div>
-        <div class="lbl">病蟲害</div>
-        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> <span class="pest-ico"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M19 18Q5 2 4 18Q5 28 18 23M21 18Q35 2 36 18Q35 28 22 23" fill="#fff" stroke="#7b9aa1" stroke-width="1.5"/><ellipse cx="20" cy="23" rx="4" ry="9" fill="#e0b85c" stroke="#7e6836"/><circle cx="20" cy="13" r="3" fill="#746048"/><path d="M17 11L12 6M23 11L28 6M16 25L9 29M24 25L31 29" stroke="#746048" stroke-width="1.3" stroke-linecap="round"/></svg></span> 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> <span class="pest-ico"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 35Q3 27 8 13Q17 2 34 7Q36 28 20 35Z" fill="#8ac879" stroke="#397b4a" stroke-width="1.8"/><path d="M13 29Q20 18 31 11" stroke="#d8f2ae" stroke-width="2"/><g fill="#bf6536" stroke="#8e452c" stroke-width=".7"><circle cx="14" cy="16" r="3"/><circle cx="23" cy="23" r="4"/><circle cx="28" cy="14" r="2.5"/><circle cx="15" cy="26" r="2"/></g></svg></span> 鏽病</label><label class="chip"><input type="checkbox" value="myna"> <span class="pest-ico"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M9 30Q3 21 13 13Q24 6 32 16Q36 26 26 31Z" fill="#594331" stroke="#352a24" stroke-width="1.5"/><path d="M11 25Q19 17 29 25Q21 32 11 25Z" fill="#fff4d6"/><circle cx="26" cy="16" r="2.2" fill="#f9c842"/><circle cx="26" cy="16" r=".9" fill="#201a15"/><path d="M31 18L39 21L31 23Z" fill="#edb32e"/><path d="M15 31L13 37M23 31L24 37" stroke="#e0b12d" stroke-width="2" stroke-linecap="round"/></svg></span> 八哥</label></div>
+        <div class="lbl">出現挑戰</div>
+        <div class="seg" id="wxPests"><label class="chip"><input type="checkbox" value="whitefly"> <span class="pest-ico" id="wxWhiteflyIcon"><svg class="wf" viewBox="0 0 40 40" aria-hidden="true"><path d="M19 18Q5 2 4 18Q5 28 18 23M21 18Q35 2 36 18Q35 28 22 23" fill="#fff" stroke="#7b9aa1" stroke-width="1.5"/><ellipse cx="20" cy="23" rx="4" ry="9" fill="#e0b85c" stroke="#7e6836"/><circle cx="20" cy="13" r="3" fill="#746048"/><path d="M17 11L12 6M23 11L28 6M16 25L9 29M24 25L31 29" stroke="#746048" stroke-width="1.3" stroke-linecap="round"/></svg></span> 粉蝨</label><label class="chip"><input type="checkbox" value="rust"> <span class="pest-ico"><svg viewBox="0 0 40 40" aria-hidden="true"><path d="M20 35Q3 27 8 13Q17 2 34 7Q36 28 20 35Z" fill="#8ac879" stroke="#397b4a" stroke-width="1.8"/><path d="M13 29Q20 18 31 11" stroke="#d8f2ae" stroke-width="2"/><g fill="#bf6536" stroke="#8e452c" stroke-width=".7"><circle cx="14" cy="16" r="3"/><circle cx="23" cy="23" r="4"/><circle cx="28" cy="14" r="2.5"/><circle cx="15" cy="26" r="2"/></g></svg></span> 鏽病</label><label class="chip"><input type="checkbox" value="rain"> <span class="pest-ico">🌧️</span> 豪雨</label><label class="chip"><input type="checkbox" value="drought"> <span class="pest-ico">💧</span> 乾旱</label><label class="chip"><input type="checkbox" value="heat"> <span class="pest-ico">☀️</span> 高溫</label><label class="chip"><input type="checkbox" value="wind"> <span class="pest-ico">🌪️</span> 強風</label><label class="chip"><input type="checkbox" value="myna"> <span class="pest-ico" id="wxMynaIcon"><svg class="myna" viewBox="0 0 40 40" aria-hidden="true"><path d="M9 30Q3 21 13 13Q24 6 32 16Q36 26 26 31Z" fill="#594331" stroke="#352a24" stroke-width="1.5"/><path d="M11 25Q19 17 29 25Q21 32 11 25Z" fill="#fff4d6"/><circle cx="26" cy="16" r="2.2" fill="#f9c842"/><circle cx="26" cy="16" r=".9" fill="#201a15"/><path d="M31 18L39 21L31 23Z" fill="#edb32e"/><path d="M15 31L13 37M23 31L24 37" stroke="#e0b12d" stroke-width="2" stroke-linecap="round"/></svg></span> 八哥</label></div>
+        <p class="lvtxt">勾選的挑戰依設定時數優先出現，已完成的挑戰不重複。自動模式仍保留神岡實測天氣。</p>
         <p class="lvtxt">規則：33°C 以上高溫、30°C 以上且沒下雨為乾旱、風速 10m/s 以上強風、雨量 20mm 以上豪雨。越熱果況越好，雨和風讓果況變差。</p>
         <button id="btnWx" class="btn main">發布</button>
       </div>
@@ -1162,7 +1164,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.6.2';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.6.3';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -3364,10 +3366,10 @@ const Admin = {
   },
   async weather(){
     let c=null; try{ c=await DB.get('config/weather'); }catch(e){}
-    const s = (c && c.date===today()) ? c : {...simWeather(), mode:'sim'};
+    const s = (c && (c.date===today()||Number(c.expiresAt)>Date.now())) ? c : {...simWeather(), mode:'sim'};
     $('#wMode').value = s.mode||'sim'; $('#wTemp').value=s.temp; $('#wRain').value=s.rain; $('#wWind').value=s.wind; $('#wHours').value=s.durationHours||3;
     [['wTempGrade','wTemp'],['wRainGrade','wRain'],['wWindGrade','wWind']].forEach(([grade,input])=>{const el=$('#'+grade),value=Number($('#'+input).value);el.value=[...el.options].reduce((a,b)=>Math.abs(Number(b.value)-value)<Math.abs(Number(a.value)-value)?b:a).value;});
-    document.querySelectorAll('#wxPests input').forEach(x=>x.checked=(s.pests||[]).includes(x.value));
+    document.querySelectorAll('#wxPests input').forEach(x=>x.checked=(s.challenges||s.pests||[]).includes(x.value));
   },
   async stats(){
     scStatus();
@@ -3571,13 +3573,14 @@ $('#btnPoolReset').onclick = async()=>{
 };
 [['wTempGrade','wTemp'],['wRainGrade','wRain'],['wWindGrade','wWind']].forEach(([grade,input])=>{$('#'+grade).addEventListener('change',()=>{$('#'+input).value=$('#'+grade).value;});});
 $('#btnWx').onclick = async()=>{
-  const pests=[...document.querySelectorAll('#wxPests input:checked')].map(x=>x.value);
+  const challenges=[...document.querySelectorAll('#wxPests input:checked')].map(x=>x.value);
+  const pests=challenges.filter(k=>['whitefly','rust','myna'].includes(k));
   const mode=$('#wMode').value;
   const hours=Number($('#wHours').value);
-  if(mode==='manual'&&(!Number.isInteger(hours)||hours<1||hours>72)){toast('持續時數必須為 1–72 小時');return;}
-  await DB.set('config/weather', {mode, temp:+$('#wTemp').value, rain:+$('#wRain').value, wind:+$('#wWind').value, pests, date:today(),durationHours:hours, publishedAt:Date.now(),expiresAt:mode==='manual'?Date.now()+hours*3600000:null});
+  if((mode==='manual'||challenges.length)&&(!Number.isInteger(hours)||hours<1||hours>72)){toast('持續時數必須為 1–72 小時');return;}
+  await DB.set('config/weather', {mode, temp:+$('#wTemp').value, rain:+$('#wRain').value, wind:+$('#wWind').value, pests, challenges, date:today(),durationHours:hours, publishedAt:Date.now(),expiresAt:(mode==='manual'||challenges.length)?Date.now()+hours*3600000:null});
   await loadWeather(); if(P){renderWeather();startWeatherTransition();}
-  toast(mode==='sim'?'已切回自動天氣，不必等待手動時數結束':'手動氣候已立即生效');
+  toast(challenges.length?'挑戰已發布，依設定時數生效':mode==='sim'?'已切回自動天氣，不必等待手動時數結束':'手動氣候已立即生效');
 };
 
 // Keep the active climate in sync while the kingdom remains open.
@@ -3620,12 +3623,14 @@ function simWeather(){
   return {temp, rain, wind, pests, src:'模擬天氣'};
 }
 async function loadWeather(){
+  let challenges=[];
   // V15.1: 舊版測試值不再覆蓋正式天氣或後台發布
   try{localStorage.removeItem('hfk_wx_test');}catch(e){}
   try{
     const c=await DB.get('config/weather');
+    if(c&&Number(c.expiresAt)>Date.now()&&Array.isArray(c.challenges))challenges=c.challenges;
     if(c&&c.mode==='manual'&&((Number(c.expiresAt)>Date.now())||(!c.expiresAt&&c.date===today()))){
-      WX={temp:+c.temp,rain:+c.rain,wind:+c.wind,pests:c.pests||[],src:'手動模擬'};
+      WX={temp:+c.temp,rain:+c.rain,wind:+c.wind,pests:c.pests||[],challenges,src:'手動模擬'};
       return;
     }
   }catch(e){console.warn('天氣公告讀取失敗',e);}
@@ -3635,11 +3640,11 @@ async function loadWeather(){
     const w=await response.json();
     if(w.stationId!=='C0F9I0'||!Number.isFinite(w.temperature))throw Error('invalid_weather');
     WX={temp:w.temperature,rain:Number.isFinite(w.rainfall)?w.rainfall:0,
-      wind:Number.isFinite(w.windSpeed)?w.windSpeed:0,pests:[],
+      wind:Number.isFinite(w.windSpeed)?w.windSpeed:0,pests:[],challenges,
       src:'神岡實測',weather:w.weather||'',observedAt:w.observedAt};
     return;
   }catch(e){console.warn('神岡實測暫不可用，改用模擬備援',e);}
-  WX={...simWeather(),src:'模擬備援'};
+  WX={...simWeather(),challenges,src:'模擬備援'};
 }
 // V15.4: smoothly interpolate visual weather only; WX remains the authoritative
 // measured/manual value for labels, challenges, and fruit calculations.
@@ -3686,6 +3691,7 @@ const CH = {
 function activeCh(){
   const pr = ['rain','wind','heat','whitefly','myna','drought','rust'].filter(k=>CH[k]);
   const tried = (P && P.daily && P.daily.chTried) || [], n = (P && P.daily && P.daily.chTry) || 0;
+  const published=(WX.challenges||[]).find(k=>pr.includes(k)&&!tried.includes(k)&&!chDone(k)); if(published)return [published];
   const w = pr.filter(k=>CH[k].when(WX)).find(k=>!tried.includes(k) && !chDone(k)); if(w) return [w];
   const D = Math.floor(Date.parse(today())/864e5), start = (D*3 + chSlot() + n) % pr.length;
   for(let i=0;i<pr.length;i++){ const k = pr[(start+i) % pr.length]; if(!tried.includes(k) && !chDone(k)) return [k]; }
@@ -3694,7 +3700,7 @@ function activeCh(){
 }
 // Presentation only: keep the existing rotation, completion records and rewards.
 function chIsDrill(k){
-  return (k==='wind'||k==='rain')&&(!CH[k].when(WX)||(k==='rain'&&WX.src==='神岡實測'&&visualRainAmount()<20));
+  return (WX.challenges||[]).includes(k)||(k==='wind'||k==='rain')&&(!CH[k].when(WX)||(k==='rain'&&WX.src==='神岡實測'&&visualRainAmount()<20));
 }
 function chCaption(k,zone=czName()){
   return chIsDrill(k)?zone+'出現新挑戰：'+CH[k].n+'！':zone+'出現'+CH[k].n+'！';
@@ -4735,6 +4741,9 @@ function holdGame(k, d){
     const stop = ()=>{ if(!iv||done) return; clearInterval(iv); iv = null; done = true;
       if(v>=lo && v<=hi){ round++; SND.good(round*2); if(round>=3) return finishChallenge(k, true); $('#mgInfo').textContent = '剛剛好！下一次綠色區更窄喔'; setTimeout(setup, 650); }
       else finishChallenge(k, false); };
+    // Cancel native long-press actions only on the irrigation control.
+    b.addEventListener('touchstart', e=>e.preventDefault(), {passive:false});
+    b.addEventListener('contextmenu', e=>e.preventDefault());
     b.addEventListener('pointerdown', start); b.addEventListener('pointerup', stop); b.addEventListener('pointerleave', stop); b.addEventListener('pointercancel', stop);
     $('#mgInfo').textContent = '水位 0%';
   }
@@ -5677,9 +5686,9 @@ function sndPop(btn){
 /* ---------- 我想玩遊戲：練習模式（不加任何數值，不影響難度與每日紀錄） ---------- */
 let PRACTICE = false, PRACTICE_D = null, PRAC_T0 = 0;
 const PRACTICE_LIST = [
-  {k:'whitefly', i:'🦟', n:'銀葉粉蝨'}, {k:'rust', i:'🍂', n:'銹病三輪'}, {k:'rain', i:'🌧️', n:'豪雨垃圾分類'},
+  {k:'whitefly', i:$('#wxWhiteflyIcon').innerHTML, n:'銀葉粉蝨'}, {k:'rust', i:'🍂', n:'銹病三輪'}, {k:'rain', i:'🌧️', n:'豪雨垃圾分類'},
   {k:'drought', i:'💧', n:'乾旱澆水'}, {k:'heat', i:'☀️', n:'高溫撐陽傘'}, {k:'wind', i:'🌪️', n:'強風夾枝'},
-  {k:'myna', i:'🐦', n:'趕走八哥'}, {k:'wood', i:'🪓', n:'碎木工作'}, {k:'pick', i:'🧺', n:'摘果挑戰賽'}, {k:'memory', i:'🃏', n:'農場翻牌'}, {k:'myco', i:'💧', n:'灌溉連線'}, {k:'rhythm', i:'🎵', n:'節奏採收'}
+  {k:'myna', i:$('#wxMynaIcon').innerHTML, n:'趕走八哥'}, {k:'wood', i:'🪓', n:'碎木工作'}, {k:'pick', i:'🧺', n:'摘果挑戰賽'}, {k:'memory', i:'🃏', n:'農場翻牌'}, {k:'myco', i:'💧', n:'灌溉連線'}, {k:'rhythm', i:'🎵', n:'節奏採收'}
 ];
 function playMenu(){
   const tired = stamina()<=0;
