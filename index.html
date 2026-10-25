@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.6.3</title>
+<title>今天在隱花王國尋寶 V15.7</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -41,8 +41,9 @@ html.gaming,html.gaming body{overscroll-behavior:none}
   body.has-ov::before{content:'';position:fixed;inset:0;background:#140E12;z-index:39}
   [id$="Ov"]{left:50%!important;right:auto!important;width:min(100vw,560px)!important;transform:translateX(-50%);box-shadow:0 0 40px #0008}
 }
-[id$="Ov"],#mg{overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
-[id$="Ov"] img,#mg img,[id$="Ov"] svg,#mg svg{-webkit-touch-callout:none;-webkit-user-drag:none}
+[id$="Ov"],#mg,.arena,.fert-layer{overscroll-behavior:contain;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+:is([id$="Ov"],#mg,.arena,.fert-layer) :is(img,svg,image,canvas){-webkit-touch-callout:none;-webkit-user-drag:none}
+:is([id$="Ov"],#mg,.arena,.fert-layer) :is(input,textarea,[contenteditable]:not([contenteditable="false"])){-webkit-touch-callout:default;-webkit-user-select:text;user-select:text}
 
 /* ===== 色彩：取自無花果果皮、果肉、葉片、翡翠溫室 ===== */
 :root{
@@ -1165,7 +1166,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.6.3';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1738,6 +1739,28 @@ function shade(hex, amt){ // amt -1..1
   r=Math.round((t-r)*p+r);g=Math.round((t-g)*p+g);b=Math.round((t-b)*p+b);
   return '#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
 }
+/* Shared game native-action guard */
+(()=>{
+  const surfaces='[id$="Ov"],#mg,.arena,.fert-layer';
+  const pointerAreas='#mg,.arena,#ghCv,#ghJoy,#emCv,#emJoy,#famOv,#hockOv,#woSvg,#pkCv,.rh-lane,.rh-b,.tut-svg,.fert-layer';
+  const editable='input,textarea,select,[contenteditable]:not([contenteditable="false"])';
+  const element=target=>target?.nodeType===1?target:target?.parentElement;
+  const visible=el=>el&&!el.closest('.hide,[hidden]')&&el.getClientRects().length>0;
+  const guard=e=>{
+    const el=element(e.target);if(!el||el.closest(editable))return;
+    // Some mobile image menus target the map behind the active game sheet.
+    if(visible(el.closest(surfaces))||(e.type==='contextmenu'&&el.closest('#mapSvg')&&Array.from(document.querySelectorAll(surfaces)).some(visible)))e.preventDefault();
+  };
+  for(const type of ['contextmenu','selectstart','dragstart'])document.addEventListener(type,guard,true);
+  document.addEventListener('touchstart',e=>{
+    const el=element(e.target);if(!el||el.closest(editable)||!visible(el.closest(pointerAreas)))return;
+    // Tap games and navigation depend on the browser's click after touchend.
+    const button=el.closest('button,a,[role="button"]');
+    if(button&&!button.matches('#holdB,.rh-b'))return;
+    e.preventDefault();
+  },{capture:true,passive:false});
+})();
+/* End game native-action guard */
 function openSheet(html, center){const s=$('#sheet'); if(s.classList.contains('hide') && typeof navGuard==='function') navGuard();s.classList.toggle('center',!!center);$('#sheetBox').innerHTML=html;s.classList.remove('hide');}
 function closeSheet(){$('#sheet').classList.add('hide'); if(typeof stopMG==='function') stopMG();}
 $('#sheet').addEventListener('click',e=>{if(e.target.id==='sheet')closeSheet();});
