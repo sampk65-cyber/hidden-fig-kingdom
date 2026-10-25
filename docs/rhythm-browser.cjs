@@ -3,6 +3,7 @@ const fs=require('node:fs'),path=require('node:path'),assert=require('node:asser
 const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
 async function main(){
  const source=fs.readFileSync(process.env.RHY_INDEX||path.join(__dirname,'../index.html'),'utf8'),a=source.indexOf('const RHY_SONGS ='),b=source.indexOf('/* ---------- V10.6：農場翻牌',a);
+ const audioStart=source.indexOf('const AUD = {'),audio=source.slice(audioStart,source.indexOf('AUD.init();',audioStart));
  const css=source.match(/<style>([\s\S]*?)<\/style>/)[1],guardStart=source.indexOf('/* Shared game native-action guard */'),guard=source.slice(guardStart,source.indexOf('function openSheet',guardStart)),script=source.slice(a,b)+guard;
  const browser=await chromium.launch(process.env.CHROMIUM_PATH?{executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox','--disable-dev-shm-usage'],headless:true}:{headless:true});
  const page=await browser.newPage({viewport:{width:390,height:844},isMobile:true,hasTouch:true});
@@ -10,7 +11,7 @@ async function main(){
  if(process.env.FONT_CSS_ROOT)await page.route('http://rhythm.test/qa-font/**',r=>r.fulfill({path:path.join(process.env.FONT_CSS_ROOT,'files',r.request().url().split('/').pop())}));
  await page.route('http://rhythm.test/',r=>r.fulfill({contentType:'text/html; charset=utf-8',body:`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><style>${css}</style><script>
  const $=s=>document.querySelector(s); const DIFF_N=['簡單','中級','高級'];let PRACTICE=true,PRACTICE_D=1;const diffOf=()=>PRACTICE?PRACTICE_D:1;
- const AUD={on:true,ctx:null,mus:null,unlock(){if(!this.on)return;if(!this.ctx){this.ctx=new AudioContext();this.mus=this.ctx.createGain();this.mus.gain.value=.11;this.mus.connect(this.ctx.destination);}this.ctx.resume();}};
+ ${audio}
  const MUSIC={stop(){}},THEME={stop(){}};const SND={tick(){},win(){},lose(){},bad(){}};function noise(){}function closeSheet(){window.closed=(window.closed||0)+1;}window.results=[];
  ${script}
  window.testApi={songs:RHY_SONGS,arrange:typeof rhyArrangement==='function'?rhyArrangement:null,chart:typeof rhyChart==='function'?rhyChart:null,time:typeof rhyTime==='function'?rhyTime:null,bank:typeof rhyVoiceBank==='function'?rhyVoiceBank:null};
@@ -90,7 +91,7 @@ async function main(){
  assert.ok(lifecycle.mutedClock>lifecycle.resumed,'muting preserves timing');
  assert.ok(lifecycle.muted<.0001,'mute silences rhythm music');assert.ok(lifecycle.stopped<.0001,'stop silences rhythm music');
  const recovered=await page.evaluate(async()=>{
-  const old=AUD.ctx;AUD.on=false;AUD.ctx=null;AUD.mus=null;const p=rhyPlayer(testApi.songs[0]);p.start(3);
+  const old=AUD.ctx;AUD.on=false;AUD.ctx=null;AUD.mus=null;AUD.sfx=null;const p=rhyPlayer(testApi.songs[0]);p.start(3);
   const wait=ms=>new Promise(r=>setTimeout(r,ms));await wait(150);const before=p.now();AUD.on=true;AUD.unlock();await AUD.ctx.resume();
   const an=AUD.ctx.createAnalyser();an.fftSize=2048;AUD.mus.connect(an);let peak=0;
   for(let i=0;i<10;i++){await wait(100);const a=new Float32Array(2048);an.getFloatTimeDomainData(a);peak=Math.max(peak,...a.map(Math.abs));}
