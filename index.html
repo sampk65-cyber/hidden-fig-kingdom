@@ -422,6 +422,21 @@ details.fold[open] summary span{display:none}details.fold .ladder{margin-top:8px
 .rh-fig::after{content:'';position:absolute;left:18px;top:-7px;width:5px;height:10px;border-radius:3px;background:#5E9A4E}.rh-fig.green{background:radial-gradient(circle at 38% 32%,#D4E89A 0 20%,#9BB84A 21%)}
 .rh-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(92vw,400px);margin-top:8px}.rh-b{border:0;border-radius:14px;padding:16px 0;background:#5B2346;color:#fff;font:inherit;font-weight:900;font-size:18px}.rh-b.hit{animation:rhB .15s}@keyframes rhB{50%{transform:scale(.92);background:#7A3A60}}
 .rh-combo{height:20px;font-weight:900;color:#C9566E}#rhJ.pf{color:#3E9A3A}#rhJ.gd{color:#3E7FC4}#rhJ.bad{color:#E0473C}
+/* Original rhythm library: scoped to the two rhythm screens. */
+#rhSongOv{position:fixed;inset:0;z-index:40;display:flex;flex-direction:column;background:#181c22;color:#f5f0e6;padding:calc(48px + env(safe-area-inset-top,0px)) 0 0;overflow:hidden;touch-action:pan-y;font-family:inherit}
+.rh-library{width:min(100%,700px);margin:0 auto;padding:14px 18px 18px;overflow:auto;flex:1;min-height:0;overscroll-behavior:contain}.rh-eyebrow{font-size:10px;letter-spacing:2px;color:#cab58b}.rh-library h2{font-size:28px;letter-spacing:2px;margin:7px 0}.rh-intro{color:#adb7b6;font-size:12px;margin:0 0 20px}.rh-catalog{display:grid;grid-template-columns:1fr;gap:9px}
+.rh-track{display:flex;align-items:center;gap:12px;text-align:left;border:1px solid #ffffff13;border-radius:14px;background:#22282d;color:inherit;padding:10px;min-height:80px;font:inherit;cursor:pointer}.rh-track.selected{border-color:var(--track);background:#30343a}.rh-art{display:grid;place-items:center;flex:0 0 54px;height:54px;border-radius:11px;background:radial-gradient(circle at 40% 35%,#ffffff28,transparent 60%),var(--track);color:#1d2428;font-size:30px;box-shadow:inset 0 0 0 5px #ffffff0c}.rh-track-copy{display:flex;flex-direction:column;gap:3px;flex:1}.rh-track-copy small{font-size:10px;color:#c0c8c4;letter-spacing:1px}.rh-track-copy b{font-size:16px;letter-spacing:.5px}.rh-track-copy>span{font-size:11px;color:#a1adad}.rh-track-check{color:var(--track);opacity:0;padding:0 4px}.selected .rh-track-check{opacity:1}
+.rh-deck{flex-shrink:0;width:100%;padding:14px max(18px,calc((100% - 664px)/2)) calc(14px + env(safe-area-inset-bottom,0px));background:#242c2e;border-top:1px solid #c9b68a44;box-shadow:0 -8px 28px #0002}#rhSelected{font-weight:800;font-size:18px;color:#f1d7a1}.rh-preview-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:5px 0 9px}#rhDescription{font-size:11px;color:#b3bfbb}#rhPreview{flex-shrink:0;border:1px solid #9caa9f66;border-radius:20px;color:#e1e7df;background:transparent;min-height:40px;padding:8px 13px;font:inherit;font-size:12px}#rhPreview[aria-pressed=true]{border-color:#ddbd78;color:#f1d7a1}
+#rhDifficulties{display:flex;gap:6px}#rhDifficulties button{flex:1;border:1px solid #ffffff24;border-radius:8px;background:#1b2226;color:#cad2ce;padding:10px;font:inherit;font-size:13px;min-height:40px}#rhDifficulties button[aria-pressed=true]{background:#d4bd8b;color:#242a28;border-color:#d4bd8b;font-weight:800}#rhDifficulties>span{font-size:12px;padding:8px 0;color:#d9d2bb}.rh-hint{font-size:11px;line-height:1.5;color:#b3bfbb;margin:9px 0;min-height:17px}.rh-start{width:100%;border:0;border-radius:11px;background:#ead9b4;color:#242d29;font:inherit;font-size:16px;font-weight:800;padding:12px;cursor:pointer}
+#rhSongOv .wo-x,#rhyOv .wo-x{color:#28332d;min-height:40px;min-width:52px}
+#rhSongOv button:focus-visible,#rhyOv button:focus-visible{outline:3px solid #f0cf78;outline-offset:3px}
+#rhyOv{background:radial-gradient(ellipse at top,#394941,#1b2728 65%);padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));color:#f3efdf;overflow:hidden}#rhyOv .mem-h{color:#f3efdf;max-width:420px}#rhyOv .mem-h span{color:#c3cdbb;font-size:12px}#rhyOv .mem-bar{height:5px;background:#ffffff15;flex-shrink:0;width:min(92vw,400px)}#rhyOv .mem-bar i{background:var(--rh-accent,#d6bc82)}#rhyOv .mem-f{color:#f1e6c5;min-height:25px;width:min(92vw,400px);font-size:14px}
+#rhyOv .rh-field{flex:1;min-height:100px;max-height:420px;background:linear-gradient(#ffffff05,#ffffff0d);border:1px solid #d4cba524;box-shadow:inset 0 0 32px #0002}#rhyOv .rh-field.pulse{animation:rhStageBeat .18s}@keyframes rhStageBeat{from{box-shadow:inset 0 -25px 28px #ddc69114}}
+#rhyOv .rh-lane{border-color:#e8d9b022}#rhyOv .rh-line{background:#e8cc86;box-shadow:0 0 12px #e8cc8655;height:3px}.rh-line-label{position:absolute;top:86%;width:100%;text-align:center;color:#b4bba3;font-size:9px;letter-spacing:8px;pointer-events:none}
+#rhyOv .rh-fig{background:radial-gradient(circle at 32% 26%,#e3a7be,#ad537a 30%,#6e3558 78%);box-shadow:0 3px 9px #0006,inset 0 0 0 1px #f1c8d533;width:36px;height:38px;margin:-19px 0 0 -18px}#rhyOv .rh-fig.green{background:radial-gradient(circle at 32% 26%,#cbdfa0,#779b4b 40%,#4c7138);border:2px dashed #d4e9ac}#rhyOv .rh-fig::after{left:16px;transform:rotate(22deg)}#rhyOv .rh-b{background:linear-gradient(#70516b,#51384c);border:1px solid #bda8a744;padding:14px 0;min-height:50px;box-shadow:0 3px 0 #111a}#rhyOv .rh-b.hit{background:#ab7c99}#rhyOv .rh-combo{height:25px;color:#ebce87;font-size:14px;letter-spacing:2px;flex-shrink:0}#rhyOv #rhJ.pf{color:#b6e0a9}#rhyOv #rhJ.gd{color:#add5ee}#rhyOv #rhJ.bad{color:#e6a291}.rh-game-hint{font-size:10px;color:#b5c3b7;margin:6px 0 0;flex-shrink:0}.rh-pause{position:absolute;top:calc(8px + env(safe-area-inset-top,0px));left:80px;background:#ffffff15;color:#e6e7db;border:1px solid #ffffff33;border-radius:20px;padding:8px 14px;font:inherit;font-size:13px}.rh-paused{position:absolute;inset:0;background:#152124f0;z-index:2;display:flex;flex-direction:column;gap:18px;align-items:center;justify-content:center}.rh-paused[hidden]{display:none}.rh-paused b{font-size:26px;color:#ead9b4}.rh-paused span{font-size:13px;color:#bbc8bc}.rh-paused button{background:#ead9b4;border:0;border-radius:14px;padding:15px 35px;font:inherit;font-weight:800;color:#24342c}
+@media(min-width:600px){.rh-catalog{grid-template-columns:1fr 1fr}}
+@media(max-height:640px){.rh-library{padding-top:4px}.rh-library h2{font-size:22px}.rh-intro{margin-bottom:12px}.rh-deck{padding-top:8px;padding-bottom:8px}#rhSelected{font-size:16px}.rh-preview-row{margin:2px 0 5px}.rh-hint{margin:5px 0}.rh-start{padding:10px}#rhyOv .mem-h{margin-bottom:3px}#rhyOv .mem-h b{font-size:16px}#rhyOv .rh-b{padding:10px 0}}
+@media(prefers-reduced-motion:reduce){#rhyOv .rh-field.pulse,#rhyOv .rh-b.hit{animation:none}}
 .prac-d{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}.prac-d button{border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:12px 6px;display:flex;flex-direction:column;gap:4px;align-items:center;font:inherit;color:var(--ink);cursor:pointer}.prac-d button b{font-size:17px}.prac-d small{font-size:11px;color:var(--muted);line-height:1.4}.prac-d button.cur{border-color:var(--fig)}
 .prac-sc{display:flex;flex-direction:column;align-items:center;margin:4px 0 6px}.prac-sc b{font-size:44px;color:var(--fig);line-height:1.1}.prac-sc small{color:var(--muted)}
 .rd-box{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);text-align:left}
@@ -1610,90 +1625,208 @@ function mycoGame(done){
 }
 
 /* ---------- V11.4：節奏採收（配上同步的歌曲：熟果跟著旋律落下，落到線上時點擊，青果不要點） ---------- */
-// V11.5：三首歌輪流，每首 8 小節循環，每小節 8 個八分音符（0＝休止）
+// 王國原創 VOL. 01：12 首器樂曲；固定十六分音符譜面與共用音訊時鐘。
 const RHY_SONGS = [
-  {n:'無花果收成歌', wave:'triangle', vol:.5,
-   chords:[[48,[60,64,67]],[43,[59,62,67]],[45,[60,64,69]],[41,[60,65,69]],[48,[60,64,67]],[43,[59,62,67]],[41,[60,65,69]],[43,[59,62,65]]],
-   mel:[[72,0,76,0,79,0,76,74],[74,0,71,0,74,0,79,0],[76,0,72,0,69,0,72,76],[77,0,76,0,72,0,69,0],
-        [72,0,76,79,84,0,79,76],[79,0,74,0,71,74,79,0],[77,76,74,72,69,0,72,0],[74,0,79,0,74,71,67,0]]},
-  {n:'小呱夜巡', wave:'square', vol:.22,
-   chords:[[45,[57,60,64]],[41,[57,60,65]],[48,[55,60,64]],[43,[55,59,62]],[45,[57,60,64]],[41,[57,60,65]],[43,[55,59,62]],[40,[56,59,64]]],
-   mel:[[69,0,72,0,76,0,74,72],[72,0,69,0,65,0,69,0],[67,0,72,0,76,0,79,0],[74,0,71,0,67,0,0,0],
-        [69,72,76,0,81,0,79,76],[77,0,76,0,72,0,69,0],[71,0,74,0,79,0,74,71],[68,0,71,0,76,0,0,0]]},
-  {n:'溫室晨光', wave:'sine', vol:.6,
-   chords:[[41,[57,60,65]],[48,[55,60,64]],[50,[57,62,65]],[46,[58,62,65]],[41,[57,60,65]],[48,[55,60,64]],[46,[58,62,65]],[48,[58,60,64]]],
-   mel:[[77,0,72,0,69,72,77,0],[76,0,72,0,67,0,72,0],[74,0,77,0,81,0,77,74],[74,0,70,0,74,0,77,0],
-        [81,0,77,0,72,0,77,81],[79,0,76,0,72,0,76,79],[77,0,74,0,70,0,74,77],[76,74,72,0,67,0,72,0]]}
+  {id:'velvet',n:'絨夜熟果',genre:'R&B',style:'rnb',bpm:82,swing:.08,icon:'☾',color:'#a979b5',desc:'柔暖電鋼琴・深沉貝斯',
+   chords:[[45,[60,64,67,71]],[41,[57,60,64,67]],[48,[59,62,64,67]],[43,[59,62,65,69]]],
+   mel:[[76,0,79,76,72,0,71,72],[72,0,69,72,76,0,74,0],[74,0,76,79,83,79,76,0],[77,0,74,71,69,0,71,0],[72,76,0,79,84,0,83,79],[76,0,72,69,67,69,72,0],[71,74,0,76,79,0,76,74],[77,74,71,0,69,71,72,0]],
+   kick:[0,7,10],snare:[4,12],hat:[0,2,4,6,8,10,12,14],bass:[[0,0],[6,7],[10,12],[14,7]],chop:[0,7,12]},
+  {id:'dew',n:'露珠慢舞',genre:'R&B',style:'rnb',bpm:90,swing:.12,icon:'◈',color:'#b882a9',desc:'碎拍律動・夜色和弦',
+   chords:[[38,[53,57,60,64]],[43,[53,57,59,62]],[48,[52,55,59,62]],[45,[55,59,60,64]]],
+   mel:[[69,0,72,74,76,74,0,72],[71,0,69,67,65,0,67,69],[67,0,71,74,76,0,74,71],[72,0,71,67,64,67,0,69],[74,76,77,76,74,0,72,69],[71,74,0,77,76,74,71,0],[76,0,79,76,74,71,67,0],[72,0,76,74,71,0,69,0]],
+   kick:[0,6,9,14],snare:[4,12],hat:[0,2,5,6,8,10,13,14],bass:[[0,0],[3,12],[6,7],[9,0],[14,10]],chop:[0,6,11]},
+  {id:'island',n:'浮島搖搖',genre:'雷鬼',style:'reggae',bpm:86,swing:0,icon:'☀',color:'#c5a54d',desc:'反拍短和弦・One-drop 鼓點',
+   chords:[[43,[59,62,67]],[48,[60,64,67]],[38,[57,62,66]],[43,[59,62,67]]],
+   mel:[[79,0,74,0,71,74,0,76],[76,0,72,0,67,0,72,74],[78,0,74,0,69,74,0,78],[79,0,76,74,71,0,67,0],[74,79,0,81,79,74,71,0],[76,0,79,76,72,0,67,72],[74,0,78,81,78,74,69,0],[71,74,79,0,76,74,67,0]],
+   kick:[8],snare:[8],hat:[2,6,10,14],bass:[[0,0],[4,7],[7,12],[10,7],[14,0]],chop:[2,6,10,14]},
+  {id:'sunpath',n:'暖陽小徑',genre:'雷鬼',style:'reggae',bpm:98,swing:.025,icon:'❋',color:'#b7b458',desc:'明亮雙反拍・彈跳低音',
+   chords:[[48,[60,64,67]],[43,[59,62,67]],[45,[60,64,69]],[41,[57,60,65]]],
+   mel:[[72,0,76,79,0,76,72,0],[71,0,74,79,0,74,71,0],[76,0,81,79,76,0,72,0],[77,0,76,72,69,0,65,0],[79,0,84,79,76,72,0,76],[74,79,0,83,79,74,71,0],[81,0,79,76,72,76,0,79],[77,76,72,69,0,72,65,0]],
+   kick:[0,8,14],snare:[4,12],hat:[0,2,6,8,10,14],bass:[[0,0],[2,12],[6,7],[8,0],[12,7],[15,12]],chop:[2,3,6,10,11,14]},
+  {id:'cafe',n:'月台爵士館',genre:'爵士',style:'jazz',bpm:112,swing:1/6,icon:'♧',color:'#c89c72',desc:'搖擺鋼琴・步行低音',
+   chords:[[38,[53,57,60,64]],[43,[53,57,59,62]],[48,[52,55,59,62]],[45,[55,58,61,64]]],
+   mel:[[77,0,76,74,72,69,0,72],[71,74,77,0,76,74,71,69],[67,71,74,76,0,79,76,74],[73,0,76,79,76,73,70,0],[74,77,81,0,79,77,76,74],[77,0,74,71,69,71,74,77],[76,79,83,81,79,76,74,71],[73,76,0,79,76,73,70,69]],
+   kick:[0,10],snare:[4,12],hat:[0,4,6,8,12,14],bass:[[0,0],[4,4],[8,7],[12,11]],chop:[2,8,14]},
+  {id:'blueglass',n:'藍調玻璃屋',genre:'爵士',style:'jazz',bpm:96,swing:.15,icon:'♭',color:'#6c9cbe',desc:'煙霧藍調・刷鼓與低音提琴',
+   chords:[[41,[57,60,63,67]],[46,[56,60,62,65]],[41,[57,60,63,67]],[48,[58,62,64,67]]],
+   mel:[[72,75,0,77,75,72,68,0],[70,0,74,77,74,70,68,0],[72,0,75,77,80,77,75,72],[74,0,70,67,64,67,70,0],[77,80,84,0,80,77,75,72],[77,0,74,70,68,70,74,0],[75,77,80,77,75,72,68,0],[74,70,67,0,64,67,65,0]],
+   kick:[0,8,11],snare:[4,12,15],hat:[0,4,6,8,12,14],bass:[[0,0],[4,7],[8,10],[12,9]],chop:[0,6,10]},
+  {id:'knight',n:'黑騎士的安可',genre:'搖滾',style:'rock',bpm:124,swing:0,icon:'ϟ',color:'#d18470',desc:'失真吉他・厚實八拍鼓組',
+   chords:[[40,[52,59,64]],[43,[55,62,67]],[38,[50,57,62]],[45,[57,64,69]]],
+   mel:[[64,64,67,0,69,67,64,0],[67,67,71,0,74,71,67,0],[66,66,69,0,74,69,66,0],[69,0,72,76,72,69,67,0],[76,0,79,76,74,71,67,64],[79,0,78,74,71,74,79,0],[78,74,0,81,78,74,69,0],[81,0,79,76,72,69,67,64]],
+   kick:[0,2,8,10],snare:[4,12],hat:[0,2,4,6,8,10,12,14],bass:[[0,0],[2,0],[4,7],[6,0],[8,0],[10,12],[12,7],[14,0]],chop:[0,4,8,12]},
+  {id:'cliff',n:'藤蔓衝上雲霄',genre:'搖滾',style:'rock',bpm:140,swing:0,icon:'▲',color:'#b37879',desc:'急行吉他 riff・雙踩推進',
+   chords:[[45,[57,64,69]],[41,[53,60,65]],[48,[60,67,72]],[43,[55,62,67]]],
+   mel:[[69,72,69,76,69,72,79,76],[65,69,65,72,65,69,76,72],[72,76,72,79,72,76,84,79],[67,71,67,74,67,71,79,74],[81,79,76,72,76,79,81,0],[77,76,72,69,72,76,77,0],[84,83,79,76,79,83,84,0],[79,78,74,71,74,71,69,0]],
+   kick:[0,3,6,8,11,14],snare:[4,12],hat:[0,2,4,6,8,10,12,14],bass:[[0,0],[2,12],[4,0],[6,7],[8,0],[10,12],[12,0],[14,7]],chop:[0,3,6,8,11,14]},
+  {id:'market',n:'果市彈跳線',genre:'放克',style:'funk',bpm:108,swing:.035,icon:'✦',color:'#b79957',desc:'Clav 短音・切分 slap 貝斯',
+   chords:[[40,[55,59,62,66]],[45,[55,59,61,64]],[40,[55,59,62,66]],[47,[57,61,63,66]]],
+   mel:[[76,0,79,0,78,76,0,74],[73,0,76,0,79,76,0,73],[74,0,76,79,0,78,76,0],[75,0,78,0,81,78,75,0],[76,79,0,83,81,79,0,76],[79,0,76,73,0,76,81,0],[83,0,81,79,78,0,76,74],[78,81,0,78,75,0,74,76]],
+   kick:[0,3,10,13],snare:[4,12],hat:[0,1,2,3,4,6,7,8,9,10,11,12,14,15],bass:[[0,0],[3,12],[6,7],[7,10],[10,0],[13,12],[15,7]],chop:[1,6,9,14]},
+  {id:'squirrel',n:'松鼠滑步派對',genre:'放克',style:'funk',bpm:118,swing:0,icon:'✧',color:'#d4a34e',desc:'銅管短句・俐落反拍',
+   chords:[[43,[53,57,59,62]],[48,[58,62,64,67]],[41,[51,55,57,60]],[38,[53,57,60,64]]],
+   mel:[[79,0,77,74,0,71,74,0],[76,79,0,82,79,0,76,74],[77,0,75,72,0,69,72,0],[74,77,0,81,77,0,74,72],[83,79,0,77,74,77,79,0],[82,79,76,0,74,76,79,0],[81,77,0,75,72,75,77,0],[81,0,77,74,72,74,77,79]],
+   kick:[0,6,8,15],snare:[4,11,12],hat:[0,1,2,4,6,7,8,10,11,12,14,15],bass:[[0,0],[2,12],[5,7],[8,0],[11,10],[14,7],[15,12]],chop:[2,5,10,13]},
+  {id:'aurora',n:'極光溫室',genre:'電音',style:'electro',bpm:128,swing:0,icon:'◇',color:'#7ba9bb',desc:'四拍大鼓・鋸齒貝斯與琶音',
+   chords:[[42,[57,61,66]],[38,[54,57,62]],[45,[57,61,64]],[40,[56,59,64]]],
+   mel:[[78,73,69,73,78,81,78,73],[74,69,66,69,74,78,74,69],[76,73,69,73,76,81,76,73],[76,71,68,71,76,80,76,71],[81,78,73,78,85,81,78,73],[78,74,69,74,81,78,74,69],[81,76,73,76,85,81,76,73],[80,76,71,76,83,80,76,71]],
+   kick:[0,4,8,12],snare:[4,12],hat:[2,6,10,14],bass:[[0,0],[2,12],[4,0],[6,7],[8,0],[10,12],[12,0],[14,7]],chop:[2,6,10,14]},
+  {id:'earth',n:'大地採收祭',genre:'鼓打',style:'drums',bpm:116,swing:0,icon:'◎',color:'#be8e62',desc:'手鼓呼應・低音大鼓合奏',
+   chords:[[38,[57,62,65]],[41,[57,60,65]],[36,[55,60,64]],[38,[57,62,65]]],
+   mel:[[74,0,69,0,65,69,0,74],[77,0,72,0,69,72,0,77],[72,0,67,0,64,67,0,72],[74,0,77,74,69,0,65,0],[81,0,77,74,0,69,74,0],[81,77,0,72,69,0,72,77],[79,0,76,72,0,67,72,0],[81,77,74,0,69,74,62,0]],
+   kick:[0,6,10],snare:[4,14],hat:[0,2,3,6,8,10,11,14],bass:[[0,0],[6,7],[10,12],[14,0]],chop:[0,8]}
 ];
-function rhyPick(){ let k = 0; try{ k = (+localStorage.getItem('hfk_rsong')||0)%3; localStorage.setItem('hfk_rsong', (k+1)%3); }catch(e){ k = rnd(3); } return RHY_SONGS[k]; }
-function rhyPlayer(bpm, SONG){
-  const e = 60/bpm/2; let timer = null, step = 0, next = 0, t0 = 0;
-  const ok = ()=>AUD.on && AUD.ctx;
-  const tickF = ()=>{ const c = AUD.ctx;
-    while(next < c.currentTime+.25){ const bar = Math.floor(step/8), pos = step%8, b8 = bar%8, [root, ch] = SONG.chords[b8], m = SONG.mel[b8][pos], t = next, intro = bar===0;
-      if(m && !intro) tone(AUD.mus, m, t, e*1.7, SONG.wave, SONG.vol);
-      if(m && !intro && bar>=8) tone(AUD.mus, m-12, t, e*1.5, 'sine', .22);                 // 第二輪加低八度和聲
-      if(pos===0 || pos===4) tone(AUD.mus, root, t, e*3.2, 'sine', .75);                      // 貝斯
-      if(pos===2 || pos===6) ch.forEach(n=>tone(AUD.mus, n, t, e*1.3, 'sine', .13));          // 和弦反拍
-      if(pos===0 || pos===4) tone(AUD.mus, 36, t, .16, 'sine', .9, -12);                      // 大鼓
-      if(pos===2 || pos===6) noise(AUD.mus, t, .09, .22, 1800);                               // 小鼓
-      if(pos%2===1) noise(AUD.mus, t, .03, .12, 8000);                                        // 鈸
-      step++; next += e; } };
+// Sixteenth-note grid. Swing moves the offbeat and the adjacent sixteenth together.
+function rhyTime(song, step){const beat=Math.floor(step/4),p=step%4,q=60/song.bpm;return (beat+p/4+(p===1?song.swing/2:p===2?song.swing:p===3?song.swing/2:0))*q;}
+function rhyArrangement(song){
+  const events=[],q=60/song.bpm,length=17*4*q;
+  const add=(voice,step,m,vol=1,dur=.2)=>events.push({voice,step,t:rhyTime(song,step),m,vol,dur});
+  for(let bar=0;bar<17;bar++){
+    const phrase=Math.max(0,bar-1),[root,ch]=song.chords[phrase%4],intro=bar===0,second=bar>8;
+    for(let p=0;p<16;p++){
+      const s=bar*16+p,boost=second?1.08:1;
+      if(song.kick.includes(p))add('kick',s,36,.9*boost,.24);
+      if(song.snare.includes(p))add('snare',s,0,song.style==='jazz'?.23:.5,.15);
+      if(song.hat.includes(p))add(song.style==='jazz'?'ride':'hat',s,0,(p%4===0?.22:.13)*boost,.06);
+      const bass=song.bass.find(b=>b[0]===p);if(bass)add('bass',s,root-12+bass[1],.65,song.style==='reggae'?q*.85:q*.65);
+      if(song.chop.includes(p))ch.forEach(m=>add('chord',s,m,song.style==='rock'?.12:.1,song.style==='rnb'?q*1.8:song.style==='jazz'?q*.65:q*.27));
+      if(!intro&&p%2===0){const m=song.mel[phrase%8][p/2];if(m)add('lead',s,m,.3,q*(song.style==='rock'?.5:.75));}
+      if(!intro&&p%4===3&&(song.style==='drums'||(second&&(song.style==='funk'||song.style==='reggae'))))add('tom',s,48+((p+bar)%3)*5,.3,.16);
+      if(!intro&&bar%4===0&&p>=13)add(song.style==='drums'?'tom':'snare',s,48+(p-13)*5,.22,.12);
+      if(second&&p===0)add('air',s,0,.12,.45);
+    }
+  }
+  events.sort((a,b)=>a.t-b.t);return {events,length};
+}
+function rhyChart(song,d){
+  const {events,length}=rhyArrangement(song),notes=[],q=60/song.bpm,last=[-9,-9,-9];
+  // Easy = two strong beats; medium = four beats + melodic offbeats; hard = full audible accents.
+  const pitches=song.mel.flat().filter(Boolean),lo=Math.min(...pitches),hi=Math.max(...pitches);
+  for(let step=16;step<17*16;step++){
+    const at=events.filter(e=>e.step===step),p=step%16,mel=at.find(e=>e.voice==='lead'),bass=at.find(e=>e.voice==='bass'),drum=at.find(e=>['kick','snare','tom'].includes(e.voice));
+    const chosen=d===0?p%8===0:d===1?(p%4===0||(p%4===2&&mel)):!!(mel||bass||drum);
+    const t=rhyTime(song,step);
+    if(chosen&&at.length){const pitch=mel?.m??(bass?bass.m+36:60+(step%3)*7),raw=Math.min(2,Math.max(0,Math.floor((pitch-lo)/Math.max(1,hi-lo+1)*3)));
+      let lane=raw;for(let k=0;k<3;k++)if(t-last[(raw+k)%3]>=.24){lane=(raw+k)%3;break;}
+      if(t-last[lane]>=.24){notes.push({t,l:lane,g:false});last[lane]=t;}
+    }
+  }
+  // Green fruit occupies a separate, sparse rest; never overlays a ripe hit window.
+  if(d>0)for(let bar=2;bar<17;bar+=d===1?4:2){const t=rhyTime(song,bar*16+10),l=bar%3;if(!notes.some(n=>n.l===l&&Math.abs(n.t-t)<.5))notes.push({t,l,g:true});}
+  notes.sort((a,b)=>a.t-b.t);return {notes,length,fall:[2.4,2,1.7][d],ripe:notes.filter(n=>!n.g).length};
+}
+// Rhythm-only voices. Each source and output belongs to this player, so stop never leaks scheduled sound.
+function rhyVoiceBank(c,out,style){
+  const live=new Set(),noiseBuffer=c.createBuffer(1,c.sampleRate,c.sampleRate),data=noiseBuffer.getChannelData(0);
+  let seed=1234567;for(let i=0;i<data.length;i++){seed=(seed*1664525+1013904223)>>>0;data[i]=seed/2147483648-1;}
+  const curve=new Float32Array(1024);for(let i=0;i<curve.length;i++){const x=i*2/(curve.length-1)-1;curve[i]=Math.tanh(x*3);}
+  const play=(e,t)=>{
+    const nodes=[],sources=[],g=c.createGain();nodes.push(g);const v=e.voice,drum=['hat','snare','ride','air'].includes(v),dur=Math.max(.035,e.dur),freq=440*2**((e.m-69)/12);
+    let dest=g,level=e.vol;
+    if(!drum&&['bass','lead','chord'].includes(v)){
+      const f=c.createBiquadFilter();f.type='lowpass';f.frequency.value=v==='bass'?style==='electro'?360:style==='funk'?950:600:style==='rock'?2400:style==='reggae'?2000:style==='rnb'?2800:4800;f.Q.value=.7;f.connect(g);nodes.push(f);dest=f;
+      if(style==='rock'&&v!=='bass'){const sh=c.createWaveShaper();sh.curve=curve;sh.oversample='2x';sh.connect(f);nodes.push(sh);dest=sh;level*=.7;}
+    }
+    const osc=(type,hz,amp=1,detune=0)=>{const o=c.createOscillator();o.type=type;o.frequency.setValueAtTime(Math.max(20,hz),t);o.detune.value=detune;
+      if(amp===1)o.connect(dest);else{const a=c.createGain();a.gain.value=amp;o.connect(a);a.connect(dest);nodes.push(a);}sources.push(o);nodes.push(o);return o;};
+    if(drum){const n=c.createBufferSource(),f=c.createBiquadFilter();n.buffer=noiseBuffer;f.type=v==='snare'?'bandpass':'highpass';f.frequency.value=v==='snare'?style==='jazz'?2600:1800:v==='ride'?4500:7000;f.Q.value=.6;n.connect(f);f.connect(g);nodes.push(n,f);sources.push(n);if(v==='snare')osc('triangle',170,.18);}
+    else if(v==='kick'){const o=osc('sine',145);o.frequency.exponentialRampToValueAtTime(42,t+.16);}
+    else if(v==='tom'){const o=osc('sine',freq*1.3);o.frequency.exponentialRampToValueAtTime(freq*.65,t+dur);osc('triangle',freq*2,.13);}
+    else if(v==='bass'){osc('sine',freq,.82);osc(style==='electro'?'sawtooth':'triangle',freq,style==='funk'?.55:.32);if(style==='funk')osc('sine',freq*2,.18);}
+    else {
+      const wave=style==='rock'||style==='electro'?'sawtooth':style==='funk'||style==='reggae'?'square':style==='jazz'?'triangle':'sine';
+      const o=osc(wave,freq,style==='electro'?.6:1);
+      if(style==='rnb'||style==='drums'){const mod=c.createOscillator(),mg=c.createGain();mod.frequency.value=freq*(style==='rnb'?2:3);mg.gain.setValueAtTime(freq*.6,t);mg.gain.exponentialRampToValueAtTime(.1,t+dur);mod.connect(mg);mg.connect(o.frequency);sources.push(mod);nodes.push(mod,mg);}
+      if(style==='jazz')osc('sine',freq*2.005,.15);
+      if(style==='electro')osc('sawtooth',freq,.35,7);
+    }
+    const attack=v==='chord'&&style==='rnb'?.018:.004;
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(level,t+attack);g.gain.exponentialRampToValueAtTime(.0001,t+dur);g.connect(out);
+    const record={sources,nodes};live.add(record);sources[0].onended=()=>{live.delete(record);nodes.forEach(n=>{try{n.disconnect();}catch(e){}});};
+    sources.forEach(n=>{n.start(t);n.stop(t+dur+.025);});
+  };
+  return {play,stop(){for(const r of live){r.sources.forEach(n=>{try{n.stop();}catch(e){}});r.nodes.forEach(n=>{try{n.disconnect();}catch(e){}});}live.clear();}};
+}
+function rhyPlayer(song){
+  const arrangement=rhyArrangement(song);let ctx=null,bus=null,bank=null,compressor=null,timer=null,origin=0,offset=0,cursor=0,running=false,started=false;
+  const now=()=>running?(ctx?ctx.currentTime:performance.now()/1000)-origin:offset;
+  const connect=()=>{bus=ctx.createGain();bus.gain.value=AUD.on?1.4:0;compressor=ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=18;compressor.ratio.value=4;compressor.attack.value=.003;compressor.release.value=.15;compressor.connect(bus);bus.connect(AUD.mus);bank=rhyVoiceBank(ctx,compressor,song.style);};
+  const tick=()=>{
+    if(!running)return;
+    if(!ctx&&AUD.on&&AUD.ctx?.state==='running'){
+      const elapsed=now();ctx=AUD.ctx;origin=ctx.currentTime-elapsed;connect();
+      cursor=arrangement.events.findIndex(e=>e.t>=elapsed-.025);if(cursor<0)cursor=arrangement.events.length;
+    }
+    if(bus)bus.gain.setTargetAtTime(AUD.on?1.4:0,ctx.currentTime,.015);
+    if(!bank)return;
+    const time=now();while(cursor<arrangement.events.length&&arrangement.events[cursor].t<time+.12){const e=arrangement.events[cursor++];if(e.t>=time-.025)bank.play(e,Math.max(ctx.currentTime,origin+e.t));}
+  };
+  const stop=()=>{running=false;started=false;clearInterval(timer);timer=null;if(bank)bank.stop();bank=null;[bus,compressor].forEach(n=>{try{n?.disconnect();}catch(e){}});bus=compressor=null;};
   return {
-    start(){ if(!ok()) return false; AUD.unlock(); MUSIC.stop(); THEME.stop(); t0 = next = AUD.ctx.currentTime+.1; step = 0; timer = setInterval(tickF, 40); tickF(); return true; },
-    now(){ return AUD.ctx.currentTime - t0; },
-    stop(){ clearInterval(timer); timer = null; }
+    start(at=0){stop();AUD.unlock();MUSIC.stop();THEME.stop();ctx=AUD.ctx&&AUD.ctx.state==='running'?AUD.ctx:null;offset=at;cursor=arrangement.events.findIndex(e=>e.t>=at);if(cursor<0)cursor=arrangement.events.length;
+      if(ctx)connect();
+      origin=(ctx?ctx.currentTime:performance.now()/1000)-at+.08;started=running=true;timer=setInterval(tick,25);tick();return !!ctx;
+    },
+    now,
+    pause(){if(!running)return;offset=Math.max(0,now());running=false;clearInterval(timer);timer=null;if(bank)bank.stop();if(bus)bus.gain.value=0;},
+    resume(){if(!started)return;this.start(offset);},
+    suspended(){return running&&ctx&&ctx.state!=='running';},
+    stop
   };
 }
-function rhythmGame(done){
-  const d = diffOf('rhythm'), BPM = [88,104,120][d], LANES = 3, FALL = [2.2,1.8,1.5][d], greenP = [0,.18,.3][d], offP = [0,.35,.7][d];
-  const SONG = rhyPick(), all = SONG.mel.flat().filter(Boolean), mLo = Math.min(...all), mHi = Math.max(...all), cut1 = mLo+(mHi-mLo)/3, cut2 = mLo+(mHi-mLo)*2/3;
-  const e = 60/BPM/2, bars = Math.min(17, Math.floor(36/(e*8))+1), LEN = bars*8*e, notes = [];
-  // 從第 2 小節開始，熟果跟著旋律音落下；音高決定落在哪一排（低／中／高）；青果放在休止拍當干擾
-  for(let s = 8; s < bars*8; s++){ const pos = s%8, m = SONG.mel[Math.floor(s/8)%8][pos], t = s*e;
-    if(m){ if(pos%2===0 ? Math.random()<.9 : Math.random()<offP) notes.push({t, l: m<cut1 ? 0 : m<cut2 ? 1 : 2, g:false}); }
-    else if(pos%2===0 && Math.random()<greenP*2) notes.push({t, l:rnd(LANES), g:true}); }
-  const ripe = notes.filter(n=>!n.g).length;
-  const ov = document.createElement('div'); ov.id = 'rhyOv';
-  ov.innerHTML = `<button class="wo-x" id="rhyX">離開</button><div class="mem-h"><b>🎵 節奏採收・${DIFF_N[d]}</b><span id="rhInfo">♪〈${SONG.n}〉跟著音樂！熟果（紫紅）落到線上時點那一排，青果（綠色）不要點</span></div>
-    <div class="mem-bar"><i id="rhBar"></i></div><div class="rh-combo" id="rhCombo"></div>
-    <div class="rh-field" id="rhF">${Array.from({length:LANES},(_,i)=>`<div class="rh-lane" data-l="${i}"></div>`).join('')}<div class="rh-line"></div></div>
-    <div class="rh-btns">${Array.from({length:LANES},(_,i)=>`<button class="rh-b" data-l="${i}">採</button>`).join('')}</div>
-    <div class="mem-f"><span id="rhS">0 分</span><span id="rhJ"></span></div>`;
-  document.body.appendChild(ov);
-  const F = $('#rhF'), lanes = [...ov.querySelectorAll('.rh-lane')], player = rhyPlayer(BPM, SONG);
-  let over = false, raf = 0, started = false, useAudio = false, pt0 = 0, pts = 0, combo = 0, maxC = 0, perfect = 0, good = 0, miss = 0, lastBeat = -1;
-  const clock = ()=> useAudio ? player.now() : (performance.now()-pt0)/1000;   // 有聲音時用音訊時鐘，果實和音樂完全同步
-  const judge = (txt, cls)=>{ const j = $('#rhJ'); j.textContent = txt; j.className = cls; const c = $('#rhCombo'); c.textContent = combo>2 ? `🔥 ${combo} 連擊` : ''; };
-  const hit = l=>{ if(over || !started) return; const now = clock(); let best = null, bd = 9;
-    notes.forEach(n=>{ if(n.done || n.l!==l) return; const dd = Math.abs(n.t-now); if(dd<bd){ bd = dd; best = n; } });
-    const btn = ov.querySelector(`.rh-b[data-l="${l}"]`); btn.classList.remove('hit'); void btn.offsetWidth; btn.classList.add('hit');
-    if(!best || bd>.22) return;
-    best.done = true; if(best.el) best.el.remove();
-    if(best.g){ combo = 0; pts = Math.max(0, pts-2); SND.bad(); return judge('青果不能採！', 'bad'); }
-    combo++; maxC = Math.max(maxC, combo);
-    if(bd<=.09){ perfect++; pts += 2 + (combo>=10?1:0); judge('完美！', 'pf'); } else { good++; pts += 1; judge('不錯', 'gd'); }
-    if(AUD.on && AUD.ctx) noise(AUD.sfx, AUD.ctx.currentTime, .05, .35, 3000);   // 輕輕的採收聲，不蓋過旋律
-    $('#rhS').textContent = `${pts} 分`; };
-  ov.querySelectorAll('.rh-b').forEach(b=>b.addEventListener('pointerdown', ev=>{ ev.preventDefault(); hit(+b.dataset.l); }));
-  lanes.forEach(L=>L.addEventListener('pointerdown', ev=>{ ev.preventDefault(); hit(+L.dataset.l); }));
-  const end = quit=>{ if(over) return; over = true; cancelAnimationFrame(raf); player.stop(); ov.remove(); if(quit) return closeSheet();
-    const pct = Math.max(5, Math.min(100, Math.round(pts/(ripe*2)*100))); pct>=50 ? SND.win() : SND.lose();
-    done({score:pct, detail:`完美 ${perfect}・不錯 ${good}・漏接 ${miss}・最高連擊 ${maxC}`}); };
-  $('#rhyX').onclick = ()=>end(true);
-  const loop = ()=>{ if(over) return; const now = clock(), H = F.clientHeight, lineY = H*.82;
-    $('#rhBar').style.width = Math.max(0, (1-now/(LEN+FALL))*100)+'%';
-    const b = Math.floor(now/(e*2)); if(b>lastBeat && now>=0){ lastBeat = b; F.classList.remove('pulse'); void F.offsetWidth; F.classList.add('pulse'); }
-    notes.forEach(n=>{ if(n.done) return; const dt = n.t - now;
-      if(dt > FALL) return;
-      if(!n.el){ n.el = document.createElement('div'); n.el.className = 'rh-fig'+(n.g?' green':''); lanes[n.l].appendChild(n.el); }
-      n.el.style.transform = `translateY(${lineY - dt/FALL*lineY}px)`;
-      if(dt < -.22){ n.done = true; n.el.remove(); if(!n.g){ miss++; combo = 0; judge('漏接', 'bad'); } } });
-    if(now > LEN + .3) return end(false);
-    raf = requestAnimationFrame(loop); };
-  let cd = 3; $('#rhJ').textContent = `${cd}`; SND.tick();
-  const ci = setInterval(()=>{ if(over) return clearInterval(ci); cd--; if(cd>0){ $('#rhJ').textContent = `${cd}`; SND.tick(); return; }
-    clearInterval(ci); $('#rhJ').textContent = '🎵 開始！'; useAudio = player.start(); pt0 = performance.now(); started = true; raf = requestAnimationFrame(loop); }, 700);
+function rhySelect(done){
+  const ov=document.createElement('div');ov.id='rhSongOv';
+  let selected=RHY_SONGS[0],difficulty=diffOf('rhythm'),preview=null,previewTimer=null,previewWatch=null,closed=false,previewRequest=0;
+  try{selected=RHY_SONGS.find(s=>s.id===localStorage.getItem('hfk_rhythm_song'))||selected;}catch(e){}
+  const stopPreview=()=>{previewRequest++;if(preview)preview.stop();preview=null;clearTimeout(previewTimer);clearInterval(previewWatch);const b=ov.querySelector('#rhPreview');if(b){b.textContent='▶ 試聽 8 秒';b.setAttribute('aria-pressed','false');}};
+  const hidden=()=>{if(document.hidden)stopPreview();};
+  const close=()=>{if(closed)return;closed=true;stopPreview();document.removeEventListener('visibilitychange',hidden);ov.remove();};
+  ov.innerHTML=`<button class="wo-x" id="rhSongX">離開</button><div class="rh-library"><div class="rh-eyebrow">KINGDOM ORIGINALS · VOL. 01</div><h2>王國聲音採集</h2><p class="rh-intro">12 首原創 · 7 種律動 · 3 種難度</p><div class="rh-catalog" id="rhSongs">${RHY_SONGS.map((s,i)=>`<button class="rh-track" data-song="${s.id}" style="--track:${s.color}" aria-pressed="false"><span class="rh-art" aria-hidden="true">${s.icon}</span><span class="rh-track-copy"><small>${String(i+1).padStart(2,'0')} / ${s.genre}</small><b>${s.n}</b><span>${s.bpm} BPM · ${Math.round(rhyArrangement(s).length)} 秒</span></span><span class="rh-track-check" aria-hidden="true">✓</span></button>`).join('')}</div></div>
+    <div class="rh-deck"><div id="rhSelected"></div><div class="rh-preview-row"><span id="rhDescription"></span><button id="rhPreview" aria-pressed="false">▶ 試聽 8 秒</button></div><div id="rhDifficulties"></div><p class="rh-hint" id="rhHint" role="status"></p><button class="rh-start" id="rhStart">開始採收 →</button></div>`;
+  document.body.appendChild(ov);THEME.stop();document.addEventListener('visibilitychange',hidden);
+  const draw=()=>{ov.querySelectorAll('[data-song]').forEach(b=>{const on=b.dataset.song===selected.id;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on));});
+    $('#rhSelected').textContent=selected.n;$('#rhDescription').textContent=selected.desc;
+    $('#rhDifficulties').innerHTML=PRACTICE?DIFF_N.map((n,d)=>`<button data-d="${d}" aria-pressed="${d===difficulty}">${n}</button>`).join(''):`<span>正式挑戰 · ${DIFF_N[difficulty]}（依原有進度）</span>`;
+    $('#rhHint').textContent=(difficulty===0?'跟著重拍採紫紅熟果':'紫紅熟果要採，綠色青果不要採')+' · 同曲同難度譜面固定';
+    ov.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{difficulty=+b.dataset.d;PRACTICE_D=difficulty;draw();});
+  };
+  ov.querySelectorAll('[data-song]').forEach(b=>b.onclick=()=>{stopPreview();selected=RHY_SONGS.find(s=>s.id===b.dataset.song);try{localStorage.setItem('hfk_rhythm_song',selected.id);}catch(e){}draw();});
+  $('#rhPreview').onclick=async()=>{if(preview){stopPreview();return;}stopPreview();const request=previewRequest;AUD.unlock();if(!AUD.on||!AUD.ctx){$('#rhHint').textContent='目前聲音關閉或無法播放，請由聲音設定開啟。';return;}
+    try{await AUD.ctx.resume();}catch(e){}if(closed||request!==previewRequest)return;if(!AUD.on||AUD.ctx.state!=='running'){$('#rhHint').textContent='音訊尚未就緒，請再點一次試聽。';return;}
+    preview=rhyPlayer(selected);preview.start(4*60/selected.bpm);$('#rhPreview').textContent='■ 停止試聽';$('#rhPreview').setAttribute('aria-pressed','true');previewTimer=setTimeout(stopPreview,8000);previewWatch=setInterval(()=>{if(!AUD.on||preview?.suspended())stopPreview();},100);};
+  $('#rhSongX').onclick=()=>{close();closeSheet();};
+  $('#rhStart').onclick=()=>{AUD.unlock();const song=selected,d=difficulty;close();rhyRun(done,song,d);};draw();
+}
+function rhythmGame(done){rhySelect(done);}
+function rhyRun(done,SONG,d){
+  const {notes,length:LEN,fall:FALL,ripe}=rhyChart(SONG,d),beat=60/SONG.bpm;
+  const ov=document.createElement('div');ov.id='rhyOv';ov.style.setProperty('--rh-accent',SONG.color);
+  ov.innerHTML=`<button class="wo-x" id="rhyX">離開</button><button id="rhPause" class="rh-pause">暫停</button><div class="mem-h"><b>🎵 節奏採收 · ${DIFF_N[d]}</b><span id="rhInfo">${SONG.n} · ${SONG.genre} · ${SONG.bpm} BPM</span></div>
+    <div class="mem-bar"><i id="rhBar"></i></div><div class="rh-combo" id="rhCombo"></div><div class="rh-field" id="rhF">${[0,1,2].map(i=>`<div class="rh-lane" data-l="${i}"></div>`).join('')}<div class="rh-line"></div><div class="rh-line-label">採 收 線</div></div>
+    <div class="rh-btns">${[0,1,2].map(i=>`<button class="rh-b" data-l="${i}" aria-label="採收第 ${i+1} 排">採</button>`).join('')}</div><div class="mem-f"><span id="rhS">0 分</span><span id="rhJ" role="status"></span></div><p class="rh-game-hint">${d?'紫紅熟果要採 · 綠色青果不要採':'紫紅熟果碰到金線時，點下方按鈕'}</p><div class="rh-paused" hidden><b>節奏暫停</b><span>準備好再繼續，不會漏接果實</span><button id="rhResume">繼續採收</button><button id="rhPauseQuit">離開遊戲</button></div>`;
+  document.body.appendChild(ov);THEME.stop();const F=$('#rhF'),lanes=[...ov.querySelectorAll('.rh-lane')],player=rhyPlayer(SONG);
+  let over=false,raf=0,started=false,paused=false,resuming=false,cd=3,ci=null,pts=0,combo=0,maxC=0,perfect=0,good=0,miss=0,lastBeat=-1;
+  const judge=(txt,cls)=>{const j=$('#rhJ');j.textContent=txt;j.className=cls;$('#rhCombo').textContent=combo>2?`${combo} COMBO`:'';};
+  const pause=()=>{if(over||paused)return;paused=true;if(started)player.pause();clearInterval(ci);cancelAnimationFrame(raf);ov.querySelector('.rh-paused').hidden=false;};
+  const visibility=()=>{if(document.hidden)pause();};document.addEventListener('visibilitychange',visibility);
+  const hit=l=>{if(over||!started||paused)return;const now=player.now();let best=null,bd=9;notes.forEach(n=>{if(n.done||n.l!==l)return;const dd=Math.abs(n.t-now);if(dd<bd){bd=dd;best=n;}});
+    const btn=ov.querySelector(`.rh-b[data-l="${l}"]`);btn.classList.remove('hit');void btn.offsetWidth;btn.classList.add('hit');if(!best||bd>.22)return;best.done=true;best.el?.remove();
+    if(best.g){combo=0;pts=Math.max(0,pts-2);SND.bad();judge('青果還沒熟','bad');}
+    else{combo++;maxC=Math.max(maxC,combo);if(bd<=.09){perfect++;pts+=2+(combo>=10?1:0);judge('完美！','pf');}else{good++;pts++;judge('不錯','gd');}if(AUD.on&&AUD.ctx)noise(AUD.sfx,AUD.ctx.currentTime,.025,.13,3000);}
+    $('#rhS').textContent=`${pts} 分`;
+  };
+  ov.querySelectorAll('.rh-b,.rh-lane').forEach(b=>b.addEventListener('pointerdown',ev=>{ev.preventDefault();hit(+b.dataset.l);}));
+  const key=e=>{if(e.repeat||e.target.closest('button,input,textarea,select'))return;const l=['ArrowLeft','ArrowDown','ArrowRight'].indexOf(e.key);if(l>=0){e.preventDefault();hit(l);}};document.addEventListener('keydown',key);
+  const end=quit=>{if(over)return;over=true;clearInterval(ci);cancelAnimationFrame(raf);player.stop();document.removeEventListener('visibilitychange',visibility);document.removeEventListener('keydown',key);ov.remove();if(quit)return closeSheet();
+    const pct=Math.max(5,Math.min(100,Math.round(pts/(ripe*2)*100))),accuracy=Math.round((perfect+good*.5)/ripe*100);pct>=50?SND.win():SND.lose();done({score:pct,detail:`${SONG.n}・準確率 ${accuracy}%・完美 ${perfect}・不錯 ${good}・漏接 ${miss}・最高連擊 ${maxC}`});};
+  $('#rhyX').onclick=()=>end(true);$('#rhPauseQuit').onclick=()=>end(true);$('#rhPause').onclick=pause;
+  const loop=()=>{if(over||paused)return;if(player.suspended()){pause();return;}const now=player.now(),lineY=F.clientHeight*.82;$('#rhBar').style.width=Math.max(0,(1-now/(LEN+.3))*100)+'%';
+    const b=Math.floor(now/beat);if(b>lastBeat&&now>=0){lastBeat=b;F.classList.remove('pulse');void F.offsetWidth;F.classList.add('pulse');}
+    notes.forEach(n=>{if(n.done)return;const dt=n.t-now;if(dt>FALL)return;if(!n.el){n.el=document.createElement('div');n.el.className='rh-fig'+(n.g?' green':'');lanes[n.l].appendChild(n.el);}n.el.style.transform=`translateY(${lineY-dt/FALL*lineY}px)`;if(dt<-.22){n.done=true;n.el.remove();if(!n.g){miss++;combo=0;judge('漏接','bad');}}});
+    if(now>LEN+.3)return end(false);raf=requestAnimationFrame(loop);
+  };
+  const countdown=()=>{clearInterval(ci);judge(String(cd),'');const timer=setInterval(()=>{if(over||paused||started){clearInterval(timer);return;}cd--;if(cd>0){judge(String(cd),'');return;}clearInterval(timer);ci=null;const sound=player.start();started=true;judge(sound?'跟上節拍！':'靜音節拍模式','');cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);},700);ci=timer;};
+  $('#rhResume').onclick=async()=>{if(over||!paused||resuming)return;resuming=true;AUD.unlock();try{if(AUD.on&&AUD.ctx)await AUD.ctx.resume();}catch(e){}resuming=false;if(over||document.hidden)return;paused=false;ov.querySelector('.rh-paused').hidden=true;if(started){player.resume();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);}else countdown();};countdown();
 }
 /* ---------- V10.6：農場翻牌（角色配對＋計時條＋連擊＋中途洗牌） ---------- */
 const MEM_CHARS = [['🍇','阿無'],['🐱','小呱'],['🐿️','碰氣'],['🐕','黑熊'],['🐈‍⬛','奇奇'],['🐢','小葵'],['🐔','一虎'],['🦜','橘子'],['👽','外星人'],['🛡️','黑騎士'],['🎁','禮盒'],['🌿','無花果葉']];
@@ -4419,7 +4552,7 @@ const TASKS = [
   {id:'wood', n:'碎木工作', i:'🪓', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
   // 之後的新小遊戲加在這裡，就會自動輪流出現
   ,{id:'myco', n:'灌溉連線', i:'💧', d:'水分是無花果長大的關鍵，灌溉管路要接到每一棵樹，不能有漏水或沒接上的地方。好的水路配上健康的土壤菌群，樹才長得好。', rules:'點一下格子，水管就會順時針轉 90 度。從最上排的 🚰 水源開始，把水灌到棋盤上每一格，每一棵 🌳 都要喝到水。有水的管子會變藍色；管口沒接好會出現紅色水滴，代表漏水。🧱 石塊不能通過。計時條歸零前全部灌到水就過關，越快、轉越少次分數越高；時間到或按「放棄」會顯示解答。簡單 4×4、中級 5×5、高級 6×6。', play:mycoGame}
-  ,{id:'rhythm', n:'節奏採收', i:'🎵', d:'無花果要在紫紅色的最佳時機採收，太早太生、太晚過熟。跟著節奏採，又快又準！', rules:'三首歌輪流（〈無花果收成歌〉〈小呱夜巡〉〈溫室晨光〉），跟著旋律，紫紅色熟果會隨著每個音符從上往下掉（低音在左、高音在右），第一小節是前奏。熟果掉到黃色線上時，點那一排的「採」按鈕（或直接點那一排）。剛好在線上是「完美」，差一點是「不錯」。中級以上會有綠色青果，不要點，點了扣分。連續採中有連擊。', play:rhythmGame}
+  ,{id:'rhythm', n:'節奏採收', i:'🎵', d:'無花果要在紫紅色的最佳時機採收，太早太生、太晚過熟。跟著節奏採，又快又準！', rules:'12 首王國原創曲可自由選擇與試聽，包含 R&B、雷鬼、爵士、搖滾、放克、電音、鼓打。每首有簡單、中級、高級三種固定譜面；練習可選難度，正式挑戰沿用目前進度。第一小節是前奏，紫紅熟果掉到金色採收線時，點那一排的「採」按鈕（或直接點那一排）。剛好在線上是「完美」，差一點是「不錯」。中級以上有綠色青果，不要點。連續採中有連擊；切到背景會暫停，回來按繼續即可。', play:rhythmGame}
   ,{id:'memory', n:'農場翻牌', i:'🃏', d:'王國夥伴們躲在卡片後面，一起來找找看！', rules:'開始前先看 2～3 秒，記住夥伴的位置。翻兩張一樣的就配對成功，連續配對分數加倍（最多 4 倍）。中級以上配對過半時，一陣風會把剩下的卡片洗牌。計時條歸零前全部配完，剩餘時間也會加分。', play:memoryGame}
 ];
 function taskSlot(){ const h = new Date().getHours(); return TASK_SLOTS.findIndex(([a,b])=>h>=a && h<b); }
