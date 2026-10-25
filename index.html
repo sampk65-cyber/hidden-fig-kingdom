@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.7</title>
+<title>今天在隱花王國尋寶 V15.8</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -1181,7 +1181,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2922,7 +2922,7 @@ function openGH3D(zid){
           const gr = cx.createLinearGradient(0, tp.y, 0, b0.y); gr.addColorStop(0,'rgba(255,214,90,0)'); gr.addColorStop(.5,`rgba(255,214,90,${.42*pulse})`); gr.addColorStop(1,`rgba(255,236,150,${.7*pulse})`);
           cx.fillStyle = gr; cx.beginPath(); cx.moveTo(b0.x-bw*.7, b0.y); cx.lineTo(tp.x-bw*.35, tp.y); cx.lineTo(tp.x+bw*.35, tp.y); cx.lineTo(b0.x+bw*.7, b0.y); cx.fill();
           cx.fillStyle = `rgba(255,236,150,${.45*pulse})`; cx.beginPath(); cx.ellipse(b0.x, b0.y, bw, bw*.25, 0, 0, Math.PI*2); cx.fill(); } }
-      ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z.stage, it.k*7 + it.r*3, rustle);
+      ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, ghSceneStage(z), it.k*7 + it.r*3, rustle);
       if(rustle && TH > 1 && Math.random() < .02) G.fall.push({x:it.x+(Math.random()-.5)*.6, y:TH-.2, z:it.z, vy:.012+Math.random()*.01, ph:Math.random()*6});
       const top = pj(it.x, TH+.3, it.z);
       if(it.idx!=null && tapped.includes(it.idx) && res[it.idx] && top && s > 10 && dist < 14){ const fs = Math.min(26, Math.max(12, .32*s));
@@ -5337,6 +5337,9 @@ const GH_ART = (()=>{
   return out;
 })();
 const ghStageKey = st => st==='度冬'?'winter':st==='剪枝'?'prune':st==='座果'?'set':'ripe';
+// 僅限巡園內景：翡翠固定成熟景觀；其餘溫室隨既有輪作進入採收樹形。
+function ghSceneStage(z){ return z.emerald ? '採收' : z.stage; }
+const GH_RIPE_VISUAL_HEIGHT = 4.2;   // 共用成熟樹視覺高度；不修改生長、尋寶或獎勵資料
 /* 巡園 V14.3 視覺層：獨立度冬休眠枝條，不影響階段、判定或遊戲資料。 */
 function ghWinterTree(cx,pj,x,z,s,seed){
   const foot=pj(x,0,z), top=pj(x,.5,z); if(!foot||!top)return;
@@ -5358,11 +5361,12 @@ function ghWinterTree(cx,pj,x,z,s,seed){
   cx.restore();
 }
 function drawFigTree(cx, pj, x, z, s, stage, seed, rustle, vs){
+  const T = {...stageTree(stage)}; if(T.fruit==='ripe') T.h = GH_RIPE_VISUAL_HEIGHT;
   if(stage==='度冬' && !(GH_ART.winter[0].complete && GH_ART.winter[0].naturalWidth)){ ghWinterTree(cx,pj,x,z,s,seed); return; }
   const pool = GH_ART[ghStageKey(stage)].filter(im=>im.complete && im.naturalWidth>0);
   const sprite = pool.length ? pool[Math.abs(seed|0) % pool.length] : {complete:false};
   if(sprite.complete && sprite.naturalWidth>0){
-    const T=stageTree(stage), VH = {prune:1.3,set:1.6,ripe:2.0,winter:1.3}[ghStageKey(stage)]*(vs||1), foot=pj(x,0,z), crown=pj(x,Math.max(T.h,VH),z);   // 寫實樹圖畫得跟遠景一樣高（只是外觀，點擊範圍不變）
+    const VH = {prune:1.3,set:1.6,ripe:2.0,winter:1.3}[ghStageKey(stage)]*(vs||1), foot=pj(x,0,z), crown=pj(x,Math.max(T.h,VH),z);   // 寫實樹圖畫得跟遠景一樣高（只是外觀，點擊範圍不變）
     if(foot && crown && foot.s>=6){
       const height=foot.y-crown.y; const width=height*(sprite.naturalWidth/sprite.naturalHeight);
       cx.save(); cx.translate(foot.x,foot.y); cx.rotate((rustle||0)*.055);
@@ -5370,7 +5374,7 @@ function drawFigTree(cx, pj, x, z, s, stage, seed, rustle, vs){
       cx.drawImage(sprite,-width/2,-height,width,height); cx.restore(); return;
     }
   }
-  const T = stageTree(stage), b0 = pj(x,0,z), b1 = pj(x,T.h,z); if(!b0||!b1) return;
+  const b0 = pj(x,0,z), b1 = pj(x,T.h,z); if(!b0||!b1) return;
   cx.strokeStyle = '#5E3B4A'; cx.lineWidth = Math.max(1, (T.h<1 ? .1 : .07)*s); cx.lineCap = 'round'; cx.beginPath(); cx.moveTo(b0.x,b0.y); cx.lineTo(b1.x,b1.y); cx.stroke();
   if(T.n===0){   // 剪枝：短短的主幹，剪口和兩三個新芽
     cx.fillStyle = '#C9A77E'; cx.beginPath(); cx.ellipse(b1.x, b1.y, .05*s, .02*s, 0, 0, Math.PI*2); cx.fill();
@@ -5541,9 +5545,9 @@ function openEmerald(){
     items.sort((a,b)=>b.z-a.z); EM.spark = [];
     for(const it of items){
       if(it.k==='t'){
-        const TH = stageTree(z6.stage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
+        const sceneStage = ghSceneStage(z6), TH = stageTree(sceneStage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
         if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
-        ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, z6.stage, Math.round(it.z*10+Math.abs(it.x)*7), 0, 1.15);
+        ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, sceneStage, Math.round(it.z*10+Math.abs(it.x)*7), 0, 1.15);
         if(TH>1 && s>=16){ const cp=pj(it.x,Math.min(1.5,TH*.6),it.z); cx.fillStyle='#F2663A'; cx.fillRect(cp.x-.04*s, cp.y-.03*s, .08*s, .06*s); }
       } else if(it.k==='sign'){
         const p=pj(it.x,1.15,it.z), q=pj(it.x,0,it.z); if(!p||p.s<6) continue;

@@ -26,4 +26,4 @@ Declined-to-judge findings: none.
 
 ## Limits
 
-This verifies isolated browser execution and synthesis, not physical Android/iPhone touch behavior or subjective speaker/headphone listening quality. Production publishing is separate; the candidate retains V15.7's version label until a release is requested.
+This verifies isolated browser execution and synthesis, not physical Android/iPhone touch behavior or subjective speaker/headphone listening quality. The initial music review used the V15.7 baseline. The user subsequently authorized synchronizing music and greenhouse scenes into V15.8; see v15.8-release.md for the combined release.
