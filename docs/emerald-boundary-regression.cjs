@@ -13,7 +13,7 @@ test('emerald trees stop before the rear wall at every allowed camera position',
 test('opposite emerald rows have different stable variations and only a slight canopy increase',()=>{
  const a=scene().items(1.5,0,[-3,3]),left=a.filter(t=>t.x<0),right=a.filter(t=>t.x>0);
  assert.notDeepEqual(left.map(t=>t.seed),right.map(t=>t.seed));
- assert.ok(a.every(t=>t.fullness>=1.045-1e-8&&t.fullness<=1.075+1e-8));
+ assert.ok(a.every(t=>t.fullness>=1.045*1.06-1e-8&&t.fullness<=1.075*1.06+1e-8));
  assert.ok(left.some((t,i)=>t.seed%2!==right[i].seed%2),'opposite crowns do not repeat the same flip pattern');
  assert.ok(left.some((t,i)=>t.seed%2===right[i].seed%2),'opposite crowns must not form systematic mirror pairs');
  assert.ok(left.some((t,i)=>t.fullness!==right[i].fullness),'opposite crowns vary in width');

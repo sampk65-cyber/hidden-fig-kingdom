@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.12</title>
+<title>今天在隱花王國尋寶 V15.13</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -1182,7 +1182,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.12';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.13';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -5430,15 +5430,36 @@ const ghStageKey = st => st==='度冬'?'winter':st==='剪枝'?'prune':st==='座�
 function ghSceneStage(z){ return z.emerald ? '採收' : z.stage; }
 function ghEmeraldX(x){const a=Math.abs(x);return Math.sign(x)*(Math.min(a,3)*.43+Math.max(0,a-3)*.70);}
 function ghEmeraldTreeItems(camZ,camX,rows){
-  const items=[];
+  const items=[],step=2.75/1.08; // 翡翠沿列密度增加 8%；排距與遊戲座標保留
   for(const x of rows){if(Math.abs(x-camX)>13)continue;
-    for(let z=Math.ceil((camZ+1)/2.75)*2.75;z<Math.min(camZ+40,EM_LEN-1.5);z+=2.75){
+    for(let z=Math.ceil((camZ+1)/step)*step;z<Math.min(camZ+40,EM_LEN-1.5);z+=step){
       let seed=Math.imul(Math.round(z*100),73856093)^Math.imul(Math.round(x*100),19349663);
       seed=Math.imul(seed^(seed>>>16),0x85ebca6b);seed=Math.imul(seed^(seed>>>13),0xc2b2ae35);seed=(seed^(seed>>>16))>>>0;
-      items.push({x,z,k:'t',seed,fullness:1.06+(seed%3-1)*.015});
+      items.push({x,z,k:'t',seed,fullness:(1.06+(seed%3-1)*.015)*1.06});
     }
   }
   return items;
+}
+function ghEmeraldTankItems(){
+  return [-5.4,-3.2,3.6].map((x,i)=>({x,z:109.1,r:.82,h:2.7,k:'tank',n:i+1}));
+}
+// Matte black domed storage tanks, fixed beyond the walking limit and in front of the end glazing.
+function ghEmeraldTank(cx,pj,tank){
+  const {x,z,r,h,n}=tank,p=pj(x,0,z),top=pj(x,h,z),shoulder=pj(x,h-.24,z);
+  if(!p||!top||!shoulder||p.s<6)return;
+  const w=2*r*p.s,l=p.x-w/2,rr=p.x+w/2,height=p.y-top.y,ry=Math.max(1,.085*p.s),mid=(l+rr)/2;
+  cx.save();cx.fillStyle='rgba(35,39,27,.22)';cx.beginPath();cx.ellipse(mid,p.y+ry*.22,w*.61,ry*1.2,0,0,Math.PI*2);cx.fill();
+  const body=cx.createLinearGradient(l,0,rr,0);body.addColorStop(0,'#171C1B');body.addColorStop(.20,'#343936');body.addColorStop(.40,'#484B44');body.addColorStop(.66,'#2C302C');body.addColorStop(1,'#161B19');
+  cx.fillStyle=body;cx.beginPath();cx.moveTo(l,shoulder.y);cx.bezierCurveTo(l,top.y,rr,top.y,rr,shoulder.y);cx.lineTo(rr,p.y-ry);cx.bezierCurveTo(rr,p.y+ry,l,p.y+ry,l,p.y-ry);cx.closePath();cx.fill();
+  cx.strokeStyle='rgba(169,166,140,.22)';cx.lineWidth=Math.max(.6,.012*p.s);
+  for(const y of [.11,1.12,2.34]){const q=pj(x,y,z);cx.beginPath();cx.moveTo(l+w*.015,q.y);cx.quadraticCurveTo(mid,q.y+ry,rr-w*.015,q.y);cx.stroke();}
+  // Subtle dust and surface scuffs, anchored to the tank rather than the camera.
+  for(let i=0;i<13;i++){const u=.09+((i*37+n*13)%83)/100,yy=.15+((i*23+n*11)%64)/100;
+    cx.strokeStyle=i%3?'rgba(176,165,131,.10)':'rgba(212,208,186,.16)';cx.lineWidth=Math.max(.5,w*.004);cx.beginPath();cx.moveTo(l+w*u,top.y+height*yy);cx.lineTo(l+w*(u+.012),top.y+height*(yy+.08));cx.stroke();}
+  const neck=w*.105,lidY=top.y+(shoulder.y-top.y)*.25;cx.fillStyle='#222825';cx.fillRect(mid-neck*.5,lidY-neck*.22,neck,neck*.32);cx.fillStyle='#4A4E43';cx.beginPath();cx.ellipse(mid,lidY-neck*.22,neck*.56,neck*.12,0,0,Math.PI*2);cx.fill();
+  if(height>45){cx.fillStyle='#DDDCCB';cx.fillRect(mid-w*.10,shoulder.y+height*.32,w*.145,height*.055);cx.fillStyle='#AEAF9C';cx.fillRect(mid-w*.085,shoulder.y+height*.335,w*.11,height*.008);}
+  const valve=pj(x+r*.40,.15,z);cx.strokeStyle='#7B8175';cx.lineWidth=Math.max(1,.055*p.s);cx.beginPath();cx.moveTo(valve.x,valve.y);cx.lineTo(valve.x+w*.12,valve.y);cx.lineTo(valve.x+w*.12,valve.y+.09*p.s);cx.stroke();
+  cx.fillStyle='#555F55';cx.beginPath();cx.ellipse(valve.x,valve.y,.052*p.s,.064*p.s,0,0,Math.PI*2);cx.fill();cx.fillStyle='#1D2723';cx.beginPath();cx.ellipse(valve.x,valve.y,.026*p.s,.033*p.s,0,0,Math.PI*2);cx.fill();cx.restore();
 }
 // Fixed translucent rear glazing and short return walls close the real greenhouse, not a reflected aisle.
 function ghEmeraldEndWall(cx,pj,endZ,camZ){
@@ -5576,6 +5597,7 @@ function openEmerald(){
   // 五期配置：中央走道 2m；兩側各 5 排（A 在左、B 在右），沿長邊分成 5 區、每區 22m
   const ROWX = [3, 6.5, 10, 13.5, 17], AISLE = [4.75, 8.25, 11.75, 15.25];
   const ROWS = [...ROWX.map(x=>-x), ...ROWX];
+  const TANKS = ghEmeraldTankItems();
   const SPARKS = []; for(let i=0;i<5;i++){ SPARKS.push({idx:i, x:-AISLE[(i*2)%4], z:i*EM_ZL+11}); SPARKS.push({idx:5+i, x:AISLE[(i*3+1)%4], z:i*EM_ZL+14}); }
   const where = (x,z)=>{ const zi=Math.min(4, Math.max(0, Math.floor(z/EM_ZL))); if(Math.abs(x)<1.2) return {zone:null, zi, txt: z<2.5?'大門・中央走道 2m':`中央走道・左 A${zi+1}｜右 B${zi+1}`};
     const side = x<0?'A':'B', row = ROWX.findIndex(r=>Math.abs(x)<r+1.75); return {zone:side+(zi+1), zi, txt:`${side}${zi+1} 區・第 ${Math.max(1,row+1)} 排附近`}; };
@@ -5658,6 +5680,7 @@ function openEmerald(){
     ghEnvironment(cx,pj,W,H,hz,camZ,ROWS,20,EM_LEN);
     if(EM_LEN-camZ<=55)ghEmeraldEndWall(cx,pj,EM_LEN,camZ);
     const items = ghEmeraldTreeItems(camZ,camX,ROWS);
+    items.push(...TANKS);
     // V14.5：株距 1.375→2.75 公尺（株數減半），樹長高不擁擠；寶藏在走道上，不受影響
     for(let i=0;i<5;i++) [['A',-1.15],['B',1.15]].forEach(([n,x])=>items.push({x, z:i*EM_ZL+1.2, k:'sign', n:n+(i+1)}));
     const tapped = (P.daily.tapped && P.daily.tapped[z6.id]) || [];
@@ -5665,7 +5688,9 @@ function openEmerald(){
     if(EM.chase) EM.chase.chests.forEach(c=>{ if(c.alive) items.push({x:c.x, z:c.z, k:'chest', c}); }); EM.chestHit = []; EM.filmHit = [];
     items.sort((a,b)=>b.z-a.z); EM.spark = [];
     for(const it of items){
-      if(it.k==='t'){
+      if(it.k==='tank'){
+        ghEmeraldTank(cx,pj,it);
+      } else if(it.k==='t'){
         const sceneStage = ghSceneStage(z6), TH = stageTree(sceneStage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
         if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
         ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, sceneStage, it.seed, 0, 1.15, it.fullness);
