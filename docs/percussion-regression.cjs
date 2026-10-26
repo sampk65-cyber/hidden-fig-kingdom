@@ -2,8 +2,8 @@ const fs=require('node:fs'),path=require('node:path'),vm=require('node:vm'),{exe
 const root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8'),a=html.indexOf('const RHY_SONGS ='),b=html.indexOf('/* ---------- V10.6：農場翻牌',a),c=vm.createContext({console,Math,setInterval,clearInterval,setTimeout,clearTimeout});
 vm.runInContext(html.slice(a,b)+';globalThis.api={songs:RHY_SONGS,chart:rhyChart};',c);
 const expected=[['cloud-drums','雲城戰鼓',45],['wind-claps','追風擊掌',30],['thunder-stomp','雷霆踏步',40]];
-test('three percussion recordings follow Wulin without removing the existing originals',()=>{
- assert.equal(c.api.songs.length,16);assert.equal(c.api.songs[0].id,'wulin');assert.equal(c.api.songs.filter(s=>!s.audio).length,12);
+test('three percussion recordings follow Wulin while keeping the seven retained originals',()=>{
+ assert.equal(c.api.songs.length,18);assert.equal(c.api.songs[0].id,'wulin');assert.equal(c.api.songs.filter(s=>!s.audio).length,7);
  for(let i=0;i<expected.length;i++){const [id,title,duration]=expected[i],s=c.api.songs[i+1];assert.equal(s.id,id);assert.equal(s.n,title);assert.equal(s.duration,duration);}
 });
 test('each added excerpt decodes to its exact requested length and audible content',()=>{

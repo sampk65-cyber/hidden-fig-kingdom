@@ -20,10 +20,10 @@ async function main(){
  if(process.env.FONT_CSS_ROOT){await page.addStyleTag({content:fs.readFileSync(path.join(process.env.FONT_CSS_ROOT,'400.css'),'utf8').replaceAll('./files/','/qa-font/')+'body{font-family:"Noto Sans TC",sans-serif}'});}
  await page.evaluate(()=>rhythmGame(r=>results.push(r)));
  await page.evaluate(()=>document.fonts.ready);
- assert.equal(await page.locator('#rhSongs [data-song]').count(),16,'four recordings and all twelve originals are selectable');
+ assert.equal(await page.locator('#rhSongs [data-song]').count(),18,'eleven recordings and seven retained originals are selectable');
  assert.equal(await page.locator('#rhDifficulties button').count(),3,'practice has three difficulties');
- await page.locator('#rhSongs [data-song="cafe"]').click();
- assert.match(await page.locator('#rhSelected').innerText(),/月台爵士館/);
+ await page.locator('#rhSongs [data-song="blueglass"]').click();
+ assert.match(await page.locator('#rhSelected').innerText(),/藍調玻璃屋/);
  await page.screenshot({path:'/tmp/rhythm-library.png'});
  await page.locator('#rhPreview').click();
  assert.equal(await page.locator('#rhPreview').getAttribute('aria-pressed'),'true');
@@ -55,7 +55,7 @@ async function main(){
  await page.evaluate(async()=>{await AUD.ctx.suspend();window.realResume=AUD.ctx.resume.bind(AUD.ctx);AUD.ctx.resume=()=>new Promise(resolve=>setTimeout(()=>realResume().then(resolve),250));rhythmGame(r=>results.push(r));});
  await page.locator('#rhPreview').click();
  assert.equal(await page.locator('#rhPreview').getAttribute('aria-pressed'),'false','preview waits for audio unlock');
- await page.locator('#rhSongs [data-song="velvet"]').click();
+ await page.locator('#rhSongs [data-song="blueglass"]').click();
  await page.waitForTimeout(400);
  assert.equal(await page.locator('#rhPreview').getAttribute('aria-pressed'),'false','a stale unlock cannot restart a cancelled preview');
  await page.evaluate(()=>{AUD.ctx.resume=realResume;});
@@ -75,7 +75,7 @@ async function main(){
   bank.play({voice:'chord',m:60,vol:.5,dur:.5},.2);bank.stop();const stopped=await c.startRendering();
   return {stats,stoppedPeak:Math.max(...stopped.getChannelData(0))};
  });
- assert.equal(rendered.stats.length,12);
+ assert.equal(rendered.stats.length,7);
  for(const r of rendered.stats){assert.ok(r.rms>.005,`${r.id} is audible`);assert.ok(r.peak<.95,`${r.id} does not clip`);}
  assert.equal(rendered.stoppedPeak,0,'stopping removes even future-scheduled voices');
  console.log('Audio render:',JSON.stringify(rendered.stats));

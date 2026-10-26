@@ -14,9 +14,9 @@ test('encoded recording contains the entire sixty-second passage',()=>{
  let energy=0;for(let i=0;i<pcm.length;i+=2)energy+=(pcm.readInt16LE(i)/32768)**2;
  assert.ok(Math.sqrt(energy/(pcm.length/2))>.03,'the passage must remain audible');
 });
-test('first track is the supplied 60-second recording and retains all twelve originals',()=>{
+test('first track is the supplied 60-second recording and retains the seven remaining originals',()=>{
  assert.equal(songs[0].n,'一個人的武林');assert.equal(songs[0].duration,60);assert.equal(songs[0].audio,'audio/wulin-60.mp3');
- assert.equal(songs.filter(s=>!s.audio).length,12);assert.ok(fs.statSync(path.join(__dirname,'../',songs[0].audio)).size>100000);
+ assert.equal(songs.filter(s=>!s.audio).length,7);assert.ok(fs.statSync(path.join(__dirname,'../',songs[0].audio)).size>100000);
 });
 test('recorded fruit arrives on acoustic accents with a full fall-in, bounded spacing and increasing density',()=>{
  const s=songs.find(s=>s.audio);assert.ok(s,'recorded track exists');

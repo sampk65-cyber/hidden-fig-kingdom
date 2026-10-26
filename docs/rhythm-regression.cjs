@@ -4,10 +4,10 @@ const start=html.indexOf('const RHY_SONGS ='),end=html.indexOf('/* ---------- V1
 const ctx=vm.createContext({console,Math,setInterval,clearInterval,setTimeout,clearTimeout});
 vm.runInContext(html.slice(start,end)+'\nglobalThis.api={songs:RHY_SONGS,arrange:typeof rhyArrangement==="function"?rhyArrangement:null,chart:typeof rhyChart==="function"?rhyChart:null,time:typeof rhyTime==="function"?rhyTime:null};',ctx);
 const api=ctx.api;api.songs=api.songs.filter(s=>!s.audio);
-test('catalog offers twelve distinct playable originals across the seven requested styles',()=>{
- assert.equal(api.songs.length,12);assert.equal(new Set(api.songs.map(s=>s.id)).size,12);
- assert.equal(new Set(api.songs.map(s=>s.genre)).size,7);
- assert.equal(new Set(api.songs.map(s=>JSON.stringify(s.mel))).size,12);
+test('catalog offers seven retained distinct playable originals across five styles',()=>{
+ assert.equal(api.songs.length,7);assert.equal(new Set(api.songs.map(s=>s.id)).size,7);
+ assert.equal(new Set(api.songs.map(s=>s.genre)).size,5);
+ assert.equal(new Set(api.songs.map(s=>JSON.stringify(s.mel))).size,7);
  for(const s of api.songs){assert.ok(s.bpm>=72&&s.bpm<=150);assert.ok(s.mel.flat().filter(Boolean).length>=20);}
 });
 test('arrangements include bass, drums, harmony and melodies with different grooves',()=>{
@@ -16,9 +16,9 @@ test('arrangements include bass, drums, harmony and melodies with different groo
   for(const voice of ['bass','kick','chord','lead'])assert.ok(a.events.some(e=>e.voice===voice),`${s.n}: ${voice}`);
   assert.ok(a.length>27&&a.length<58);assert.ok(a.events.every(e=>Number.isFinite(e.t)&&e.t>=0&&e.t<a.length));
   signatures.add(JSON.stringify(a.events.filter(e=>e.voice==='kick').map(e=>e.step)));
- }assert.ok(signatures.size>=7,'genre grooves cannot all share the same kick pattern');
+ }assert.ok(signatures.size>=5,'genre grooves cannot all share the same kick pattern');
 });
-test('all 36 charts are deterministic, audible, playable and get denser by difficulty',()=>{
+test('all 21 retained original charts are deterministic, audible, playable and get denser by difficulty',()=>{
  assert.equal(typeof api.chart,'function','fixed chart builder is available');
  for(const s of api.songs){let previous=0;const sounds=api.arrange(s).events;
   for(let d=0;d<3;d++){const a=api.chart(s,d),b=api.chart(s,d);assert.deepEqual(a,b);
