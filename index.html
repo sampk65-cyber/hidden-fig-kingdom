@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.13</title>
+<title>今天在隱花王國尋寶 V15.14</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -1182,7 +1182,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.13';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.14';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -5357,7 +5357,71 @@ function ghSoilTile(cx,im,a,b,c,d,v0,v1){
   tri([b,c,d],[(c.x-d.x)/sw,(c.y-d.y)/sw,(c.x-b.x)/sh,(c.y-b.y)/sh,b.x-c.x+d.x,b.y-c.y+d.y]);
 }
 // Visual environment shared by both walkable interiors; gameplay coordinates remain untouched.
-function ghEnvironment(cx,pj,W,H,hz,camZ,rows,halfW,endZ){
+function ghBeginFrame(cx,dpr,W,H){
+  // Reset also discards stale clips; clearing pixels alone cannot recover a clipped canvas.
+  if(typeof cx.reset==='function')cx.reset();else cx.canvas.width=cx.canvas.width;
+  cx.setTransform(dpr,0,0,dpr,0,0);cx.globalAlpha=1;cx.globalCompositeOperation='source-over';cx.filter='none';cx.shadowBlur=0;cx.setLineDash([]);cx.beginPath();
+  cx.clearRect(0,0,W,H);cx.fillStyle='#BDE0F3';cx.fillRect(0,0,W,H);
+}
+function emeraldSurface(cx,pj,camZ,rows,endZ){
+  const near=camZ+.6,far=Math.min(camZ+50,endZ),step=2.75/1.08;
+  const poly=(ps,fill)=>{const p=ps.map(q=>pj(...q));if(p.some(q=>!q))return;cx.fillStyle=fill;cx.beginPath();p.forEach((q,i)=>i?cx.lineTo(q.x,q.y):cx.moveTo(q.x,q.y));cx.closePath();cx.fill();};
+  const ordered=[...rows].sort((a,b)=>a-b);
+  for(let i=1;i<ordered.length;i++){
+    const a=ordered[i-1],b=ordered[i];if(a*b<=0)continue;
+    const x=(a+b)/2,half=(b-a)*.25;
+    poly([[x-half,.018,near],[x+half,.018,near],[x+half,.018,far],[x-half,.018,far]],'#D8DDD6');
+    poly([[x-half,.023,near],[x-half+.035,.023,near],[x-half+.035,.023,far],[x-half,.023,far]],'#AEB9AF');
+    poly([[x+half-.035,.023,near],[x+half,.023,near],[x+half,.023,far],[x+half-.035,.023,far]],'#EEF0E9');
+    for(let z=Math.ceil(near/1.2)*1.2;z<far;z+=1.2){const q=pj(x,0,z);if(!q||q.s<8)continue;poly([[x-half+.04,.025,z],[x+half-.04,.025,z+.08],[x+half-.04,.025,z+.095],[x-half+.04,.025,z+.015]],'rgba(111,128,115,.14)');}
+  }
+  const soilEnd=Math.min(far,endZ-1.5);
+  for(const x of rows){
+    poly([[x-.32,.021,near],[x+.32,.021,near],[x+.32,.021,soilEnd],[x-.32,.021,soilEnd]],'#73624A');
+    poly([[x-.24,.026,near],[x+.24,.026,near],[x+.24,.026,soilEnd],[x-.24,.026,soilEnd]],'#4D4030');
+    for(let z=Math.ceil(near/.85)*.85;z<soilEnd;z+=.85){const p=pj(x,0,z);if(!p||p.s<5)continue;
+      for(let j=0;j<4;j++){const q=pj(x+Math.sin(j*7+z)*.19,.03,z+Math.cos(j*5+z)*.13);if(!q)continue;cx.fillStyle=j%2?'#817059':'#3D3429';cx.beginPath();cx.ellipse(q.x,q.y,Math.max(.5,.025*q.s),Math.max(.3,.009*q.s),0,0,Math.PI*2);cx.fill();}
+    }
+  }
+  // Two metal rails and light cross ties along the central A/B aisle.
+  const railEnd=Math.min(far,108.1);
+  for(let z=Math.ceil(near/1.5)*1.5;z<railEnd;z+=1.5)poly([[-.65,.022,z], [.65,.022,z],[.65,.022,z+.08],[-.65,.022,z+.08]],'#898B7E');
+  for(const x of [-.53,.53]){
+    poly([[x-.035,.025,near],[x+.035,.025,near],[x+.035,.025,railEnd],[x-.035,.025,railEnd]],'#6F7B74');
+    poly([[x-.026,.055,near],[x+.026,.055,near],[x+.026,.055,railEnd],[x-.026,.055,railEnd]],'#BDC7C3');
+    poly([[x-.012,.058,near],[x+.008,.058,near],[x+.008,.058,railEnd],[x-.012,.058,railEnd]],'#EDF0E8');
+  }
+}
+function emeraldRailCart(cx,pj,it){
+  const z=it.z,p=pj(0,0,z);if(!p)return;
+  const poly=(ps,fill,edge)=>{const q=ps.map(a=>pj(...a));if(q.some(a=>!a))return;cx.fillStyle=fill;cx.beginPath();q.forEach((a,i)=>i?cx.lineTo(a.x,a.y):cx.moveTo(a.x,a.y));cx.closePath();cx.fill();if(edge){cx.strokeStyle=edge;cx.lineWidth=1;cx.stroke();}};
+  const line=(a,b,color,w)=>{const q=pj(...a),r=pj(...b);if(!q||!r)return;cx.strokeStyle=color;cx.lineWidth=Math.max(.7,w*(q.s+r.s)/2);cx.lineCap='round';cx.beginPath();cx.moveTo(q.x,q.y);cx.lineTo(r.x,r.y);cx.stroke();};
+  cx.save();poly([[-.73,.012,z-1.06],[.73,.012,z-1.06],[.73,.012,z+1.06],[-.73,.012,z+1.06]],'rgba(34,51,38,.15)');
+  for(const zz of [z+.80,z-.93])for(const x of [-.53,.53]){const q=pj(x,.12,zz);if(!q)continue;cx.fillStyle='#4E5B58';cx.beginPath();cx.ellipse(q.x,q.y,.065*q.s,.115*q.s,0,0,Math.PI*2);cx.fill();cx.strokeStyle='#BFC8C4';cx.lineWidth=Math.max(.7,.025*q.s);cx.stroke();}
+  poly([[-.65,.14,z-.96],[.65,.14,z-.96],[.65,.30,z-.96],[-.65,.30,z-.96]],'#748782','#DCE3DC');
+  for(const x of [-.65,.65])poly([[x,.14,z-.96],[x,.14,z+.96],[x,.30,z+.96],[x,.30,z-.96]],x<0?'#879A96':'#637B74','#BCCBC6');
+  const steel=cx.createLinearGradient(p.x-40,0,p.x+40,0);steel.addColorStop(0,'#A3B4B0');steel.addColorStop(.3,'#E4EBE6');steel.addColorStop(.55,'#C5D1CD');steel.addColorStop(1,'#8CA49B');
+  poly([[-.65,.30,z-.96],[.65,.30,z-.96],[.65,.30,z+.96],[-.65,.30,z+.96]],steel,'#EDF0E9');
+  for(let zz=z-.78;zz<z+.9;zz+=.22)line([-.59,.304,zz],[.59,.304,zz],'rgba(94,116,108,.32)',.006);
+  for(const x of [-.52,.52]){line([x,.27,z-.86],[x,.98,z-.86],'#6E827C',.045);line([x-.012,.29,z-.87],[x-.012,.97,z-.87],'#DDE7E1',.017);}
+  line([-.52,.98,z-.86],[.52,.98,z-.86],'#71857C',.05);line([-.5,1.0,z-.86],[.5,1.0,z-.86],'#E3E9E0',.017);line([-.25,.99,z-.86],[.25,.99,z-.86],'#53645B',.06);
+  cx.restore();
+}
+
+function emeraldLowPipes(cx,pj,camZ,rows,endZ){
+  const near=camZ+.8,far=endZ-2.1;
+  for(const row of rows){const x=row+Math.sign(row)*.18,a=pj(x,.50,near),b=pj(x,.50,far);if(!a||!b)continue;
+    cx.save();
+    const band=(low,high,color)=>{const ps=[[x,low,near],[x,high,near],[x,high,far],[x,low,far]].map(v=>pj(...v));if(ps.some(v=>!v))return;cx.fillStyle=color;cx.beginPath();ps.forEach((v,i)=>i?cx.lineTo(v.x,v.y):cx.moveTo(v.x,v.y));cx.closePath();cx.fill();};
+    band(.488,.512,'#68726C');band(.506,.513,'#C4CCC1');
+    for(let z=Math.ceil(near/5.1)*5.1;z<far;z+=5.1){const q=pj(x,.50,z);if(!q||q.s<5)continue;
+      cx.fillStyle='#4C6157';cx.beginPath();cx.ellipse(q.x,q.y,.045*q.s,.035*q.s,0,0,Math.PI*2);cx.fill();
+      const t=performance.now()/1000;for(let k=0;k<2;k++){const mist=pj(x+Math.sin(t+k)*.06,.48-((t*.35+k*.4)%1)*.20,z+.08+k*.05);if(!mist)continue;cx.fillStyle='rgba(241,250,238,.24)';cx.beginPath();cx.ellipse(mist.x,mist.y,.06*mist.s,.035*mist.s,0,0,Math.PI*2);cx.fill();}
+    }cx.restore();
+  }
+}
+
+function ghEnvironment(cx,pj,W,H,hz,camZ,rows,halfW,endZ,surface){
   ghSky(cx,W,hz);
   const far=Math.min(endZ,camZ+55),near=camZ+.6;
   const ground=cx.createLinearGradient(0,hz,0,H);ground.addColorStop(0,'#E8DDC2');ground.addColorStop(.3,'#EBD7AC');ground.addColorStop(1,'#D9B780');cx.fillStyle=ground;cx.fillRect(0,hz,W,H-hz);
@@ -5376,6 +5440,7 @@ function ghEnvironment(cx,pj,W,H,hz,camZ,rows,halfW,endZ){
     cx.restore();
   }
   const poly=(points,color)=>{const ps=points.map(p=>pj(...p));if(ps.some(p=>!p))return;cx.fillStyle=color;cx.beginPath();ps.forEach((p,i)=>i?cx.lineTo(p.x,p.y):cx.moveTo(p.x,p.y));cx.closePath();cx.fill();};
+  if(surface){surface(cx,pj,camZ,rows,endZ);}else{
   // Each row has a narrow silver-black mulch bed; the open ground between rows stays sunlit.
   for(const x of rows){
     poly([[x-.48,0,near],[x+.48,0,near],[x+.48,0,far],[x-.48,0,far]],'#777D70');
@@ -5388,6 +5453,7 @@ function ghEnvironment(cx,pj,W,H,hz,camZ,rows,halfW,endZ){
       poly([[x-.45,.021,z],[x+.42,.021,z+.18],[x+.42,.021,z+.22],[x-.45,.021,z+.04]],'rgba(246,239,203,.28)');
       for(let j=0;j<4;j++){const q=pj(x+.45+j*.23,0,z+.3+j*.12);if(!q)continue;cx.fillStyle='rgba(89,91,48,.10)';cx.beginPath();cx.ellipse(q.x,q.y,.21*q.s,.055*q.s,-.25,0,Math.PI*2);cx.fill();}
     }
+  }
   }
   // Perspective dust / soil detail and soft roof shadows, all deterministic world-space marks.
   for(let z=Math.ceil(near/2)*2;z<far;z+=2){
@@ -5428,7 +5494,7 @@ const GH_ART = (()=>{
 const ghStageKey = st => st==='度冬'?'winter':st==='剪枝'?'prune':st==='座果'?'set':'ripe';
 // 僅限巡園內景：翡翠固定成熟景觀；其餘溫室隨既有輪作進入採收樹形。
 function ghSceneStage(z){ return z.emerald ? '採收' : z.stage; }
-function ghEmeraldX(x){const a=Math.abs(x);return Math.sign(x)*(Math.min(a,3)*.43+Math.max(0,a-3)*.70);}
+function ghEmeraldX(x){const a=Math.abs(x);return Math.sign(x)*(Math.min(a,3)*.43*1.12+Math.max(0,a-3)*.70);}
 function ghEmeraldTreeItems(camZ,camX,rows){
   const items=[],step=2.75/1.08; // 翡翠沿列密度增加 8%；排距與遊戲座標保留
   for(const x of rows){if(Math.abs(x-camX)>13)continue;
@@ -5599,7 +5665,7 @@ function openEmerald(){
   const ROWS = [...ROWX.map(x=>-x), ...ROWX];
   const TANKS = ghEmeraldTankItems();
   const SPARKS = []; for(let i=0;i<5;i++){ SPARKS.push({idx:i, x:-AISLE[(i*2)%4], z:i*EM_ZL+11}); SPARKS.push({idx:5+i, x:AISLE[(i*3+1)%4], z:i*EM_ZL+14}); }
-  const where = (x,z)=>{ const zi=Math.min(4, Math.max(0, Math.floor(z/EM_ZL))); if(Math.abs(x)<1.2) return {zone:null, zi, txt: z<2.5?'大門・中央走道 2m':`中央走道・左 A${zi+1}｜右 B${zi+1}`};
+  const where = (x,z)=>{ const zi=Math.min(4, Math.max(0, Math.floor(z/EM_ZL))); if(Math.abs(x)<1.2) return {zone:null, zi, txt: z<2.5?'大門・中央走道 2.24m':`中央走道・左 A${zi+1}｜右 B${zi+1}`};
     const side = x<0?'A':'B', row = ROWX.findIndex(r=>Math.abs(x)<r+1.75); return {zone:side+(zi+1), zi, txt:`${side}${zi+1} 區・第 ${Math.max(1,row+1)} 排附近`}; };
   // ---------- 寶箱追逐賽 ----------
   async function chaseIntro(){
@@ -5677,18 +5743,25 @@ function openEmerald(){
     const camZ = EM.pz-.5, camX = EM.px, camY = 1.8, hz = H*.45, f = W*.92;
     const pj = (x,y,z)=>{ const dz=z-camZ; if(dz<.4) return null; const s=f/dz; return {x:W/2+(ghEmeraldX(x)-ghEmeraldX(camX))*s, y:hz+(camY-y)*s, s}; };
     const quad=(x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,camZ+50), d=pj(x1,0,camZ+50); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
-    ghEnvironment(cx,pj,W,H,hz,camZ,ROWS,20,EM_LEN);
+    ghBeginFrame(cx,dpr,W,H);
+    ghEnvironment(cx,pj,W,H,hz,camZ,ROWS,20,EM_LEN,emeraldSurface);
     if(EM_LEN-camZ<=55)ghEmeraldEndWall(cx,pj,EM_LEN,camZ);
     const items = ghEmeraldTreeItems(camZ,camX,ROWS);
-    items.push(...TANKS);
+    items.push(...TANKS,{x:0,z:6.4,k:'cart'});
     // V14.5：株距 1.375→2.75 公尺（株數減半），樹長高不擁擠；寶藏在走道上，不受影響
     for(let i=0;i<5;i++) [['A',-1.15],['B',1.15]].forEach(([n,x])=>items.push({x, z:i*EM_ZL+1.2, k:'sign', n:n+(i+1)}));
     const tapped = (P.daily.tapped && P.daily.tapped[z6.id]) || [];
     SPARKS.forEach(s=>{ if(!tapped.includes(s.idx)) items.push({x:s.x, z:s.z, k:'spark', s}); });
     if(EM.chase) EM.chase.chests.forEach(c=>{ if(c.alive) items.push({x:c.x, z:c.z, k:'chest', c}); }); EM.chestHit = []; EM.filmHit = [];
+    // Split long pipes at scene depths so distant sections stay behind nearer trees and carts.
+    const pipeNear=camZ+.8,pipeFar=EM_LEN-2.1;
+    if(pipeNear<pipeFar){const cuts=[...new Set([pipeNear,pipeFar,...items.map(it=>it.z).filter(z=>z>pipeNear&&z<pipeFar)])].sort((a,b)=>a-b);
+      for(let j=1;j<cuts.length;j++)items.push({k:'pipes',z:(cuts[j-1]+cuts[j])/2,from:cuts[j-1],to:cuts[j]});}
     items.sort((a,b)=>b.z-a.z); EM.spark = [];
     for(const it of items){
-      if(it.k==='tank'){
+      if(it.k==='pipes'){emeraldLowPipes(cx,pj,it.from-.8,ROWS,it.to+2.1);
+      } else if(it.k==='cart'){emeraldRailCart(cx,pj,it);
+      } else if(it.k==='tank'){
         ghEmeraldTank(cx,pj,it);
       } else if(it.k==='t'){
         const sceneStage = ghSceneStage(z6), TH = stageTree(sceneStage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
@@ -5725,8 +5798,6 @@ function openEmerald(){
         EM.chestHit.push({c, x:p.x, y:p.y, r:Math.max(30,w), near});
       }
     }
-    ROWS.filter(x=>Math.abs(x-camX)<8).forEach(x=>{ const a=pj(x,2.55,camZ+.8), b=pj(x,2.55,Math.min(EM_LEN,camZ+32)); if(!a||!b) return; cx.strokeStyle='#9AA3AA'; cx.lineWidth=2; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.stroke();
-      for(let k=0;k<8;k++){ const mz = camZ + 2 + ((k*3.6 + t*1.5) % 30);if(mz>=EM_LEN)continue;const p=pj(x,2.45-((t*0.7+k)%1)*.5,mz); if(!p) continue; cx.fillStyle='rgba(255,255,255,.33)'; cx.beginPath(); cx.arc(p.x,p.y,.18*p.s,0,Math.PI*2); cx.fill(); } });
     const ah = Math.min(H*.15, 125), aw = ah*.8, bob = moving ? Math.sin(EM.walk*3)*4 : 0, ax = W/2;
     cx.fillStyle='rgba(0,0,0,.18)'; cx.beginPath(); cx.ellipse(ax, H-24, aw*.32, 8, 0, 0, Math.PI*2); cx.fill();
     if(img.complete){ cx.save(); if(mvx<-.01){ cx.translate(ax*2,0); cx.scale(-1,1); } cx.drawImage(img, ax-aw/2, H-24-ah+bob, aw, ah); cx.restore(); }
