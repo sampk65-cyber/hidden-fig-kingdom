@@ -20,7 +20,7 @@ async function main(){
  if(process.env.FONT_CSS_ROOT){await page.addStyleTag({content:fs.readFileSync(path.join(process.env.FONT_CSS_ROOT,'400.css'),'utf8').replaceAll('./files/','/qa-font/')+'body{font-family:"Noto Sans TC",sans-serif}'});}
  await page.evaluate(()=>rhythmGame(r=>results.push(r)));
  await page.evaluate(()=>document.fonts.ready);
- assert.equal(await page.locator('#rhSongs [data-song]').count(),13,'recording and all twelve originals are selectable');
+ assert.equal(await page.locator('#rhSongs [data-song]').count(),16,'four recordings and all twelve originals are selectable');
  assert.equal(await page.locator('#rhDifficulties button').count(),3,'practice has three difficulties');
  await page.locator('#rhSongs [data-song="cafe"]').click();
  assert.match(await page.locator('#rhSelected').innerText(),/月台爵士館/);
