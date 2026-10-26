@@ -1,0 +1,211 @@
+[
+  {
+    "id": "wulin",
+    "audio_sha256": "2265abb22a316a62e75b5f164f09dfa2229e39efe091c2e79a4741d2118ea17c",
+    "tempo_prior": 130,
+    "median_bpm": 130.83,
+    "pulse_count": 130,
+    "counts": [
+      58,
+      113,
+      225
+    ],
+    "max_grid_offset_ms": 52.24,
+    "old_easy_within_45ms_of_measured_pulse_pct": 86.8,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.447,
+      0.4818
+    ]
+  },
+  {
+    "id": "cloud-drums",
+    "audio_sha256": "2e3b5f3095d0d1fa7d8a2f557202861b2dc86e88c40cb21537dbe5fecf35fdd9",
+    "tempo_prior": 94,
+    "median_bpm": 93.96,
+    "pulse_count": 70,
+    "counts": [
+      33,
+      66,
+      126
+    ],
+    "max_grid_offset_ms": 37.73,
+    "old_easy_within_45ms_of_measured_pulse_pct": 40.5,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.6246,
+      0.6617
+    ]
+  },
+  {
+    "id": "wind-claps",
+    "audio_sha256": "d502ed68fd144020683888a8aef5377a04872d8e488fa05b6fe137e3006a93c7",
+    "tempo_prior": 100,
+    "median_bpm": 100.35,
+    "pulse_count": 50,
+    "counts": [
+      21,
+      43,
+      88
+    ],
+    "max_grid_offset_ms": 52.24,
+    "old_easy_within_45ms_of_measured_pulse_pct": 36.0,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.5805,
+      0.6095
+    ]
+  },
+  {
+    "id": "thunder-stomp",
+    "audio_sha256": "c63614b23e82daf99df725b18760927be635e879f1f6752e7852967e6944261c",
+    "tempo_prior": 145,
+    "median_bpm": 145.56,
+    "pulse_count": 96,
+    "counts": [
+      40,
+      83,
+      168
+    ],
+    "max_grid_offset_ms": 43.54,
+    "old_easy_within_45ms_of_measured_pulse_pct": 84.6,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.4006,
+      0.4272
+    ]
+  },
+  {
+    "id": "moon-alone",
+    "audio_sha256": "ac8af437fc66bb4ee521bf3b36e05a0efeb25c9e2ef7b576c9ffd43982ef77ed",
+    "tempo_prior": 82,
+    "median_bpm": 82.02,
+    "pulse_count": 61,
+    "counts": [
+      28,
+      57,
+      114
+    ],
+    "max_grid_offset_ms": 49.34,
+    "old_easy_within_45ms_of_measured_pulse_pct": 34.9,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.7024,
+      0.7611
+    ]
+  },
+  {
+    "id": "neon-faultline",
+    "audio_sha256": "6040da1ce68ae649b84b593d1ed222f77c86ac979e9ceae967f09f9412f34a2b",
+    "tempo_prior": 103,
+    "median_bpm": 102.85,
+    "pulse_count": 77,
+    "counts": [
+      36,
+      72,
+      143
+    ],
+    "max_grid_offset_ms": 55.15,
+    "old_easy_within_45ms_of_measured_pulse_pct": 28.2,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.5688,
+      0.5979
+    ]
+  },
+  {
+    "id": "your-journey",
+    "audio_sha256": "f5a7cd6bf6c0fdfdd4cc5928c832ebfd70743fa31fc0df96e955eaeb72ab7799",
+    "tempo_prior": 95.75,
+    "median_bpm": 95.71,
+    "pulse_count": 72,
+    "counts": [
+      33,
+      66,
+      132
+    ],
+    "max_grid_offset_ms": 52.24,
+    "old_easy_within_45ms_of_measured_pulse_pct": 29.3,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.6037,
+      0.6444
+    ]
+  },
+  {
+    "id": "shining-you",
+    "audio_sha256": "b712efb78f8e16677b2940cd2e69fd1c05ee6d45ed0f04c8194acfd28baa48de",
+    "tempo_prior": 128,
+    "median_bpm": 127.61,
+    "pulse_count": 96,
+    "counts": [
+      44,
+      88,
+      177
+    ],
+    "max_grid_offset_ms": 43.54,
+    "old_easy_within_45ms_of_measured_pulse_pct": 95.1,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.4586,
+      0.476
+    ]
+  },
+  {
+    "id": "unspoken-echoes",
+    "audio_sha256": "ca9ca9c7b0c42ea3522965e006856c61872820221406c5a42c74a22b4dc1bea0",
+    "tempo_prior": 96,
+    "median_bpm": 94.83,
+    "pulse_count": 72,
+    "counts": [
+      32,
+      65,
+      129
+    ],
+    "max_grid_offset_ms": 52.24,
+    "old_easy_within_45ms_of_measured_pulse_pct": 41.0,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.5979,
+      0.6618
+    ]
+  },
+  {
+    "id": "lucky-walk",
+    "audio_sha256": "657f54f382b0bb2ea47a6f59e0a7d682d6d294f67ad74e291e6bf69b8fafb810",
+    "tempo_prior": 88,
+    "median_bpm": 88.34,
+    "pulse_count": 66,
+    "counts": [
+      28,
+      59,
+      117
+    ],
+    "max_grid_offset_ms": 55.15,
+    "old_easy_within_45ms_of_measured_pulse_pct": 33.3,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.6212,
+      0.7291
+    ]
+  },
+  {
+    "id": "hear-me",
+    "audio_sha256": "47e73ce4e631e4583a7db1f93fd072fc792abe02e01277e2bd8f9c859b7165c0",
+    "tempo_prior": 132,
+    "median_bpm": 132.51,
+    "pulse_count": 99,
+    "counts": [
+      46,
+      91,
+      174
+    ],
+    "max_grid_offset_ms": 55.15,
+    "old_easy_within_45ms_of_measured_pulse_pct": 95.2,
+    "new_easy_within_45ms_of_measured_pulse_pct": 100.0,
+    "pulse_interval_p10_p90": [
+      0.4527,
+      0.4586
+    ]
+  }
+]
