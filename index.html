@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.9</title>
+<title>今天在隱花王國尋寶 V15.10</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -1182,7 +1182,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.10';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1628,6 +1628,7 @@ function mycoGame(done){
 /* ---------- V11.4：節奏採收（配上同步的歌曲：熟果跟著旋律落下，落到線上時點擊，青果不要點） ---------- */
 // 王國原創 VOL. 01：12 首器樂曲；固定十六分音符譜面與共用音訊時鐘。
 const RHY_SONGS = [
+  {id:'wulin',n:'一個人的武林',genre:'武俠節奏',style:'recorded',bpm:130,swing:0,icon:'武',color:'#d7ae67',desc:'原曲精選 60 秒・跟著鼓點採收',audio:'audio/wulin-60.mp3',duration:60,beats:[[0.04,0,1.064],[0.22,0,0.417],[0.429,2,0.469],[0.667,2,0.857],[0.905,0,0.42],[1.132,2,1.021],[1.283,0,0.272],[1.422,0,0.447],[1.59,1,0.519],[1.84,0,0.777],[2.043,1,0.323],[2.281,1,0.315],[2.513,1,0.789],[2.757,0,1.404],[2.966,1,1.376],[3.117,0,0.477],[3.326,0,0.22],[6.513,0,0.474],[6.681,0,1.537],[6.879,0,0.586],[7.029,0,0.4],[7.169,0,0.617],[7.349,2,1.09],[7.581,1,1.728],[7.767,0,0.75],[8.051,1,1.264],[8.278,2,0.7],[8.504,1,1.803],[8.695,0,0.68],[8.974,2,0.999],[9.201,1,0.715],[9.427,1,1.86],[9.665,1,0.558],[9.891,2,1.71],[10.065,0,0.757],[10.356,1,1.442],[10.518,0,0.682],[10.75,0,0.692],[11.064,0,1.594],[11.302,0,1.532],[11.575,0,0.696],[11.743,1,1.192],[11.969,1,0.978],[12.196,1,1.827],[12.335,0,0.603],[12.55,0,1.229],[12.736,0,0.689],[12.892,1,1.623],[13.13,0,2.342],[13.316,0,0.51],[13.589,1,1.801],[13.815,1,1.241],[14.048,0,1.529],[14.193,0,1.0],[14.373,2,0.381],[14.512,2,0.552],[14.738,2,1.275],[14.971,2,1.251],[15.238,0,0.676],[15.429,2,1.021],[15.661,2,0.626],[15.894,2,1.487],[16.143,0,0.809],[16.352,2,0.893],[16.584,2,0.925],[16.817,1,2.157],[17.049,2,0.654],[17.281,1,1.574],[17.513,2,0.599],[17.734,2,2.062],[17.902,0,0.807],[18.059,2,0.544],[18.216,0,0.808],[18.43,1,0.873],[18.703,0,1.618],[18.895,0,0.707],[19.133,2,1.446],[19.353,2,1.217],[19.586,1,1.641],[19.835,0,0.938],[19.992,0,0.765],[20.276,2,0.967],[20.509,1,1.04],[20.66,1,0.221],[20.84,0,0.425],[20.99,0,1.072],[21.182,0,0.855],[21.321,0,0.813],[21.571,0,0.873],[21.739,0,0.382],[21.995,1,0.367],[22.14,1,0.756],[22.36,1,0.86],[22.587,0,0.637],[22.819,0,1.488],[23.063,1,0.326],[23.278,2,1.521],[23.429,0,0.544],[23.597,0,0.54],[23.748,0,1.032],[23.974,2,0.78],[24.206,1,1.642],[24.357,0,0.434],[24.659,2,1.171],[24.816,0,0.582],[24.973,0,0.245],[25.124,1,1.689],[25.321,0,0.279],[25.588,2,0.669],[25.82,2,0.731],[26.052,2,1.12],[26.36,0,0.435],[26.505,1,0.538],[26.743,2,0.48],[26.975,1,1.645],[27.219,0,0.537],[27.486,0,0.602],[27.689,0,0.756],[27.893,1,1.478],[28.142,0,0.682],[28.357,1,1.223],[28.589,1,0.698],[28.816,1,1.564],[29.042,2,0.382],[29.297,2,0.532],[29.53,0,0.939],[29.744,0,1.511],[29.971,0,0.752],[30.197,2,0.58],[30.522,0,0.429],[30.685,0,1.24],[30.9,2,0.364],[31.143,0,1.251],[31.37,0,0.684],[31.59,1,1.34],[31.817,2,0.484],[32.043,1,1.155],[32.508,2,1.329],[32.647,0,0.873],[32.85,0,0.236],[33.059,0,0.784],[33.216,0,0.748],[33.425,1,1.08],[33.645,0,0.384],[33.901,1,0.767],[34.139,1,0.69],[34.359,1,1.414],[34.58,0,0.6],[34.824,1,0.882],[35.068,1,0.531],[35.282,1,0.567],[35.515,2,0.534],[35.747,1,0.784],[35.967,1,0.347],[36.211,0,2.052],[36.478,0,0.478],[36.629,0,0.32],[36.861,0,0.67],[37.099,0,0.336],[37.285,0,0.34],[37.453,0,0.508],[37.599,0,0.396],[37.924,0,0.275],[38.086,0,0.427],[38.359,0,0.305],[38.504,1,0.47],[38.736,1,0.62],[38.963,1,1.053],[39.201,1,1.825],[39.427,1,1.715],[39.653,1,2.078],[39.891,1,2.175],[40.06,0,0.605],[40.234,1,1.04],[40.373,0,0.711],[40.594,0,1.337],[40.832,0,0.653],[41.047,1,1.076],[41.273,1,1.639],[41.43,0,0.348],[41.592,0,0.61],[41.749,0,1.868],[41.993,0,0.405],[42.202,1,2.089],[42.446,0,1.642],[42.66,1,0.355],[42.904,1,1.043],[43.125,1,1.34],[43.363,1,1.233],[43.583,1,1.487],[43.88,0,0.369],[44.048,1,2.125],[44.292,0,1.206],[44.547,0,0.615],[44.739,2,2.15],[44.965,1,2.051],[45.226,0,0.979],[45.429,2,1.428],[45.621,0,0.409],[45.778,2,1.551],[45.964,0,0.758],[46.114,2,1.939],[46.271,0,0.388],[46.48,0,1.191],[46.631,0,0.988],[46.817,2,2.293],[47.049,1,0.804],[47.275,1,1.79],[47.45,0,0.974],[47.74,1,2.018],[47.966,2,1.258],[48.204,0,0.849],[48.431,2,1.224],[48.663,2,1.631],[48.912,0,0.703],[49.121,2,0.885],[49.267,0,0.826],[49.58,1,1.169],[49.824,0,1.314],[49.998,0,0.816],[50.277,2,1.054],[50.509,1,2.007],[50.741,2,1.289],[50.979,1,1.328],[51.229,0,0.39],[51.426,1,2.145],[51.571,0,0.444],[51.71,0,1.382],[52.001,2,0.877],[52.355,2,1.02],[52.506,0,0.335],[52.657,0,0.683],[52.825,0,1.282],[53.075,0,0.812],[53.278,1,2.009],[53.51,1,1.646],[53.655,0,0.396],[53.858,0,1.57],[54.056,0,0.755],[54.195,1,1.582],[54.433,1,1.218],[54.677,0,1.374],[54.897,0,0.714],[55.124,1,1.52],[55.362,0,1.534],[55.565,0,0.439],[55.722,0,0.954],[55.873,0,0.4],[56.047,1,1.261],[56.273,0,0.619],[56.517,0,1.313],[56.732,0,0.411],[56.97,2,1.343],[57.214,0,1.325],[57.434,0,0.537],[57.672,0,0.8],[57.893,2,1.412],[58.131,0,1.048],[58.351,2,1.233],[58.496,0,0.724],[58.816,2,1.046],[59.06,0,1.402],[59.234,0,0.57],[59.524,1,0.905]]},
   {id:'velvet',n:'絨夜熟果',genre:'R&B',style:'rnb',bpm:82,swing:.08,icon:'☾',color:'#a979b5',desc:'柔暖電鋼琴・深沉貝斯',
    chords:[[45,[60,64,67,71]],[41,[57,60,64,67]],[48,[59,62,64,67]],[43,[59,62,65,69]]],
    mel:[[76,0,79,76,72,0,71,72],[72,0,69,72,76,0,74,0],[74,0,76,79,83,79,76,0],[77,0,74,71,69,0,71,0],[72,76,0,79,84,0,83,79],[76,0,72,69,67,69,72,0],[71,74,0,76,79,0,76,74],[77,74,71,0,69,71,72,0]],
@@ -1680,6 +1681,7 @@ const RHY_SONGS = [
 // Sixteenth-note grid. Swing moves the offbeat and the adjacent sixteenth together.
 function rhyTime(song, step){const beat=Math.floor(step/4),p=step%4,q=60/song.bpm;return (beat+p/4+(p===1?song.swing/2:p===2?song.swing:p===3?song.swing/2:0))*q;}
 function rhyArrangement(song){
+  if(song.audio)return {events:song.beats.map(([t,l,vol],step)=>({voice:'recorded',t,l,vol,step})),length:song.duration};
   const events=[],q=60/song.bpm,length=17*4*q;
   const add=(voice,step,m,vol=1,dur=.2)=>events.push({voice,step,t:rhyTime(song,step),m,vol,dur});
   for(let bar=0;bar<17;bar++){
@@ -1702,6 +1704,13 @@ function rhyArrangement(song){
   events.sort((a,b)=>a.t-b.t);return {events,length};
 }
 function rhyChart(song,d){
+  if(song.audio){
+    const gap=[.76,.38,.19][d],picked=[];
+    for(const [t,l,weight] of [...song.beats].sort((a,b)=>b[2]-a[2]))if(t>=2.6&&t<=song.duration-.5&&!picked.some(n=>Math.abs(n.t-t)<gap))picked.push({t,l,g:false});
+    picked.sort((a,b)=>a.t-b.t);const last=[-9,-9,-9];
+    for(const n of picked){for(let k=0;k<3;k++){const l=(n.l+k)%3;if(n.t-last[l]>=.24){n.l=l;last[l]=n.t;break;}}}
+    return {notes:picked,length:song.duration,fall:[2.4,2,1.7][d],ripe:picked.length};
+  }
   const {events,length}=rhyArrangement(song),notes=[],q=60/song.bpm,last=[-9,-9,-9];
   // Easy = two strong beats; medium = four beats + melodic offbeats; hard = full audible accents.
   const pitches=song.mel.flat().filter(Boolean),lo=Math.min(...pitches),hi=Math.max(...pitches);
@@ -1734,6 +1743,7 @@ function rhyVoiceBank(c,out,style){
       if(amp===1)o.connect(dest);else{const a=c.createGain();a.gain.value=amp;o.connect(a);a.connect(dest);nodes.push(a);}sources.push(o);nodes.push(o);return o;};
     const transient=(hz,amp,duration=.025)=>{const n=c.createBufferSource(),f=c.createBiquadFilter(),a=c.createGain();n.buffer=noiseBuffer;f.type='highpass';f.frequency.value=hz;a.gain.setValueAtTime(amp,t);a.gain.exponentialRampToValueAtTime(.0001,t+duration);n.connect(f);f.connect(a);a.connect(g);nodes.push(n,f,a);sources.push(n);};
     if(drum){const n=c.createBufferSource(),f=c.createBiquadFilter();n.buffer=noiseBuffer;f.type=v==='snare'?'bandpass':'highpass';f.frequency.value=v==='snare'?style==='jazz'?2600:1800:v==='ride'?4500:7000;f.Q.value=.6;n.connect(f);f.connect(g);nodes.push(n,f);sources.push(n);if(v==='snare'){osc('sine',158,.44);osc('triangle',316,.12);};}
+    else if(v==='success'){osc('sine',freq,.85);osc('triangle',freq*2,.1);}
     else if(v==='kick'){const o=osc('sine',110,.86);o.frequency.exponentialRampToValueAtTime(52,t+.05);osc('triangle',104,.3);transient(1300,.16,.02);}
     else if(v==='midTom'||v==='highTom'){const hz=v==='midTom'?158:316,o=osc('sine',hz*1.4,.82);o.frequency.exponentialRampToValueAtTime(hz,t+.035);osc('triangle',hz*2,.2);transient(v==='midTom'?1800:3500,.12,.035);}
     else if(v==='tom'){const o=osc('sine',freq*1.3);o.frequency.exponentialRampToValueAtTime(freq*.65,t+dur);osc('triangle',freq*2,.13);}
@@ -1752,10 +1762,25 @@ function rhyVoiceBank(c,out,style){
   };
   return {play,stop(){for(const r of live){r.sources.forEach(n=>{try{n.stop();}catch(e){}});r.nodes.forEach(n=>{try{n.disconnect();}catch(e){}});}live.clear();}};
 }
+const RHY_AUDIO=new Map();
+function rhyLoadAudio(song){
+  if(!song.audio)return Promise.resolve(null);
+  if(RHY_AUDIO.has(song.audio))return RHY_AUDIO.get(song.audio).promise;
+  const entry={buffer:null,promise:null};
+  entry.promise=(async()=>{
+    const response=await fetch(song.audio);if(!response.ok)throw new Error('audio_fetch');
+    const bytes=await response.arrayBuffer(),Decoder=window.OfflineAudioContext||window.webkitOfflineAudioContext;
+    const decoder=AUD.ctx||new Decoder(2,1,48000),buffer=await decoder.decodeAudioData(bytes);
+    if(buffer.duration<song.duration-.05)throw new Error('audio_short');entry.buffer=buffer;return buffer;
+  })().catch(error=>{RHY_AUDIO.delete(song.audio);throw error;});
+  RHY_AUDIO.set(song.audio,entry);return entry.promise;
+}
 function rhyPlayer(song){
-  const arrangement=rhyArrangement(song);let ctx=null,bus=null,bank=null,compressor=null,padBus=null,padBank=null,padCompressor=null,timer=null,origin=0,offset=0,cursor=0,running=false,started=false;
+  const arrangement=rhyArrangement(song),musicLevel=song.audio?3:1.4;let ctx=null,bus=null,bank=null,recording=null,compressor=null,padBus=null,padBank=null,padCompressor=null,timer=null,origin=0,offset=0,cursor=0,running=false,started=false;
   const now=()=>running?(ctx?ctx.currentTime:performance.now()/1000)-origin:offset;
-  const connect=()=>{bus=ctx.createGain();bus.gain.value=AUD.on?1.4:0;compressor=ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=18;compressor.ratio.value=4;compressor.attack.value=.003;compressor.release.value=.15;compressor.connect(bus);bus.connect(AUD.mus);bank=rhyVoiceBank(ctx,compressor,song.style);
+  const connect=()=>{bus=ctx.createGain();bus.gain.value=AUD.on?musicLevel:0;compressor=ctx.createDynamicsCompressor();compressor.threshold.value=-12;compressor.knee.value=18;compressor.ratio.value=4;compressor.attack.value=.003;compressor.release.value=.15;compressor.connect(bus);bus.connect(AUD.mus);if(song.audio){const elapsed=Math.max(0,now()),buffer=RHY_AUDIO.get(song.audio)?.buffer;
+      if(buffer&&elapsed<song.duration){recording=ctx.createBufferSource();recording.buffer=buffer;recording.connect(compressor);recording.start(Math.max(ctx.currentTime,origin+elapsed),elapsed,song.duration-elapsed);}
+    }else bank=rhyVoiceBank(ctx,compressor,song.style);
     padBus=ctx.createGain();padBus.gain.value=AUD.on?.85:0;padCompressor=ctx.createDynamicsCompressor();padCompressor.threshold.value=-9;padCompressor.knee.value=12;padCompressor.ratio.value=6;padCompressor.attack.value=.002;padCompressor.release.value=.1;padCompressor.connect(padBus);padBus.connect(AUD.sfx);padBank=rhyVoiceBank(ctx,padCompressor,'drums');};
   const tick=()=>{
     if(!running)return;
@@ -1763,20 +1788,21 @@ function rhyPlayer(song){
       const elapsed=now();ctx=AUD.ctx;origin=ctx.currentTime-elapsed;connect();
       cursor=arrangement.events.findIndex(e=>e.t>=elapsed-.025);if(cursor<0)cursor=arrangement.events.length;
     }
-    if(bus)bus.gain.setTargetAtTime(AUD.on?1.4:0,ctx.currentTime,.015);
+    if(bus)bus.gain.setTargetAtTime(AUD.on?musicLevel:0,ctx.currentTime,.015);
     if(padBus)padBus.gain.setTargetAtTime(AUD.on?.85:0,ctx.currentTime,.01);if(!AUD.on&&padBank)padBank.stop();
     if(!bank)return;
     const time=now();while(cursor<arrangement.events.length&&arrangement.events[cursor].t<time+.12){const e=arrangement.events[cursor++];if(e.t>=time-.025)bank.play(e,Math.max(ctx.currentTime,origin+e.t));}
   };
-  const stop=()=>{running=false;started=false;clearInterval(timer);timer=null;if(bank)bank.stop();if(padBank)padBank.stop();bank=padBank=null;[bus,compressor,padBus,padCompressor].forEach(n=>{try{n?.disconnect();}catch(e){}});bus=compressor=padBus=padCompressor=null;};
+  const stopRecording=()=>{if(recording){try{recording.stop();recording.disconnect();}catch(e){}recording=null;}};
+  const stop=()=>{stopRecording();running=false;started=false;clearInterval(timer);timer=null;if(bank)bank.stop();if(padBank)padBank.stop();bank=padBank=null;[bus,compressor,padBus,padCompressor].forEach(n=>{try{n?.disconnect();}catch(e){}});bus=compressor=padBus=padCompressor=null;};
   return {
     start(at=0){stop();AUD.unlock();MUSIC.stop();THEME.stop();ctx=AUD.ctx&&AUD.ctx.state==='running'?AUD.ctx:null;offset=at;cursor=arrangement.events.findIndex(e=>e.t>=at);if(cursor<0)cursor=arrangement.events.length;
-      if(ctx)connect();
-      origin=(ctx?ctx.currentTime:performance.now()/1000)-at+.08;started=running=true;timer=setInterval(tick,25);tick();return !!ctx;
+      origin=(ctx?ctx.currentTime:performance.now()/1000)-at+.08;if(ctx)connect();
+      started=running=true;timer=setInterval(tick,25);tick();return !!ctx;
     },
     now,
-    drum(lane){if(!running||!AUD.on||lane<0||lane>2)return;AUD.unlock();tick();if(ctx?.state!=='running'||!padBank)return;padBank.play({voice:['kick','midTom','highTom'][lane],m:36,vol:.9,dur:lane===0?.42:lane===1?.3:.23},ctx.currentTime);},
-    pause(){if(!running)return;offset=Math.max(0,now());running=false;clearInterval(timer);timer=null;if(bank)bank.stop();if(padBank)padBank.stop();if(bus)bus.gain.value=0;if(padBus)padBus.gain.value=0;},
+    success(combo){if(!running||!AUD.on)return;AUD.unlock();tick();if(ctx?.state!=='running'||!padBank)return;const tier=Math.min(5,Math.floor((Math.max(1,combo)-1)/4));padBank.stop();padBank.play({voice:'success',m:81+tier,vol:.48+tier*.015,dur:.13},ctx.currentTime);},
+    pause(){if(!running)return;offset=Math.max(0,now());stopRecording();running=false;clearInterval(timer);timer=null;if(bank)bank.stop();if(padBank)padBank.stop();if(bus)bus.gain.value=0;if(padBus)padBus.gain.value=0;},
     resume(){if(!started)return;this.start(offset);},
     suspended(){return running&&ctx&&ctx.state!=='running';},
     stop
@@ -1784,44 +1810,52 @@ function rhyPlayer(song){
 }
 function rhySelect(done){
   const ov=document.createElement('div');ov.id='rhSongOv';
-  let selected=RHY_SONGS[0],difficulty=diffOf('rhythm'),preview=null,previewTimer=null,previewWatch=null,closed=false,previewRequest=0;
+  let selected=RHY_SONGS[0],difficulty=diffOf('rhythm'),preview=null,previewTimer=null,previewWatch=null,closed=false,previewRequest=0,startRequest=0;
   try{selected=RHY_SONGS.find(s=>s.id===localStorage.getItem('hfk_rhythm_song'))||selected;}catch(e){}
   const stopPreview=()=>{previewRequest++;if(preview)preview.stop();preview=null;clearTimeout(previewTimer);clearInterval(previewWatch);const b=ov.querySelector('#rhPreview');if(b){b.textContent='▶ 試聽 8 秒';b.setAttribute('aria-pressed','false');}};
   const hidden=()=>{if(document.hidden)stopPreview();};
-  const close=()=>{if(closed)return;closed=true;stopPreview();document.removeEventListener('visibilitychange',hidden);ov.remove();};
-  ov.innerHTML=`<button class="wo-x" id="rhSongX">離開</button><div class="rh-library"><div class="rh-eyebrow">KINGDOM ORIGINALS · VOL. 01</div><h2>王國聲音採集</h2><p class="rh-intro">12 首原創 · 7 種律動 · 3 種難度</p><div class="rh-catalog" id="rhSongs">${RHY_SONGS.map((s,i)=>`<button class="rh-track" data-song="${s.id}" style="--track:${s.color}" aria-pressed="false"><span class="rh-art" aria-hidden="true">${s.icon}</span><span class="rh-track-copy"><small>${String(i+1).padStart(2,'0')} / ${s.genre}</small><b>${s.n}</b><span>${s.bpm} BPM · ${Math.round(rhyArrangement(s).length)} 秒</span></span><span class="rh-track-check" aria-hidden="true">✓</span></button>`).join('')}</div></div>
+  const close=()=>{if(closed)return;closed=true;startRequest++;stopPreview();document.removeEventListener('visibilitychange',hidden);ov.remove();};
+  ov.innerHTML=`<button class="wo-x" id="rhSongX">離開</button><div class="rh-library"><div class="rh-eyebrow">KINGDOM RHYTHMS · VOL. 01</div><h2>王國聲音採集</h2><p class="rh-intro">13 首曲目 · 首推〈一個人的武林〉60 秒 · 3 種難度</p><div class="rh-catalog" id="rhSongs">${RHY_SONGS.map((s,i)=>`<button class="rh-track" data-song="${s.id}" style="--track:${s.color}" aria-pressed="false"><span class="rh-art" aria-hidden="true">${s.icon}</span><span class="rh-track-copy"><small>${String(i+1).padStart(2,'0')} / ${s.genre}</small><b>${s.n}</b><span>${s.audio?'原曲鼓點':s.bpm+' BPM'} · ${Math.round(rhyArrangement(s).length)} 秒</span></span><span class="rh-track-check" aria-hidden="true">✓</span></button>`).join('')}</div></div>
     <div class="rh-deck"><div id="rhSelected"></div><div class="rh-preview-row"><span id="rhDescription"></span><button id="rhPreview" aria-pressed="false">▶ 試聽 8 秒</button></div><div id="rhDifficulties"></div><p class="rh-hint" id="rhHint" role="status"></p><button class="rh-start" id="rhStart">開始採收 →</button></div>`;
   document.body.appendChild(ov);THEME.stop();document.addEventListener('visibilitychange',hidden);
   const draw=()=>{ov.querySelectorAll('[data-song]').forEach(b=>{const on=b.dataset.song===selected.id;b.classList.toggle('selected',on);b.setAttribute('aria-pressed',String(on));});
     $('#rhSelected').textContent=selected.n;$('#rhDescription').textContent=selected.desc;
     $('#rhDifficulties').innerHTML=PRACTICE?DIFF_N.map((n,d)=>`<button data-d="${d}" aria-pressed="${d===difficulty}">${n}</button>`).join(''):`<span>正式挑戰 · ${DIFF_N[difficulty]}（依原有進度）</span>`;
-    $('#rhHint').textContent=(difficulty===0?'跟著重拍採紫紅熟果':'紫紅熟果要採，綠色青果不要採')+' · 同曲同難度譜面固定';
-    ov.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{difficulty=+b.dataset.d;PRACTICE_D=difficulty;draw();});
+    $('#rhHint').textContent=(selected.audio?'跟著原曲鼓點採熟果':difficulty===0?'跟著重拍採紫紅熟果':'紫紅熟果要採，綠色青果不要採')+' · 答對音隨連擊升級';
+    ov.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{startRequest++;$('#rhStart').disabled=false;$('#rhStart').textContent='開始採收 →';difficulty=+b.dataset.d;PRACTICE_D=difficulty;draw();});
   };
-  ov.querySelectorAll('[data-song]').forEach(b=>b.onclick=()=>{stopPreview();selected=RHY_SONGS.find(s=>s.id===b.dataset.song);try{localStorage.setItem('hfk_rhythm_song',selected.id);}catch(e){}draw();});
+  ov.querySelectorAll('[data-song]').forEach(b=>b.onclick=()=>{startRequest++;$('#rhStart').disabled=false;$('#rhStart').textContent='開始採收 →';stopPreview();selected=RHY_SONGS.find(s=>s.id===b.dataset.song);try{localStorage.setItem('hfk_rhythm_song',selected.id);}catch(e){}draw();});
   $('#rhPreview').onclick=async()=>{if(preview){stopPreview();return;}stopPreview();const request=previewRequest;AUD.unlock();if(!AUD.on||!AUD.ctx){$('#rhHint').textContent='目前聲音關閉或無法播放，請由聲音設定開啟。';return;}
     try{await AUD.ctx.resume();}catch(e){}if(closed||request!==previewRequest)return;if(!AUD.on||AUD.ctx.state!=='running'){$('#rhHint').textContent='音訊尚未就緒，請再點一次試聽。';return;}
-    preview=rhyPlayer(selected);preview.start(4*60/selected.bpm);$('#rhPreview').textContent='■ 停止試聽';$('#rhPreview').setAttribute('aria-pressed','true');previewTimer=setTimeout(stopPreview,8000);previewWatch=setInterval(()=>{if(!AUD.on||preview?.suspended())stopPreview();},100);};
+    const song=selected;$('#rhPreview').textContent='載入試聽中…';
+    try{await rhyLoadAudio(song);}catch(e){if(!closed&&request===previewRequest){stopPreview();$('#rhHint').textContent='音樂載入失敗，請再點一次試聽。';}return;}
+    if(closed||request!==previewRequest||selected!==song||!AUD.on||document.hidden)return;
+    preview=rhyPlayer(song);preview.start(song.audio?0:4*60/song.bpm);$('#rhPreview').textContent='■ 停止試聽';$('#rhPreview').setAttribute('aria-pressed','true');previewTimer=setTimeout(stopPreview,8000);previewWatch=setInterval(()=>{if(!AUD.on||preview?.suspended())stopPreview();},100);};
   $('#rhSongX').onclick=()=>{close();closeSheet();};
-  $('#rhStart').onclick=()=>{AUD.unlock();const song=selected,d=difficulty;close();rhyRun(done,song,d);};draw();
+  $('#rhStart').onclick=async()=>{AUD.unlock();stopPreview();const song=selected,d=difficulty,request=++startRequest,button=$('#rhStart');button.disabled=true;button.textContent='音樂載入中…';
+    try{await rhyLoadAudio(song);}catch(e){if(!closed&&request===startRequest){button.disabled=false;button.textContent='重新開始 →';$('#rhHint').textContent='音樂載入失敗，請檢查網路後重試。';}return;}
+    if(closed||request!==startRequest||selected!==song)return;
+    if(document.hidden){button.disabled=false;button.textContent='開始採收 →';return;}
+    close();rhyRun(done,song,d);
+  };draw();
 }
 function rhythmGame(done){rhySelect(done);}
 const RHY_FIG_SVG='<svg viewBox="0 0 50 64" aria-hidden="true"><path d="M25 15 Q22 9 27 3" fill="none" stroke="#799451" stroke-width="4" stroke-linecap="round"/><path d="M26 9 Q32 3 38 7 Q34 13 26 11" fill="#8fa45f"/><path class="rh-fig-body" d="M21 13 Q25 11 29 13 C29 25 40 27 44 39 C51 57 32 62 24 61 C10 61 1 54 5 40 C8 29 20 24 21 13Z" fill="var(--fig-skin)" stroke="#efb6cb" stroke-opacity=".5" stroke-width="1"/><path d="M22 17 C21 29 11 31 10 43 C9 53 15 56 20 57 C13 44 24 31 24 18Z" fill="var(--fig-light)" opacity=".55"/><path d="M25 17 C26 30 18 40 24 56 M28 20 C29 31 38 41 29 57 M20 27 C15 38 13 49 21 56" fill="none" stroke="var(--fig-rib)" stroke-width="1" stroke-linecap="round" opacity=".45"/><ellipse cx="25" cy="57" rx="3.1" ry="1.9" fill="var(--fig-eye)"/><path d="m23 56 4 2m-3 0 2-3" stroke="var(--fig-light)" stroke-width=".7"/></svg>';
 function rhyRun(done,SONG,d){
   const {notes,length:LEN,fall:FALL,ripe}=rhyChart(SONG,d),beat=60/SONG.bpm;
   const ov=document.createElement('div');ov.id='rhyOv';ov.style.setProperty('--rh-accent',SONG.color);
-  ov.innerHTML=`<button class="wo-x" id="rhyX">離開</button><button id="rhPause" class="rh-pause">暫停</button><div class="mem-h"><b>♪ 節奏採收 · ${DIFF_N[d]}</b><span id="rhInfo">${SONG.n} · ${SONG.genre} · ${SONG.bpm} BPM</span></div>
+  ov.innerHTML=`<button class="wo-x" id="rhyX">離開</button><button id="rhPause" class="rh-pause">暫停</button><div class="mem-h"><b>♪ 節奏採收 · ${DIFF_N[d]}</b><span id="rhInfo">${SONG.n} · ${SONG.audio?'60 秒 · 原曲鼓點同步':SONG.genre+' · '+SONG.bpm+' BPM'}</span></div>
     <div class="rh-scoreboard"><div><small>累積分數 · SCORE</small><strong id="rhS">0</strong></div><div class="rh-combo" id="rhCombo">0 COMBO</div></div><div class="rh-counts"><span>Perfect <b id="rhPerfect">0</b></span><span>Good <b id="rhGood">0</b></span><span>NG <b id="rhNG">0</b></span></div><div class="mem-bar"><i id="rhBar"></i></div><div class="rh-field" id="rhF">${[0,1,2].map(i=>`<div class="rh-lane" data-l="${i}"></div>`).join('')}<div class="rh-line"></div><div class="rh-line-label">採 收 線</div></div>
-    <div class="rh-feedback"><span id="rhJ" role="status"></span><span id="rhWhy"></span></div><div class="rh-btns">${['低音鼓','中音鼓','高音鼓'].map((n,i)=>`<button class="rh-b" data-l="${i}" aria-label="${n} · 採收第 ${i+1} 排">${n}<small>${['BASS · ←','MID · ↓','HIGH · →'][i]}</small></button>`).join('')}</div><p class="rh-game-hint">${d?'紫紅熟果要採 · 綠色青果不要採':'紫紅熟果碰到金線時，點下方按鈕'}</p><div class="rh-paused" hidden><b>節奏暫停</b><span>準備好再繼續，不會漏接果實</span><button id="rhResume">繼續採收</button><button id="rhPauseQuit">離開遊戲</button></div>`;
+    <div class="rh-feedback"><span id="rhJ" role="status"></span><span id="rhWhy"></span></div><div class="rh-btns">${['左側採收','中央採收','右側採收'].map((n,i)=>`<button class="rh-b" data-l="${i}" aria-label="${n} · 採收第 ${i+1} 排">${n}<small>${['←','↓','→'][i]}</small></button>`).join('')}</div><p class="rh-game-hint">${d&&!SONG.audio?'紫紅熟果要採 · 綠色青果不要採':'熟果碰到金線時採收 · 答對音隨連擊升級'}</p><div class="rh-paused" hidden><b>節奏暫停</b><span>準備好再繼續，不會漏接果實</span><button id="rhResume">繼續採收</button><button id="rhPauseQuit">離開遊戲</button></div>`;
   document.body.appendChild(ov);THEME.stop();const F=$('#rhF'),lanes=[...ov.querySelectorAll('.rh-lane')],player=rhyPlayer(SONG);
   let over=false,raf=0,started=false,paused=false,resuming=false,cd=3,ci=null,pts=0,combo=0,maxC=0,perfect=0,good=0,miss=0,ng=0,lastBeat=-1;
   const judge=(txt,cls,why='')=>{const j=$('#rhJ');j.textContent=txt;j.className=cls;$('#rhWhy').textContent=why;$('#rhCombo').textContent=`${combo} COMBO`;$('#rhS').textContent=pts;$('#rhPerfect').textContent=perfect;$('#rhGood').textContent=good;$('#rhNG').textContent=ng;};
   const pause=()=>{if(over||paused)return;paused=true;if(started)player.pause();clearInterval(ci);cancelAnimationFrame(raf);ov.querySelector('.rh-paused').hidden=false;};
   const visibility=()=>{if(document.hidden)pause();};document.addEventListener('visibilitychange',visibility);
-  const hit=l=>{if(over||!started||paused)return;player.drum(l);const now=player.now();let best=null,bd=9;notes.forEach(n=>{if(n.done||n.l!==l)return;const dd=Math.abs(n.t-now);if(dd<bd){bd=dd;best=n;}});
+  const hit=l=>{if(over||!started||paused)return;const now=player.now();let best=null,bd=9;notes.forEach(n=>{if(n.done||n.l!==l)return;const dd=Math.abs(n.t-now);if(dd<bd){bd=dd;best=n;}});
     const btn=ov.querySelector(`.rh-b[data-l="${l}"]`);btn.classList.remove('hit');void btn.offsetWidth;btn.classList.add('hit');if(!best||bd>.22){ng++;combo=0;judge('NG','bad','未碰到熟果');return;}best.done=true;best.el?.remove();
     if(best.g){ng++;combo=0;pts=Math.max(0,pts-2);judge('NG','bad','青果還沒熟');}
-    else{combo++;maxC=Math.max(maxC,combo);if(bd<=.09){perfect++;pts+=2+(combo>=10?1:0);judge('Perfect','pf','完美採收');}else{good++;pts++;judge('Good','gd','採收成功');}}
+    else{combo++;maxC=Math.max(maxC,combo);player.success(combo);if(bd<=.09){perfect++;pts+=2+(combo>=10?1:0);judge('Perfect','pf','完美採收');}else{good++;pts++;judge('Good','gd','採收成功');}}
   };
   ov.querySelectorAll('.rh-b,.rh-lane').forEach(b=>b.addEventListener('pointerdown',ev=>{ev.preventDefault();hit(+b.dataset.l);}));
   const key=e=>{if(e.repeat||e.target.closest('button,input,textarea,select'))return;const l=['ArrowLeft','ArrowDown','ArrowRight'].indexOf(e.key);if(l>=0){e.preventDefault();hit(l);}};document.addEventListener('keydown',key);
@@ -4552,7 +4586,7 @@ const TASKS = [
   {id:'wood', n:'碎木工作', i:'🪓', d:'修剪下來的枝條打成碎木，鋪回土裡養菌、保濕，這是循環農法的一環。', rules:'鋸子鋸紅圈、電剪剪藍圈（每把用一次）→ 點木段轉到變綠 → 滑進碎木機 → 每 2 段推一車木屑到堆肥區。推越多車越厲害！', play:woodGame}
   // 之後的新小遊戲加在這裡，就會自動輪流出現
   ,{id:'myco', n:'灌溉連線', i:'💧', d:'水分是無花果長大的關鍵，灌溉管路要接到每一棵樹，不能有漏水或沒接上的地方。好的水路配上健康的土壤菌群，樹才長得好。', rules:'點一下格子，水管就會順時針轉 90 度。從最上排的 🚰 水源開始，把水灌到棋盤上每一格，每一棵 🌳 都要喝到水。有水的管子會變藍色；管口沒接好會出現紅色水滴，代表漏水。🧱 石塊不能通過。計時條歸零前全部灌到水就過關，越快、轉越少次分數越高；時間到或按「放棄」會顯示解答。簡單 4×4、中級 5×5、高級 6×6。', play:mycoGame}
-  ,{id:'rhythm', n:'節奏採收', i:'🎵', d:'無花果要在紫紅色的最佳時機採收，太早太生、太晚過熟。跟著節奏採，又快又準！', rules:'12 首王國原創曲可自由選擇與試聽，包含 R&B、雷鬼、爵士、搖滾、放克、電音、鼓打。每首有簡單、中級、高級三種固定譜面；練習可選難度，正式挑戰沿用目前進度。第一小節是前奏，紫紅熟果掉到金色採收線時，點那一排的「採」按鈕（或直接點那一排）。剛好在線上是「完美」，差一點是「不錯」。中級以上有綠色青果，不要點。連續採中有連擊；切到背景會暫停，回來按繼續即可。', play:rhythmGame}
+  ,{id:'rhythm', n:'節奏採收', i:'🎵', d:'無花果要在紫紅色的最佳時機採收，太早太生、太晚過熟。跟著節奏採，又快又準！', rules:'第一首〈一個人的武林〉為原曲精選 60 秒，依鼓點採收；另有 12 首王國原創曲可選擇與試聽，包含 R&B、雷鬼、爵士、搖滾、放克、電音、鼓打。每首有簡單、中級、高級三種固定譜面；練習可選難度，正式挑戰沿用目前進度。開頭保留準備時間，紫紅熟果掉到金色採收線時，點那一排的「採」按鈕（或直接點那一排）。剛好在線上是「完美」，差一點是「不錯」。中級以上有綠色青果，不要點。三個按鈕使用同一種答對音，連續採中時提示音逐步升級、分數累加；切到背景會暫停，回來按繼續即可。', play:rhythmGame}
   ,{id:'memory', n:'農場翻牌', i:'🃏', d:'王國夥伴們躲在卡片後面，一起來找找看！', rules:'開始前先看 2～3 秒，記住夥伴的位置。翻兩張一樣的就配對成功，連續配對分數加倍（最多 4 倍）。中級以上配對過半時，一陣風會把剩下的卡片洗牌。計時條歸零前全部配完，剩餘時間也會加分。', play:memoryGame}
 ];
 function taskSlot(){ const h = new Date().getHours(); return TASK_SLOTS.findIndex(([a,b])=>h>=a && h<b); }

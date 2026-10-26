@@ -14,13 +14,13 @@ async function main(){
  ${audio}
  const MUSIC={stop(){}},THEME={stop(){}};const SND={tick(){},win(){},lose(){},bad(){}};function noise(){}function closeSheet(){window.closed=(window.closed||0)+1;}window.results=[];
  ${script}
- window.testApi={songs:RHY_SONGS,arrange:typeof rhyArrangement==='function'?rhyArrangement:null,chart:typeof rhyChart==='function'?rhyChart:null,time:typeof rhyTime==='function'?rhyTime:null,bank:typeof rhyVoiceBank==='function'?rhyVoiceBank:null};
+ window.testApi={songs:RHY_SONGS.filter(s=>!s.audio),arrange:typeof rhyArrangement==='function'?rhyArrangement:null,chart:typeof rhyChart==='function'?rhyChart:null,time:typeof rhyTime==='function'?rhyTime:null,bank:typeof rhyVoiceBank==='function'?rhyVoiceBank:null};
  </script>`}));
  await page.goto('http://rhythm.test/');
  if(process.env.FONT_CSS_ROOT){await page.addStyleTag({content:fs.readFileSync(path.join(process.env.FONT_CSS_ROOT,'400.css'),'utf8').replaceAll('./files/','/qa-font/')+'body{font-family:"Noto Sans TC",sans-serif}'});}
  await page.evaluate(()=>rhythmGame(r=>results.push(r)));
  await page.evaluate(()=>document.fonts.ready);
- assert.equal(await page.locator('#rhSongs [data-song]').count(),12,'all twelve songs are selectable');
+ assert.equal(await page.locator('#rhSongs [data-song]').count(),13,'recording and all twelve originals are selectable');
  assert.equal(await page.locator('#rhDifficulties button').count(),3,'practice has three difficulties');
  await page.locator('#rhSongs [data-song="cafe"]').click();
  assert.match(await page.locator('#rhSelected').innerText(),/月台爵士館/);

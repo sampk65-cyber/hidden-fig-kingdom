@@ -3,7 +3,7 @@ const html=fs.readFileSync(process.env.RHY_INDEX||require('node:path').join(__di
 const start=html.indexOf('const RHY_SONGS ='),end=html.indexOf('/* ---------- V10.6：農場翻牌',start);
 const ctx=vm.createContext({console,Math,setInterval,clearInterval,setTimeout,clearTimeout});
 vm.runInContext(html.slice(start,end)+'\nglobalThis.api={songs:RHY_SONGS,arrange:typeof rhyArrangement==="function"?rhyArrangement:null,chart:typeof rhyChart==="function"?rhyChart:null,time:typeof rhyTime==="function"?rhyTime:null};',ctx);
-const api=ctx.api;
+const api=ctx.api;api.songs=api.songs.filter(s=>!s.audio);
 test('catalog offers twelve distinct playable originals across the seven requested styles',()=>{
  assert.equal(api.songs.length,12);assert.equal(new Set(api.songs.map(s=>s.id)).size,12);
  assert.equal(new Set(api.songs.map(s=>s.genre)).size,7);
