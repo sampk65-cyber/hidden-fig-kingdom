@@ -1,0 +1,55 @@
+(function(){'use strict';
+ if(!window.CastleCore)return;
+ const gate=new CastleCore.Gate();let adapter=null,overlay=null,epoch=0,busy=false,raf=0,timer=0,control=null,priorOverflow='',priorFocus=null,flowIdentity=null,watcher=0,lastSound=null;
+ const $=s=>overlay&&overlay.querySelector(s),esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function identity(){return adapter?.identity?.()??'preview'}
+ function live(id){if(id!==epoch)return false;if(flowIdentity!==null&&flowIdentity!==identity()){close();adapter?.toast('帳號已變更，請重新開啟城堡。');return false}return true}
+ function watch(){if(watcher)return;watcher=setInterval(()=>{if(!live(epoch))return;const v=$('video'),sound=!!adapter?.sound?.();if(v&&sound!==lastSound){v.muted=!sound;lastSound=sound}},100)}
+ function message(s){const el=$('.castle-msg');if(el)el.textContent=s;else adapter?.toast(s)}
+ function on(el,type,fn,options={}){el.addEventListener(type,fn,{...options,signal:control.signal})}
+ function shell(className){
+  if(!overlay){priorFocus=document.activeElement;priorOverflow=document.body.style.overflow;document.body.style.overflow='hidden';control=new AbortController();overlay=document.createElement('div');overlay.id='castleOv';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-label','隱花之巔城堡');document.body.appendChild(overlay);
+   on(document,'keydown',e=>{if(e.key==='Escape'){e.preventDefault();close()}else if(e.key==='Tab'){const list=[...overlay.querySelectorAll('button:not(:disabled),input,video[controls]')].filter(x=>!x.hidden&&x.getClientRects().length);if(!list.length){e.preventDefault();return}const first=list[0],last=list[list.length-1];if(e.shiftKey&&(document.activeElement===first||!overlay.contains(document.activeElement))){e.preventDefault();last.focus()}else if(!e.shiftKey&&(document.activeElement===last||!overlay.contains(document.activeElement))){e.preventDefault();first.focus()}}});
+  }
+  overlay.className=className||'';overlay.innerHTML='<button class="castle-close" id="castleX" aria-label="離開城堡">返回</button>';$('#castleX').onclick=close;adapter?.themeSync();return overlay;
+ }
+ function close(){epoch++;busy=false;clearInterval(watcher);watcher=0;flowIdentity=null;lastSound=null;cancelAnimationFrame(raf);clearTimeout(timer);control?.abort();const v=$('video');if(v){v.pause();v.removeAttribute('src');v.load()}overlay?.remove();overlay=null;gate.cancel();if(control)document.body.style.overflow=priorOverflow;adapter?.restoreMap();adapter?.themeSync();if(priorFocus?.isConnected)priorFocus.focus();else document.querySelector('.castle-stone')?.focus();}
+ async function call(op,data={}){if(!adapter)throw Error('城堡尚未準備好');return adapter.call(op,data)}
+ function marker(){return '<g class="castle-stone" role="button" tabindex="0" aria-label="吊橋入口的密語石，驗證後點五下進入城堡"><circle class="castle-hit" cx="265" cy="190" r="16" fill="transparent"/><ellipse cx="265" cy="195" rx="10" ry="3" fill="#23372d" opacity=".3"/><path class="castle-rock" d="M254 193 L256 184 262 179 272 181 277 190 272 196 260 197Z" fill="#81918b" stroke="#465c59" stroke-width="1.2"/><path d="M256 185 L263 188 272 182 M263 188 L261 195" fill="none" stroke="#c5cbb5" stroke-width="1"/><path d="M264 184 L268 188 264 192" fill="none" stroke="#ebd38a" stroke-width="1.5"/><circle cx="267" cy="188" r="1" fill="#fff2ba"/></g>';}
+ function bind(){document.querySelectorAll('.castle-stone').forEach(n=>{n.onclick=e=>{e.stopPropagation();stoneTap()};n.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();stoneTap()}}})}
+ function invite(eligible,rank){
+  shell('');overlay.insertAdjacentHTML('beforeend',`<section class="castle-card"><div class="castle-eyebrow">HIDDEN FIG KINGDOM</div><div class="castle-seal">${eligible?'♜':'♧'}</div><h2>隱花之巔</h2>${eligible?`<p>第 ${rank} 名守護者，城堡向你發出邀請。<br>首次輸入一次性密語，喚醒吊橋入口的石頭。</p><button class="castle-button" id="castleIssue">領取我的一次性密語</button><div class="castle-code" hidden><strong id="castleCode"></strong><small>僅限本人・10 分鐘有效・成功後作廢</small></div><form id="castleForm"><label for="castleInput">輸入六位密語</label><input class="castle-input" id="castleInput" inputmode="numeric" pattern="[0-9]{6}" autocomplete="one-time-code" maxlength="6" required aria-label="六位一次性密語"><button class="castle-button" id="castleVerify">確認密語</button></form>`:'<p>城堡只向守護者積分榜前三名開放。<br>繼續累積果友值，等待你的迎賓時刻。</p>'}<div class="castle-msg" role="status" aria-live="polite"></div><button class="castle-button secondary" id="castleBack">回王國</button></section>`);
+  $('#castleBack').onclick=close;if(!eligible)return $('#castleBack').focus();$('#castleIssue').focus();
+  $('#castleIssue').onclick=async()=>{if(busy)return;busy=true;const id=epoch,button=$('#castleIssue');button.disabled=true;message('正在準備邀請…');try{const r=await call('issue');if(!live(id))return;$('#castleCode').textContent=r.code;$('.castle-code').hidden=false;button.textContent='重新領取密語';message('請記下上方密語，輸入後即可喚醒石頭。');$('#castleInput').focus()}catch(e){if(live(id))message(e.message)}finally{if(live(id)){busy=false;button.disabled=false}}};
+  $('#castleForm').onsubmit=async e=>{e.preventDefault();if(busy)return;busy=true;const id=epoch,button=$('#castleVerify'),code=$('#castleInput').value;button.disabled=true;message('正在核對密語…');try{await call('verify',{code});if(!live(id))return;close();flowIdentity=identity();watch();gate.authorize();adapter.toast('密語驗證完成！點入口石頭五下，就能通過吊橋。')}catch(err){if(live(id))message(err.message)}finally{if(live(id)){busy=false;button.disabled=false}}};
+ }
+ async function stoneTap(){
+  if(!live(epoch))return;if(busy||overlay)return;flowIdentity=identity();watch();const id=epoch;
+  if(gate.stage==='locked'){busy=true;adapter.toast('正在核對城堡資格…');try{const s=await call('status');if(!live(id))return;if(!s.eligible||!s.verified){invite(s.eligible,s.rank);return}gate.authorize()}catch(e){if(live(id))adapter.toast(e.message);return}finally{if(live(id))busy=false}}
+  const cross=gate.tap();adapter.tick?.();adapter.toast(`密語石 ${gate.count}／5${cross?'・吊橋甦醒':'・再輕點石頭'}`);if(!cross)return;
+  busy=true;try{const s=await call('enter');if(!live(id))return;busy=false;crossBridge(s)}catch(e){if(live(id)){busy=false;gate.cancel();adapter.toast(e.message)}}
+ }
+ function crossBridge(info){
+  shell('castle-crossing');overlay.insertAdjacentHTML('beforeend','<div class="castle-caption"><div class="castle-eyebrow">THE BRIDGE AWAKENS</div><h2>通往隱花之巔</h2><p>石頭的光芒，為你照亮吊橋。</p></div>');$('#castleX').focus();
+  const id=epoch,start=performance.now(),duration=matchMedia('(prefers-reduced-motion: reduce)').matches?180:2400;
+  function step(t){if(!live(id))return;const p=Math.min(1,(t-start)/duration);adapter.bridge?.(p);if(p<1)raf=requestAnimationFrame(step);else{gate.arrive();door(info)}}raf=requestAnimationFrame(step);
+ }
+ function door(info){
+  shell('castle-gate');overlay.insertAdjacentHTML('beforeend',`<div class="castle-hall-back"></div><div class="castle-over-title"><div class="castle-eyebrow">THE LAST SECRET</div><h2>城門，等待你的印記</h2><p>用手指畫兩筆交叉的 X</p></div><div class="castle-doorframe"><div class="castle-door left"></div><div class="castle-door right"></div><svg class="castle-x-guide" viewBox="0 0 100 100" aria-hidden="true"><path d="M15 15L85 85M85 15L15 85" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 5"/></svg><canvas class="castle-draw" aria-label="在城門上畫兩筆交叉的 X"></canvas></div><div class="castle-gate-controls"><div class="castle-msg" role="status">先畫一條斜線，再畫反向的斜線。</div><button class="castle-button" id="castleRedraw">重新畫</button></div>`);
+  const c=$('canvas'),ctx=c.getContext('2d');let strokes=[],current=null,pointer=null;const dpr=Math.min(2,devicePixelRatio||1),w=c.clientWidth,h=c.clientHeight;c.width=w*dpr;c.height=h*dpr;ctx.scale(dpr,dpr);ctx.strokeStyle='#ffdfa2';ctx.lineWidth=4;ctx.lineCap='round';ctx.lineJoin='round';ctx.shadowColor='#ffb645';ctx.shadowBlur=12;
+  function clear(){strokes=[];current=null;pointer=null;ctx.clearRect(0,0,w,h)}
+  $('#castleRedraw').onclick=()=>{if(gate.stage!=='door')return;clear();message('重新畫兩條交叉斜線。')};
+  const point=e=>{const b=c.getBoundingClientRect();return [Math.max(0,Math.min(1,(e.clientX-b.left)/b.width)),Math.max(0,Math.min(1,(e.clientY-b.top)/b.height))]};
+  on(c,'pointerdown',e=>{if(gate.stage!=='door'||pointer!==null||busy||e.isPrimary===false)return;e.preventDefault();if(strokes.length>=2)clear();pointer=e.pointerId;c.setPointerCapture(pointer);current=[point(e)];ctx.beginPath();ctx.moveTo(current[0][0]*w,current[0][1]*h)});
+  on(c,'pointermove',e=>{if(e.pointerId!==pointer||!current)return;const q=point(e),p=current[current.length-1];if(Math.hypot(q[0]-p[0],q[1]-p[1])<.006)return;current.push(q);ctx.lineTo(q[0]*w,q[1]*h);ctx.stroke()});
+  on(c,'pointercancel',()=>{clear();message('手勢中斷，請重新畫 X。')});
+  on(c,'pointerup',async e=>{if(e.pointerId!==pointer||!current)return;current.push(point(e));strokes.push(current);current=null;pointer=null;if(strokes.length<2)return message('再畫另一條反向斜線。');if(!gate.draw(strokes)){message('尚未形成 X，請讓兩條斜線在中間交叉。');return}busy=true;const id=epoch;message('印記已亮起，正在開門…');try{const fresh=await call('enter');if(!live(id))return;busy=false;overlay.classList.add('is-opening');c.hidden=true;$('.castle-x-guide').hidden=true;$('#castleRedraw').hidden=true;adapter.win?.();timer=setTimeout(()=>{if(live(id))film(fresh)},matchMedia('(prefers-reduced-motion: reduce)').matches?250:1850)}catch(err){if(live(id)){busy=false;gate.stage='door';clear();message(err.message)}}});$('#castleX').focus();
+ }
+ function film(info){
+  shell('castle-film');overlay.insertAdjacentHTML('beforeend',`<video playsinline controls preload="auto" poster="art/castle/hall.webp" src="art/castle/welcome-30s.mp4" aria-label="30 秒隱花之巔原創迎賓燈光秀"></video><div class="castle-film-head"><small>WELCOME TO THE SUMMIT</small><h2>${esc(info.name||'守護者')}，歡迎來到隱花之巔</h2></div><div class="castle-film-status" role="status">30 秒・專屬迎賓時刻</div><button class="castle-play">▶ 開始迎賓燈光秀<small>30 秒・開啟你的城堡時刻</small></button>`);
+  const v=$('video'),b=$('.castle-play'),label=$('.castle-film-status');lastSound=!!adapter.sound?.();v.muted=!lastSound;
+  const filmEpoch=epoch;async function play(){if(!live(filmEpoch))return;try{await v.play();if(v.isConnected)b.hidden=true}catch(_){if(v.isConnected){b.hidden=false;b.innerHTML='▶ 點此播放迎賓秀<small>手機需要點一下才能播放</small>'}}}
+  b.onclick=()=>{if(v.ended)v.currentTime=0;play()};on(v,'playing',()=>b.hidden=true);on(v,'timeupdate',()=>{label.textContent=`迎賓燈光秀・${Math.min(30,Math.floor(v.currentTime))}／30 秒`});on(v,'ended',()=>{label.textContent='歡迎來到隱花之巔';b.hidden=false;b.innerHTML='↻ 再看一次<small>30 秒・原創城堡光影秀</small>'});on(v,'error',()=>{label.textContent='影片暫時無法載入，請檢查連線後重試。';b.hidden=false;b.textContent='重新載入影片';b.onclick=()=>{v.load();play()}});on(document,'visibilitychange',()=>{if(document.hidden)v.pause()});on(v,'pause',()=>{if(!v.ended){b.hidden=false;b.innerHTML='▶ 繼續播放<small>迎賓燈光秀</small>'}});$('#castleX').focus();play();
+ }
+ window.Castle={configure(a){adapter=a},marker,bind,close};
+})();

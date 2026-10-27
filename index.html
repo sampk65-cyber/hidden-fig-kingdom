@@ -817,6 +817,9 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 @keyframes natureBreeze{from{transform:translateX(-3px)}to{transform:translateX(5px)}}
 @media(prefers-reduced-motion:reduce){#mapSvg .nature-rain,#mapSvg .nature-wind{animation:none}}
 </style>
+<link rel="stylesheet" href="castle/castle.css?v=15.16">
+<script src="castle/core.js?v=15.16"></script>
+<script src="castle/castle.js?v=15.16"></script>
 </head>
 <body>
 <div id="app">
@@ -1182,7 +1185,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.15';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.16';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -2359,12 +2362,12 @@ async function openPointsRank(){
   postRank(); let live = [], pub = [];
   try{
     if(DEMO) live = await DB.list('ranks');
-    else { const q = fb.fs.query(fb.fs.collection(fb.F, 'ranks'), fb.fs.orderBy('points','desc'), fb.fs.limit(10)); live = (await fb.fs.getDocs(q)).docs.map(d=>({id:d.id, ...d.data()})); }
+    else { const q = fb.fs.query(fb.fs.collection(fb.F, 'ranks'), fb.fs.orderBy('points','desc'), fb.fs.limit(10)); live = (await fb.fs.getDocs(q)).docs.map(d=>({id:d.id, ...d.data()})); const cutoff=live.at(-1)?.points; if(live.length===10 && Number.isFinite(cutoff)){const tied=fb.fs.query(fb.fs.collection(fb.F,'ranks'),fb.fs.where('points','==',cutoff));live.push(...(await fb.fs.getDocs(tied)).docs.map(d=>({id:d.id,...d.data()})));} }
   }catch(e){ console.warn(e); }
   try{ const c = await DB.get('config/rank'); pub = (c && c.list) || []; }catch(e){}
   const m = {}; [...pub, ...live].forEach(r=>{ if(!r.pid) return; if(!m[r.pid] || (r.points||0) >= (m[r.pid].points||0)) m[r.pid] = r; });   // 後台發布＋玩家即時，取較新的分數
   if(PID && P && !P.guest && P.role) m[PID] = {pid:PID, name:P.name, points:Math.round(P.points||0)};
-  const rows = Object.values(m).sort((a,b)=>(b.points||0)-(a.points||0)).slice(0,10);
+  const rows = Object.values(m).sort((a,b)=>(b.points||0)-(a.points||0)||(a.pid<b.pid?-1:a.pid>b.pid?1:0)).slice(0,10);
   const box = $('#prBox'); if(!box) return; const md = ['🥇','🥈','🥉'];
   box.innerHTML = rows.length ? `<table class="ladder">${rows.map((r,i)=>`<tr class="${r.pid===PID?'rk-me':''}"><td>${md[i]||(i+1)+'.'} ${LEVELS[lvIndex(r.points||0)].icon} ${esc(r.name||'')}</td><td><b>${r.points}</b> 分</td></tr>`).join('')}</table>
     ${rows.some(r=>r.pid===PID) ? '' : `<p class="lvtxt">你目前 ${P.points||0} 分，繼續加油擠進前 10 名！</p>`}` : '<p class="sub">排行榜準備中，玩家登入後就會出現。</p>';
@@ -2795,6 +2798,7 @@ function renderMap(){
     ${tone==='night' ? MAP_LAMPS.map(([x,y],i)=>`<circle cx="${x}" cy="${y}" r="7" fill="#FFC870" opacity=".45"><animate attributeName="opacity" values=".45;.25;.45" dur="${2.4+i%3*.7}s" repeatCount="indefinite"/></circle><circle cx="${x}" cy="${y}" r="1.8" fill="#FFE7B0"/>`).join('') : ''}
     ${(()=>{ let still=false; try{ still = matchMedia('(prefers-reduced-motion: reduce)').matches; }catch(e){} return still ? '' : `<g pointer-events="none"><g opacity="${weatherVisual().opacity}" style="filter:drop-shadow(${weatherVisual().wet*.5}px 0 ${weatherVisual().wet*2}px rgba(220,245,255,.6))">${MAP_FALLS}</g>${rainAmount>=3?`<g class="wx-falls" pointer-events="none" style="mix-blend-mode:screen" opacity="${(.20+rainStrength*.50).toFixed(2)}">${[[251.3,228.4,290.8],[319.3,373.8,438]].map(([x,y1,y2],j)=>`<g><path d="M${x-2} ${y1} Q${x-5} ${(y1+y2)/2} ${x-1} ${y2}" stroke="#d7f3ff" stroke-width="${(1.1+rainStrength*2.5).toFixed(1)}" stroke-dasharray="9 4" fill="none"><animate attributeName="stroke-dashoffset" from="0" to="-26" dur="${(0.75-rainStrength*.28).toFixed(2)}s" repeatCount="indefinite"/></path><path d="M${x+2} ${y1+3} V${y2-2}" stroke="#ffffff" stroke-width="${(0.6+rainStrength*1.2).toFixed(1)}" stroke-dasharray="4 7" fill="none"><animate attributeName="stroke-dashoffset" from="0" to="-22" dur="${(0.9-rainStrength*.3).toFixed(2)}s" repeatCount="indefinite"/></path><ellipse cx="${x}" cy="${y2}" rx="${(7+rainStrength*9).toFixed(1)}" ry="${(2.5+rainStrength*3).toFixed(1)}" fill="#e0f8ff" opacity=".65"><animate attributeName="opacity" values=".35;.75;.35" dur="2s" repeatCount="indefinite"/></ellipse><g class="wx-fall-spray" style="--wx-drift:${Math.min(9,windAmount*.65).toFixed(1)}px"><circle cx="${x-7}" cy="${y2-4}" r="1.4"/><circle cx="${x+7}" cy="${y2-7}" r="1.1"/><circle cx="${x+3}" cy="${y2-11}" r=".9"/></g></g>`).join('')}</g>`:''}${rainVisual?'<g pointer-events="none" fill="#d9f5ff" opacity="'+(.18+rainStrength*.25).toFixed(2)+'"><ellipse cx="251" cy="291" rx="'+(7+rainStrength*7)+'" ry="3"/><ellipse cx="319" cy="438" rx="'+(6+rainStrength*5)+'" ry="3"/></g>':''}${MAP_MILLS}${tone==='night' ? '' : MAP_BIRDS}</g>`; })()}
     ${MAP_CASTLE_LB}
+    ${typeof Castle!=='undefined' ? Castle.marker() : ''}
     ${tone==='night' ? `<g pointer-events="none">${MAP_BRIDGE_GLOW}</g>` : ''}
     <path id="mapPath" d="${pathD}" fill="none" stroke="none"/>
     ${nodes}
@@ -2812,6 +2816,7 @@ function renderMap(){
   const bh = $('#mapSvg').querySelector('.bd-hint'); if(bh) bh.onclick = e=>{ e.stopPropagation(); const z = ZONES.find(x=>x.id===bh.dataset.hz) || ZONES.find(x=>x.emerald); if((PHOTO_N[z.id]||0)>0) openPhotos(z.id); else { P.badgeHintDone = true; Auth.save(); renderMap(); toast('溫室上的數字＝今天在這座溫室找寶箱的次數'); } };
   $('#mapSvg').querySelectorAll('.ph-badge').forEach(n=>n.onclick=e=>{ e.stopPropagation(); openPhotos(n.dataset.pz); });
   placeMe();
+  if(typeof Castle!=='undefined') Castle.bind();
 }
 // 主角在金葉小徑上：平常呆呆地晃，點溫室就搖搖擺擺走過去
 let MAP_LEN = null, WALKING = false;
@@ -5551,6 +5556,37 @@ function ghEmeraldTank(cx,pj,tank){
   const valve=pj(x+r*.40,.15,z);cx.strokeStyle='#7B8175';cx.lineWidth=Math.max(1,.055*p.s);cx.beginPath();cx.moveTo(valve.x,valve.y);cx.lineTo(valve.x+w*.12,valve.y);cx.lineTo(valve.x+w*.12,valve.y+.09*p.s);cx.stroke();
   cx.fillStyle='#555F55';cx.beginPath();cx.ellipse(valve.x,valve.y,.052*p.s,.064*p.s,0,0,Math.PI*2);cx.fill();cx.fillStyle='#1D2723';cx.beginPath();cx.ellipse(valve.x,valve.y,.026*p.s,.033*p.s,0,0,Math.PI*2);cx.fill();cx.restore();
 }
+// V15.16: rear fixtures from the owner's greenhouse video; visual objects only.
+function ghEmeraldRearItems(){
+  return [-5.4,-3.2,3.6].map((x,i)=>({x,z:107.65,r:.53,h:.98,k:'openbarrel',n:i+1}))
+    .concat([{x:-7.5,z:108.25,w:1.32,d:.72,h:.90,k:'sink'}]);
+}
+function ghEmeraldRearFixture(cx,pj,it){
+  const p=pj(it.x,0,it.z),top=pj(it.x,it.h,it.z);if(!p||!top||p.s<6)return;
+  cx.save();
+  if(it.k==='openbarrel'){
+    const w=it.r*2*p.s,ry=Math.max(1,.115*p.s),l=p.x-w*.5,rr=p.x+w*.5;
+    cx.fillStyle='rgba(26,33,25,.22)';cx.beginPath();cx.ellipse(p.x,p.y,w*.6,ry,0,0,Math.PI*2);cx.fill();
+    const g=cx.createLinearGradient(l,0,rr,0);g.addColorStop(0,'#101817');g.addColorStop(.28,'#343E39');g.addColorStop(.56,'#222C28');g.addColorStop(1,'#101816');
+    cx.fillStyle=g;cx.beginPath();cx.moveTo(l,top.y);cx.lineTo(l+w*.06,p.y-ry*.35);cx.quadraticCurveTo(p.x,p.y+ry,rr-w*.06,p.y-ry*.35);cx.lineTo(rr,top.y);cx.closePath();cx.fill();
+    cx.strokeStyle='#4A524A';cx.lineWidth=Math.max(1,p.s*.018);cx.beginPath();cx.ellipse(p.x,top.y,w*.5,ry,0,0,Math.PI*2);cx.stroke();
+    cx.fillStyle='#080F0F';cx.beginPath();cx.ellipse(p.x,top.y,w*.46,ry*.76,0,0,Math.PI*2);cx.fill();
+    cx.fillStyle='#263D3C';cx.beginPath();cx.ellipse(p.x,top.y+ry*.15,w*.35,ry*.40,0,0,Math.PI*2);cx.fill();
+    cx.strokeStyle='rgba(185,202,185,.45)';cx.lineWidth=Math.max(.5,p.s*.009);cx.beginPath();cx.ellipse(p.x,top.y,w*.49,ry*.95,0,Math.PI,Math.PI*2);cx.stroke();
+    // Fixed rim, scuffs and one loose hose distinguish these from the domed tanks.
+    for(let j=0;j<5;j++){const x=l+w*(.18+j*.14);cx.strokeStyle='rgba(179,178,148,.16)';cx.beginPath();cx.moveTo(x,top.y+ry+it.h*p.s*.24);cx.lineTo(x+w*.025,p.y-ry-it.h*p.s*.12);cx.stroke();}
+    if(it.n===1){cx.strokeStyle='#677971';cx.lineWidth=Math.max(1,.035*p.s);cx.beginPath();cx.moveTo(l+w*.18,top.y);cx.bezierCurveTo(l+w*.25,top.y-it.h*p.s*.36,rr-w*.18,top.y-it.h*p.s*.34,rr-w*.23,top.y+ry*.2);cx.stroke();}
+  }else if(it.k==='sink'){
+    const ps=[[it.x-it.w/2,it.h,it.z-it.d/2],[it.x+it.w/2,it.h,it.z-it.d/2],[it.x+it.w/2,it.h,it.z+it.d/2],[it.x-it.w/2,it.h,it.z+it.d/2]].map(q=>pj(...q));if(ps.some(q=>!q)){cx.restore();return;}
+    cx.strokeStyle='#81918C';cx.lineWidth=Math.max(1.5,.045*p.s);for(const side of [-1,1]){const a=pj(it.x+side*it.w*.43,.02,it.z-it.d*.28),b=pj(it.x+side*it.w*.43,it.h,it.z-it.d*.28);if(a&&b){cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke();}}
+    cx.fillStyle='#C0CAC0';cx.beginPath();ps.forEach((q,i)=>i?cx.lineTo(q.x,q.y):cx.moveTo(q.x,q.y));cx.closePath();cx.fill();cx.strokeStyle='#7C8D89';cx.lineWidth=Math.max(1,.025*p.s);cx.stroke();
+    const basin=pj(it.x,it.h+.012,it.z);cx.fillStyle='#526D6B';cx.beginPath();cx.ellipse(basin.x,basin.y,it.w*.32*p.s,Math.max(1,.11*p.s),0,0,Math.PI*2);cx.fill();cx.strokeStyle='#E2E8D9';cx.stroke();
+    const a=pj(it.x,it.h,it.z+it.d*.3),b=pj(it.x,it.h+.36,it.z+it.d*.3),c=pj(it.x+.17,it.h+.36,it.z+it.d*.3);if(a&&b&&c){cx.strokeStyle='#A5B8B0';cx.lineWidth=Math.max(2,.045*p.s);cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.quadraticCurveTo(c.x,b.y,c.x,c.y+.07*p.s);cx.stroke();}
+    const drain=pj(it.x,.42,it.z);cx.strokeStyle='#768F85';cx.lineWidth=Math.max(1,.045*p.s);cx.beginPath();cx.moveTo(basin.x,basin.y+.08*p.s);cx.lineTo(drain.x,drain.y);cx.lineTo(drain.x+.16*p.s,drain.y+.10*p.s);cx.stroke();
+  }
+  cx.restore();
+}
+
 // Fixed translucent rear glazing and short return walls close the real greenhouse, not a reflected aisle.
 function ghEmeraldEndWall(cx,pj,endZ,camZ){
   const foot=pj(0,0,endZ),top=pj(0,4.7,endZ);if(!foot||!top)return;
@@ -5569,11 +5605,12 @@ function ghEmeraldEndWall(cx,pj,endZ,camZ){
   for(let x=-20;x<=20;x+=3.2){const center=Math.round(x/16)*16,y=3.45+1.25*Math.sqrt(Math.max(0,1-((x-center)/8)**2));line([x,0,endZ],[x,y,endZ]);}
   for(const y of [.08,1.3,3.45])line([-20,y,endZ],[20,y,endZ]);
   poly([[-20,0],[20,0],[20,.10],[-20,.10]],'#8B967F');
-  poly([[-1.05,.1],[1.05,.1],[1.05,2.65],[-1.05,2.65]],'#D9E3CD');
+  const doorX=-9.1; // Door is on the rear left, beside the washing station.
+  poly([[doorX-1.05,.1],[doorX+1.05,.1],[doorX+1.05,2.65],[doorX-1.05,2.65]],'#D9E3CD');
   cx.strokeStyle='#6E8D83';cx.lineWidth=Math.max(1.5,.04*foot.s);
-  for(const x of [-1.05,0,1.05])line([x,.1,endZ],[x,2.65,endZ]);
-  for(const y of [.1,1.35,2.65])line([-1.05,y,endZ],[1.05,y,endZ]);
-  line([-.13,1.12,endZ],[-.13,1.45,endZ]);line([.13,1.12,endZ],[.13,1.45,endZ]);
+  for(const x of [doorX-1.05,doorX,doorX+1.05])line([x,.1,endZ],[x,2.65,endZ]);
+  for(const y of [.1,1.35,2.65])line([doorX-1.05,y,endZ],[doorX+1.05,y,endZ]);
+  line([doorX-.13,1.12,endZ],[doorX-.13,1.45,endZ]);line([doorX+.13,1.12,endZ],[doorX+.13,1.45,endZ]);
   const label=pj(0,2.87,endZ);if(label&&foot.s>12){cx.fillStyle='#416C5D';cx.textAlign='center';cx.font=`700 ${Math.min(18,Math.max(9,.16*foot.s))}px "Noto Sans TC",sans-serif`;cx.fillText('溫室盡頭',label.x,label.y);}
   cx.restore();
 }
@@ -5771,7 +5808,7 @@ function openEmerald(){
     ghEnvironment(cx,pj,W,H,hz,camZ,ROWS,20,EM_LEN,emeraldSurface);
     if(EM_LEN-camZ<=55)ghEmeraldEndWall(cx,pj,EM_LEN,camZ);
     const items = ghEmeraldTreeItems(camZ,camX,ROWS);
-    items.push(...TANKS,{x:0,z:6.4,k:'cart'});
+    items.push(...TANKS,...ghEmeraldRearItems(),{x:0,z:6.4,k:'cart'});
     // V14.5：株距 1.375→2.75 公尺（株數減半），樹長高不擁擠；寶藏在走道上，不受影響
     for(let i=0;i<5;i++) [['A',-1.15],['B',1.15]].forEach(([n,x])=>items.push({x, z:i*EM_ZL+1.2, k:'sign', n:n+(i+1)}));
     const tapped = (P.daily.tapped && P.daily.tapped[z6.id]) || [];
@@ -5787,6 +5824,8 @@ function openEmerald(){
       } else if(it.k==='cart'){emeraldRailCart(cx,pj,it);
       } else if(it.k==='tank'){
         ghEmeraldTank(cx,pj,it);
+      } else if(it.k==='openbarrel'||it.k==='sink'){
+        ghEmeraldRearFixture(cx,pj,it);
       } else if(it.k==='t'){
         const sceneStage = ghSceneStage(z6), TH = stageTree(sceneStage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
         if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
@@ -6477,7 +6516,35 @@ async function boot(){
   }catch(e){ console.error(e); return info('⚠️','讀取失敗', esc(e.message||'請檢查網路後重新整理。')); }
   show('login');
 }
+/* V15.16: isolated castle entry; original game/data APIs are unchanged. */
+if(typeof Castle!=='undefined') Castle.configure({
+  async call(op, data={}){
+    const u=fb && fb.A && fb.A.currentUser;
+    if(!P || P.guest || !PID || !u) throw new Error('請先登入正式會員帳號。');
+    const identity=PID,uid=u.uid,token=await u.getIdToken();
+    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+    try{
+      const res=await fetch('/api/castle',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({op,...data}),signal:controller.signal});
+      const body=await res.json().catch(()=>({}));
+      if(PID!==identity || fb.A.currentUser?.uid!==uid) throw new Error('帳號已變更，請重新開啟城堡。');
+      if(!res.ok) throw new Error(body.msg||'城堡服務暫時無法連線，請稍後再試。');
+      return body;
+    }catch(e){if(e.name==='AbortError')throw new Error('城堡驗證連線逾時，請重試。');throw e;}finally{clearTimeout(timeout);}
+  },
+  identity:()=>PID && fb?.A?.currentUser ? PID+'|'+fb.A.currentUser.uid : '',
+  toast, tick:()=>SND.tick(), win:()=>SND.win(), sound:()=>AUD.on,
+  themeSync:()=>THEME.sync(),
+  restoreMap:()=>{if(P && $('#home').classList.contains('on'))renderMap();},
+  bridge(p){
+    const me=$('#mapMe'),path=$('#mapPath');if(!me)return;
+    let x,y;
+    if(p<.3){const start=path?path.getPointAtLength(MAP_LEN||0):{x:265,y:190},q=p/.3;x=start.x+(273-start.x)*q;y=start.y+(186-start.y)*q;}
+    else{const q=(p-.3)/.7;x=(1-q)*(1-q)*273+2*(1-q)*q*298+q*q*310;y=(1-q)*(1-q)*186+2*(1-q)*q*166+q*q*132;}
+    me.setAttribute('transform',`translate(${x} ${y})`);me.classList.toggle('walking',p<1);
+  }
+});
 boot();
 </script>
 </body>
 </html>
+
