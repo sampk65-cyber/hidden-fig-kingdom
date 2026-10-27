@@ -7,8 +7,8 @@ Run from any directory:
 Optional first import:
   python docs/render-castle-film.py --source /path/to/original-hall.png
 
-The checked-in hall.webp is the source image. All animation and music are
-procedural, deterministic (seed 20261027), and generated here. Nothing is fetched.
+The checked-in hall.webp is the source image. Architecture and music are original. Lighting cues are measured from the owner
+reference video; animation is procedural and deterministic. Nothing is fetched.
 The source image is compressed, never painted over; light is composited per frame.
 """
 
@@ -26,7 +26,7 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter, ImageOps
 
 
-W, H, FPS, DURATION = 540, 960, 24, 30
+W, H, FPS, DURATION = 432, 768, 24, 30
 SEED = 20261027
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -63,7 +63,8 @@ def arch(apex, left_end, left_controls, foot_y=None):
 
 
 class Hall:
-    def __init__(self, poster):
+    def __init__(self, poster, cues):
+        self.cues = cues
         self.base = np.asarray(ImageOps.fit(Image.open(poster).convert("RGB"), (W, H), method=Image.Resampling.LANCZOS), dtype=np.float32) / 255
         self.y, self.x = np.mgrid[0:H, 0:W].astype(np.float32)
         self.x /= W
@@ -110,94 +111,69 @@ class Hall:
         self.particles = [(float(rng.uniform(.08,.92)), float(rng.uniform(.07,.95)), float(rng.uniform(.004,.012)), float(rng.uniform(0,2*math.pi)), float(rng.uniform(5.0,10.0)), float(rng.uniform(.5,1.25))) for _ in range(100)]
 
     def frame(self, t):
+        # Reference-derived light envelopes, registered to the original hall surfaces.
+        cue = lambda key: float(np.interp(t, self.cues["times"], self.cues[key]))
         x, y = self.x, self.y
-        warm = float(smooth(12,21,t))
-        finale = float(smooth(23,27.5,t))
-        arrival = float(smooth(0,3,t))
-        blue = np.array([.20,.40,1.0],dtype=np.float32)
-        violet = np.array([.62,.21,1.0],dtype=np.float32)
-        gold = np.array([1.0,.61,.16],dtype=np.float32)
-        ruby = np.array([1.0,.13,.075],dtype=np.float32)
-        ivory = np.array([1.0,.91,.64],dtype=np.float32)
-        phase = .5 + .5*math.sin(t*.25-.8)
-        cool = blue*(1-phase*.54)+violet*(phase*.54)
-        hue = cool*(1-warm)+gold*warm
-        hue = hue*(1-finale*.52)+ivory*finale*.52
+        blue_level, gold_level, rose_level, red_level = [cue(k) for k in ["blue", "gold", "rose", "red"]]
+        arrival = float(smooth(0, 1.6, t))
+        finale = float(smooth(21, 28, t))
+        blue = np.array([.12, .23, 1.0], dtype=np.float32)
+        violet = np.array([.45, .12, .92], dtype=np.float32)
+        gold = np.array([1.0, .53, .10], dtype=np.float32)
+        white = np.array([1.0, .88, .58], dtype=np.float32)
+        red = np.array([1.0, .065, .025], dtype=np.float32)
+        # A dark, readable hall between projection cues, like the uploaded show.
+        frame = self.base * (.19 + .035*arrival + .035*finale)
+        surface_detail = .16 + .84*self.luma
+        left = 1-smooth(.37,.64,x)
+        cool_strength = .14 + .38*blue_level
+        frame += (self.vault*left*cool_strength*surface_detail)[...,None]*blue
+        frame += (self.columns*(.035+.10*blue_level)*surface_detail)[...,None]*violet
 
-        # Exposure and coloured architectural wash preserve photographic detail.
-        exposure = .40 + .16*arrival + .13*warm + .17*finale
-        frame = self.base * exposure
-        wash = self.arch_space*(.075+.035*arrival)
-        frame += self.base * wash[...,None] * hue * 1.2
-
-        # Light travels up columns in broad, slow bands. Surface masks constrain
-        # the projection to stone; neighbouring bands cross-fade continuously.
-        bands = .5+.5*np.sin(y*28 + np.cos(x*8)*.9 + t*.69)
-        bands = bands**3
-        moving_colour = cool*(1-warm)+ruby*warm
-        column_strength = (.16+.39*arrival)*(.47+.53*bands)
-        frame += (self.stone*column_strength*self.light_texture)[...,None] * moving_colour
-        frame += (self.column_edges*(.07+.08*finale))[...,None]*hue
-        vault_wave = (.5+.5*np.sin(y*31+x*4+t*.52))**2
-        vault_hue = violet*(1-warm)+ruby*warm
-        vault_hue = vault_hue*(1-finale)+gold*finale
-        frame += (self.vault*vault_wave*self.light_texture*arrival*.23)[...,None]*vault_hue
-
-        # Five nested vaults illuminate in sequence, then keep a slow light wave.
+        # Broad gold/ivory bands travel along the vaults, rather than tinting the frame.
+        sweep = (.5+.5*np.sin(y*16.0 - t*1.13 + np.abs(x-.5)*5.0))**5
+        lattice = ((.5+.5*np.sin((x-.5)*100+y*36-t*.45)) *
+                   (.5+.5*np.sin((x-.5)*100-y*36+t*.45)))**3
+        mapping = self.vault*(.22+.78*sweep)
+        frame += (mapping*(.17+.93*gold_level)*surface_detail)[...,None]*gold
+        frame += (self.vault*lattice*gold_level*.35*surface_detail)[...,None]*white
         for i,(core,bloom) in enumerate(self.arches):
-            on = float(smooth(1.0+i*1.3,4.0+i*1.3,t))
-            upward = .70+.30*np.sin(y*9+t*.36+i*.7)
-            strength = on*(.38+.27*finale)*upward
-            frame += (core*strength*.8 + bloom*strength*1.7)[...,None]*hue
+            on = float(smooth(.6+i*.9, 2.0+i*.9, t))
+            travel = (.5+.5*np.sin(y*15-t*.96+i*.6))**6
+            light = on*(.07+.64*gold_level*travel)
+            frame += (bloom*light*surface_detail)[...,None]*white
+            frame += (core*on*(.025+.12*gold_level*travel))[...,None]*gold
 
-        # Slow radial petals remain aligned with the rose window tracery.
-        petal = .66+.34*np.cos(self.rose_angle*8-t*.20+self.rose_r*3.6)
-        rose_on = float(smooth(3,9,t))
-        frame += (self.rose*petal*rose_on*.23*self.light_texture)[...,None]*hue
-        frame += (self.rose_ring*rose_on*(.14+.10*finale))[...,None]*hue
-        frame += (self.rose_glow*rose_on*(.025+.055*finale))[...,None]*hue
+        # The rose window opens petal by petal, then rotates a soft projected fan.
+        angle = (self.rose_angle + math.pi) / (2*math.pi)
+        reveal = smooth(angle-.07, angle+.11, (.12+t*.085)%1.3)
+        fan = (.5+.5*np.cos(self.rose_angle*12-t*.76+self.rose_r*3))**5
+        rose_on = float(smooth(6, 10, t))
+        rose_power = rose_on*(.20+.80*rose_level)
+        frame += (self.rose*(.10+.38*reveal+.50*fan)*rose_power*surface_detail)[...,None]*white
+        frame += (self.rose_ring*rose_power*.22)[...,None]*gold
+        frame += (self.rose_glow*rose_power*.055)[...,None]*gold
 
-        # Haze-lit rays and their subdued marble-floor reflections.
+        # Red/gold alcoves come on in sequence while the upper vault remains blue.
+        for i,xx in enumerate([.205,.795,.313,.687,.374,.626,.5]):
+            on = float(smooth(17.5+i*.72, 19.0+i*.72, t))
+            niche = np.exp(-(((x-xx)/(.017 if i<6 else .055))**4 + ((y-.61)/.083)**4))
+            power = on*(.15+.48*red_level+.19*finale)
+            frame += (niche*power*surface_detail)[...,None]*red
+            crown = np.exp(-(((x-xx)/.020)**2 + ((y-.535)/.021)**2)*2)
+            frame += (crown*on*(.13+.14*finale))[...,None]*gold
+        frame += (self.throne*(.08+.26*finale)*surface_detail)[...,None]*white
+        # Restrained haze/reflections belong to the lighted architecture.
         for i,beam in enumerate(self.beams):
-            strength = (.014+.018*finale)*arrival*(.72+.28*math.sin(t*.32+i*.9))
-            frame += (beam*strength)[...,None]*hue
-        reflection = (.5+.5*np.sin(self.floor_perspective*10-t*.37))**8
-        reflection *= self.floor*(.055+.07*warm+.04*finale)*(.3+.7*self.luma)
-        frame += reflection[...,None]*hue
-        frame += (self.floor_edges*(.045+.07*warm+.055*finale))[...,None]*hue
-        frame += (self.throne*(.04+.09*warm+.17*finale))[...,None]*ivory
-
-        # Soft, slowly breathing motes; no short flashes or abrupt strobe effects.
-        motes = Image.new("RGB", (W,H))
-        draw = ImageDraw.Draw(motes)
-        particle_colour = blue*(1-warm)+ivory*warm
-        for i,(px,py,speed,phase,period,radius) in enumerate(self.particles):
-            yy = (py-t*speed)%1.0
-            xx = px+.009*math.sin(t*.22+phase)
-            edge = float(smooth(.015,.11,yy)*(1-smooth(.89,.99,yy)))
-            breathe = (.5+.5*math.sin(t*2*math.pi/period+phase))**2
-            alpha = edge*(.18+.82*breathe)*(.45+.28*warm)*arrival
-            if alpha < .025:
-                continue
-            cx,cy=xx*W,yy*H
-            rgb=tuple(int(float(c)*alpha*255) for c in particle_colour)
-            draw.ellipse((cx-radius,cy-radius,cx+radius,cy+radius),fill=rgb)
-            if i%7==0:
-                draw.line((cx-2.5,cy,cx+2.5,cy),fill=rgb,width=1)
-                draw.line((cx,cy-2.5,cx,cy+2.5),fill=rgb,width=1)
-        mote_pixels=np.asarray(motes,dtype=np.float32)/255
-        mote_glow=np.asarray(motes.filter(ImageFilter.GaussianBlur(2.6)),dtype=np.float32)/255
-        frame += mote_pixels*.53 + mote_glow*1.6
-
-        # Gentle highlight roll-off and a slow 2.6% camera push toward the throne.
+            strength = (.006+.013*gold_level)*(.65+.35*math.sin(t*.37+i))
+            frame += (beam*strength*arrival)[...,None]*gold
+        reflection = (.5+.5*np.sin(self.floor_perspective*9-t*.5))**8
+        reflection *= self.floor*(.025+.055*gold_level+.045*red_level)*(.2+.8*self.luma)
+        frame += reflection[...,None]*(gold*(1-finale)+red*finale)
+        frame += (self.floor_edges*(.025+.035*finale))[...,None]*gold
+        # Soft highlight roll-off; fixed camera keeps the projections on the masonry.
         frame = np.where(frame>.88,.88+(1-np.exp(-(frame-.88)/.12))*.12,frame)
-        frame = np.uint8(np.clip(frame,0,1)*255+.5)
-        result=Image.fromarray(frame)
-        zoom=1+.026*float(smooth(0,30,t))
-        crop_w,crop_h=W/zoom,H/zoom
-        left=(W-crop_w)*.5
-        top=(H-crop_h)*.46
-        return result.resize((W,H),Image.Resampling.BICUBIC,box=(left,top,left+crop_w,top+crop_h))
+        return Image.fromarray(np.uint8(np.clip(frame,0,1)*255+.5))
 
 
 def soundtrack(path):
@@ -250,6 +226,27 @@ def soundtrack(path):
         f.writeframes(pcm.tobytes())
 
 
+def measure_reference(source, output):
+    raw = subprocess.check_output(["ffmpeg","-v","error","-i",str(source),"-vf","fps=3,scale=96:170","-f","rawvideo","-pix_fmt","rgb24","pipe:1"])
+    frames = np.frombuffer(raw,dtype=np.uint8).reshape(-1,170,96,3).astype(np.float32)/255
+    rgb = frames[:,:125]
+    r,g,b = rgb[...,0],rgb[...,1],rgb[...,2]
+    scores = {
+        "blue":np.quantile(np.maximum(b[:,:92,:42]-(r[:,:92,:42]+g[:,:92,:42])*.5,0),.97,axis=(1,2)),
+        "gold":np.quantile(np.maximum(r[:,:92]*.6+g[:,:92]*.4-b[:,:92]*.6,0),.97,axis=(1,2)),
+        "rose":np.quantile((r[:,:42,28:75]+g[:,:42,28:75])*.5,.97,axis=(1,2)),
+        "red":np.quantile(np.maximum(r[:,85:125,12:86]-(g[:,85:125,12:86]+b[:,85:125,12:86])*.5,0),.97,axis=(1,2))
+    }
+    count = len(frames)
+    cues={"source":"User supplied InShot_20261027_074248438.mp4; lighting measurements only", "times":np.linspace(0,DURATION,count).round(3).tolist()}
+    for key,values in scores.items():
+        lo,hi=np.quantile(values,[.08,.92]);v=np.clip((values-lo)/max(float(hi-lo),.001),0,1)
+        v=np.convolve(np.pad(v,(1,1),mode="edge"),[.2,.6,.2],mode="valid")
+        cues[key]=v.round(4).tolist()
+    output.write_text(json.dumps(cues,separators=(",",":")))
+    return cues
+
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source",type=Path,help="Original image to compress into hall.webp on first import")
@@ -257,6 +254,8 @@ def main():
     parser.add_argument("--poster",type=Path,default=ROOT/"art/castle/hall.webp")
     parser.add_argument("--qa-dir",type=Path,help="Optional frame samples, audio and ffprobe JSON")
     parser.add_argument("--preview-only",action="store_true",help="Save sample frames without encoding video")
+    parser.add_argument("--reference",type=Path,help="Measure lighting envelopes from the owner supplied reference video")
+    parser.add_argument("--cues",type=Path,default=ROOT/"docs/castle-light-cues.json")
     args=parser.parse_args()
     args.output.parent.mkdir(parents=True,exist_ok=True)
     args.poster.parent.mkdir(parents=True,exist_ok=True)
@@ -264,7 +263,8 @@ def main():
         Image.open(args.source).convert("RGB").save(args.poster,"WEBP",quality=91,method=6)
     if not args.poster.exists():
         parser.error("hall.webp is missing; use --source to import the original hall image")
-    hall=Hall(args.poster)
+    cues=measure_reference(args.reference,args.cues) if args.reference else json.loads(args.cues.read_text())
+    hall=Hall(args.poster,cues)
     sample_times=[0,5,10,15,20,25,29]
     if args.qa_dir:
         args.qa_dir.mkdir(parents=True,exist_ok=True)
@@ -276,7 +276,7 @@ def main():
         work=Path(temporary)
         audio_path=(args.qa_dir or work)/"original-score.wav"
         soundtrack(audio_path)
-        cmd=["ffmpeg","-hide_banner","-loglevel","warning","-y","-f","rawvideo","-pix_fmt","rgb24","-s",f"{W}x{H}","-r",str(FPS),"-i","pipe:0","-i",str(audio_path),"-map","0:v:0","-map","1:a:0","-c:v","libx264","-preset","medium","-crf","22","-maxrate","1500k","-bufsize","3000k","-pix_fmt","yuv420p","-profile:v","high","-level","3.1","-g","48","-c:a","aac","-b:a","96k","-ar","48000","-ac","2","-t",str(DURATION),"-movflags","+faststart","-metadata","title=Hidden Fig Kingdom — Castle Welcome","-metadata","comment=Original procedural light animation and synthesized score; 30 seconds.",str(args.output)]
+        cmd=["ffmpeg","-hide_banner","-loglevel","warning","-y","-f","rawvideo","-pix_fmt","rgb24","-s",f"{W}x{H}","-r",str(FPS),"-i","pipe:0","-i",str(audio_path),"-map","0:v:0","-map","1:a:0","-c:v","libx264","-preset","fast","-b:v","300k","-maxrate","420k","-bufsize","840k","-pix_fmt","yuv420p","-profile:v","high","-level","3.1","-g","48","-c:a","aac","-b:a","64k","-ar","48000","-ac","2","-t",str(DURATION),"-movflags","+faststart","-metadata","title=Hidden Fig Kingdom — Castle Welcome","-metadata","comment=Original procedural light animation and synthesized score; 30 seconds.",str(args.output)]
         proc=subprocess.Popen(cmd,stdin=subprocess.PIPE)
         try:
             for i in range(FPS*DURATION):
