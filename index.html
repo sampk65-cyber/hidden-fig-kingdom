@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.15</title>
+<title>今天在隱花王國尋寶 V15.17</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -1185,7 +1185,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.16';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.17';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -5524,6 +5524,28 @@ const ghStageKey = st => st==='度冬'?'winter':st==='剪枝'?'prune':st==='座�
 // 僅限巡園內景：翡翠固定成熟景觀；其餘溫室隨既有輪作進入採收樹形。
 function ghSceneStage(z){ return z.emerald ? '採收' : z.stage; }
 function ghEmeraldX(x){const a=Math.abs(x);return Math.sign(x)*(Math.min(a,3)*.43*1.12+Math.max(0,a-3)*.70);}
+// V15.17: thin row-long steel wires and one fixed, colored training cord per tree.
+function emeraldTrellisWires(cx,pj,camZ,rows,endZ){
+  const near=Math.max(0,camZ+.6);if(near>=endZ)return;
+  cx.save();cx.lineCap='round';cx.setLineDash([]);
+  for(const x of rows){
+    const a=pj(x,3.65,near),b=pj(x,3.65,endZ);if(!a||!b)continue;
+    cx.strokeStyle='rgba(91,109,112,.78)';cx.lineWidth=1;
+    cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke();
+    cx.strokeStyle='rgba(231,239,230,.72)';cx.lineWidth=.35;cx.stroke();
+  }
+  cx.restore();
+}
+function emeraldTrellisCord(cx,pj,tree){
+  const a=pj(tree.x,3.65,tree.z),b=pj(tree.x,.58,tree.z);if(!a||!b||a.s<6)return;
+  const colors=['#ED3572','#27BCEB','#E7EF46'],color=colors[(tree.seed>>>0)%3];
+  cx.save();cx.lineCap='round';cx.setLineDash([]);cx.globalAlpha=.86;
+  cx.strokeStyle=color;cx.lineWidth=Math.min(1.15,Math.max(.55,a.s*.009));
+  cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);cx.stroke();
+  // A small tied loop anchors the cord to the overhead wire, rather than a floating line.
+  if(a.s>=18){cx.beginPath();cx.ellipse(a.x,a.y,Math.min(1.8,.023*a.s),Math.min(1.15,.014*a.s),0,0,Math.PI*2);cx.stroke();}
+  cx.restore();
+}
 function ghEmeraldTreeItems(camZ,camX,rows){
   const items=[],step=2.75/1.08; // 翡翠沿列密度增加 8%；排距與遊戲座標保留
   for(const x of rows){if(Math.abs(x-camX)>13)continue;
@@ -5806,6 +5828,7 @@ function openEmerald(){
     const quad=(x1,x2,col)=>{ const a=pj(x1,0,camZ+.6), b=pj(x2,0,camZ+.6), c=pj(x2,0,camZ+50), d=pj(x1,0,camZ+50); if(!a||!b||!c||!d) return; cx.fillStyle=col; cx.beginPath(); cx.moveTo(a.x,a.y); cx.lineTo(b.x,b.y); cx.lineTo(c.x,c.y); cx.lineTo(d.x,d.y); cx.fill(); };
     ghBeginFrame(cx,dpr,W,H);
     ghEnvironment(cx,pj,W,H,hz,camZ,ROWS,20,EM_LEN,emeraldSurface);
+    emeraldTrellisWires(cx,pj,camZ,ROWS,EM_LEN);
     if(EM_LEN-camZ<=55)ghEmeraldEndWall(cx,pj,EM_LEN,camZ);
     const items = ghEmeraldTreeItems(camZ,camX,ROWS);
     items.push(...TANKS,...ghEmeraldRearItems(),{x:0,z:6.4,k:'cart'});
@@ -5828,8 +5851,8 @@ function openEmerald(){
         ghEmeraldRearFixture(cx,pj,it);
       } else if(it.k==='t'){
         const sceneStage = ghSceneStage(z6), TH = stageTree(sceneStage).h, b0=pj(it.x,0,it.z), b1=pj(it.x,TH,it.z); if(!b0||!b1) continue; const s=b0.s;
-        if(TH>1){ const top=pj(it.x,3.4,it.z); cx.strokeStyle='rgba(200,195,185,.8)'; cx.lineWidth=1; cx.beginPath(); cx.moveTo(b1.x,b1.y); cx.lineTo(top.x,top.y); cx.stroke(); }
         ghShadow(cx, pj, it.x, it.z, TH); drawFigTree(cx, pj, it.x, it.z, s, sceneStage, it.seed, 0, 1.15, it.fullness);
+        emeraldTrellisCord(cx,pj,it);
         if(TH>1 && s>=16){ const cp=pj(it.x,Math.min(1.5,TH*.6),it.z); cx.fillStyle='#F2663A'; cx.fillRect(cp.x-.04*s, cp.y-.03*s, .08*s, .06*s); }
       } else if(it.k==='sign'){
         const p=pj(it.x,1.15,it.z), q=pj(it.x,0,it.z); if(!p||p.s<6) continue;
