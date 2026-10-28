@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V15.20</title>
+<title>今天在隱花王國尋寶 V15.21</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle">.pest-ico{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#eef3e5;font-size:17px;vertical-align:middle}#wxPests{display:flex;flex-wrap:wrap;gap:8px}#wxPests .chip{white-space:nowrap}
 #mapSvg .wx-clouds{animation:wxCloudDrift 9s ease-in-out infinite alternate}#mapSvg .wx-mist{animation:wxMistDrift 5s ease-in-out infinite alternate}#mapSvg .wx-leaves{animation:wxLeafGust 2.8s ease-in-out infinite alternate}@keyframes wxCloudDrift{to{transform:translateX(11px)}}@keyframes wxMistDrift{to{transform:translate(7px,-3px)}}@keyframes wxLeafGust{to{transform:translate(-12px,8px)}}@media(prefers-reduced-motion:reduce){#mapSvg .wx-clouds,#mapSvg .wx-mist,#mapSvg .wx-leaves{animation:none}}
@@ -817,9 +817,13 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 @keyframes natureBreeze{from{transform:translateX(-3px)}to{transform:translateX(5px)}}
 @media(prefers-reduced-motion:reduce){#mapSvg .nature-rain,#mapSvg .nature-wind{animation:none}}
 </style>
-<link rel="stylesheet" href="castle/castle.css?v=15.20">
+<link rel="stylesheet" href="castle/castle.css?v=15.21">
 <script src="castle/core.js?v=15.16"></script>
-<script src="castle/castle.js?v=15.20"></script>
+<script src="castle/castle.js?v=15.21"></script>
+<link rel="stylesheet" href="castle/level.css?v=15.21">
+<script src="castle/level-core.js?v=15.21"></script>
+<script src="castle/vip.js?v=15.21"></script>
+<script src="castle/level.js?v=15.21"></script>
 </head>
 <body>
 <div id="app">
@@ -987,6 +991,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <button id="btnFill" class="btn ghost" style="margin:0">補滿今天的能量</button>
       <button id="btnNewDay" class="btn ghost">模擬隔天登入</button>
     </div>
+    <div class="card" id="summitCards"></div>
     <div class="card">
       <div class="lbl" style="margin-top:0">我的會員卡</div>
       <p class="sub" style="margin:4px 0 8px">這張 QR 是你帳號<b>唯一</b>的登入鑰匙。換手機時用相機掃描，或在登入頁「從相簿選會員卡圖片」，就能找回角色、果友值和優惠券。請不要給別人。</p>
@@ -1034,6 +1039,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
         <button class="adm-card" data-a="zone"><b>溫室階段</b><small>每週自動輪替，可手動調整</small></button>
         <button class="adm-card" data-a="weather"><b>天氣</b><small>公告當天天氣，決定守護挑戰</small></button>
         <button class="adm-card" data-a="feed"><b>貼文</b><small>留言板貼文、每週通關密語</small></button>
+        <button class="adm-card" data-a="summit"><b>隱花之巔關卡獎項</b><small>通關 VIP、限量編號與專屬獎項</small></button>
         <button class="adm-card" data-a="pool"><b>寶箱獎池</b><small>設定每日獎項數量與免單頻率</small></button>
         <button class="adm-card" data-a="photo"><b>照片</b><small>依溫室／年／月上傳、看讚數</small></button>
         <button class="adm-card hi" data-a="stats"><b>數據</b><small>排行、寶箱紀錄、公告與私訊</small></button>
@@ -1123,6 +1129,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
         <div id="phList" class="ph-grid"></div>
       </div>
     </div>
+    <div class="admpane hide" id="ap-summit"><div id="summitAdmin"></div></div>
     <div class="admpane hide" id="ap-pool">
       <h2 class="h2 wk">寶箱追逐賽・每日獎池</h2>
       <p class="sub">每天的寶箱數量，所有玩家共用，搶完就沒了。鑽石寶盒是「平均幾天出現一個」，系統每天依機率決定今天有沒有。</p>
@@ -1185,7 +1192,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.20';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.21';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -3358,6 +3365,7 @@ function renderMe(){
   $('#pwShowId').textContent = PID; $('#pwShowKey').textContent = '••••••••••••••••'; $('#btnPwEye').textContent = '👁 顯示';
   $('#bkLast').textContent = P.bkAt ? `上次備份：${new Date(P.bkAt).toLocaleDateString('zh-TW')}` : '還沒有下載過備份';
   $('#testCard').classList.toggle('hide', !TEST_TOOLS);
+  if(window.CastleVIP) CastleVIP.shelf($('#summitCards'));
 }
 $('#btnEdit').onclick = ()=>openCreate();
 $('#btnCardDl').onclick = ()=>downloadCard();
@@ -3433,12 +3441,15 @@ const Admin = {
     $('#admVer').textContent = '版本 '+APP_VERSION; Admin.home();
     const v = new URLSearchParams(location.search).get('v');          // 掃顧客券 QR 進來：直接查這張券
     if(v){ Admin.tab('coupon'); $('#cpIn').value = v.toUpperCase(); Admin.findCoupon(); }
+    if(new URLSearchParams(location.search).has('summit')) Admin.tab('summit');
   },
   home(){
+    if(window.CastleVIP) CastleVIP.disposeAdmin();
     $('#admHome').classList.remove('hide'); $('#admBar').classList.add('hide');
     document.querySelectorAll('.admpane').forEach(p=>p.classList.add('hide')); window.scrollTo(0,0);
   },
   tab(k){
+    if(window.CastleVIP) CastleVIP.disposeAdmin();
     const c = document.querySelector(`.adm-card[data-a="${k}"]`);
     $('#admHome').classList.add('hide'); $('#admBar').classList.remove('hide'); $('#admCur').textContent = c ? c.querySelector('b').textContent : '';
     document.querySelectorAll('.admpane').forEach(p=>p.classList.toggle('hide', p.id!=='ap-'+k)); window.scrollTo(0,0);
@@ -3450,6 +3461,7 @@ const Admin = {
     if(k==='pool') Admin.pool();
     if(k==='photo') Admin.photo();
     if(k==='admins') Admin.admins();
+    if(k==='summit' && window.CastleVIP) CastleVIP.admin($('#summitAdmin'));
   },
   async gen(){
     const product = $('#qProd').value.trim(), price = +$('#qPrice').value, zone = $('#qZone').value, harvest = $('#qHarvest').value, qty = Math.floor(+$('#qQty').value), layout = $('#qLayout').value;
@@ -6539,21 +6551,26 @@ async function boot(){
   }catch(e){ console.error(e); return info('⚠️','讀取失敗', esc(e.message||'請檢查網路後重新整理。')); }
   show('login');
 }
+/* V15.21: authenticated summit bridge, membership snapshots omit recovery keys. */
+function summitMember(){return P && !P.guest && PID ? {memberNo:PID,name:P.name||'王國守護者',role:roleBase(P.role),avatarUrl:'art/chars/'+roleBase(P.role)+'.webp',points:P.points||0}:null;}
+async function summitRequest(op,data={},adminOnly=false){
+ const u=fb?.A?.currentUser;
+ if(!u || (!adminOnly && (!P || P.guest || !PID)))throw Error(adminOnly?'請先登入管理員帳號。':'請先登入正式會員帳號。');
+ const member=PID,uid=u.uid,token=await u.getIdToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+ try{
+  const res=await fetch('/api/castle',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({op,...data}),signal:controller.signal});
+  const body=await res.json().catch(()=>({}));
+  if(fb?.A?.currentUser?.uid!==uid || (!adminOnly && PID!==member))throw Error('帳號已變更，請重新開啟。');
+  if(!res.ok)throw Error(body.msg||'城堡服務暫時無法連線，請稍後再試。');
+  return body;
+ }catch(e){if(e.name==='AbortError')throw Error('城堡連線逾時，請同步進度後重試。');throw e;}finally{clearTimeout(timeout);}
+}
+
 /* V15.16: isolated castle entry; original game/data APIs are unchanged. */
 if(typeof Castle!=='undefined') Castle.configure({
-  async call(op, data={}){
-    const u=fb && fb.A && fb.A.currentUser;
-    if(!P || P.guest || !PID || !u) throw new Error('請先登入正式會員帳號。');
-    const identity=PID,uid=u.uid,token=await u.getIdToken();
-    const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
-    try{
-      const res=await fetch('/api/castle',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({op,...data}),signal:controller.signal});
-      const body=await res.json().catch(()=>({}));
-      if(PID!==identity || fb.A.currentUser?.uid!==uid) throw new Error('帳號已變更，請重新開啟城堡。');
-      if(!res.ok) throw new Error(body.msg||'城堡服務暫時無法連線，請稍後再試。');
-      return body;
-    }catch(e){if(e.name==='AbortError')throw new Error('城堡驗證連線逾時，請重試。');throw e;}finally{clearTimeout(timeout);}
-  },
+  call:(op,data={})=>summitRequest(op,data),
+  member:summitMember,
+  cardsChanged:()=>{if(window.CastleVIP)CastleVIP.invalidate();},
   identity:()=>PID && fb?.A?.currentUser ? PID+'|'+fb.A.currentUser.uid : '',
   toast, tick:()=>SND.tick(), win:()=>SND.win(), sound:()=>AUD.on,
   themeSync:()=>THEME.sync(),
@@ -6565,6 +6582,15 @@ if(typeof Castle!=='undefined') Castle.configure({
     else{const q=(p-.3)/.7;x=(1-q)*(1-q)*273+2*(1-q)*q*298+q*q*310;y=(1-q)*(1-q)*186+2*(1-q)*q*166+q*q*132;}
     me.setAttribute('transform',`translate(${x} ${y})`);me.classList.toggle('walking',p<1);
   }
+});
+if(window.CastleVIP)CastleVIP.configure({
+ member:summitMember,
+ identity:()=>PID && fb?.A?.currentUser ? PID+'|'+fb.A.currentUser.uid : '',
+ authIdentity:()=>fb?.A?.currentUser?.uid||'',
+ call:(op,data={})=>summitRequest(op,data),
+ adminCall:(op,data={})=>summitRequest(op,data,true),
+ adminVisible:()=>!document.hidden && $('#admin').classList.contains('on') && !$('#ap-summit').classList.contains('hide'),
+ toast
 });
 boot();
 </script>

@@ -1,0 +1,17 @@
+'use strict';
+const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),vm=require('node:vm'),path=require('node:path');
+const {memory}=require('./castle-level-test-helpers.cjs');
+function route({uid='root',mapped=false,admin=true,tokenOK=true}={}){
+ const seed={'ranks/A':{pid:'A',points:300},'srv/castle_pass_A':{verified:true}};
+ if(mapped){seed['users/'+uid]={pid:'A'};seed['players/A']={uids:[uid],points:300,role:'hero',name:'甲'}}
+ if(admin)seed['admins/root']={name:'管理員'};
+ const db=memory(seed),firebase={apps:[{}],auth:()=>({verifyIdToken:async()=>{if(!tokenOK)throw Error('invalid');return {uid}}}),firestore:()=>db};
+ const context={module:{exports:{}},require:n=>n==='firebase-admin'?firebase:require(path.join(__dirname,'../api',n)),process:{env:{FIREBASE_SERVICE_ACCOUNT:'fixture'}},console:{error(){}}};
+ vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../api/castle.js'),'utf8'),context);
+ return {db,async request(body,headers={authorization:'Bearer fixture'}){const out={headers:{}};await context.module.exports({method:'POST',headers,body},{setHeader:(k,v)=>out.headers[k]=v,status:n=>{out.status=n;return {json:d=>{out.body=d}}}});return out}};
+}
+test('Firebase admin with no member mapping can list and configure level awards',async()=>{const f=route();const r=await f.request({op:'adminOverview'});assert.equal(r.status,200);assert.equal(r.body.cards.length,0);assert.equal(r.body.levels[0].limit,100);const saved=await f.request({op:'adminSaveLevel',levelId:'tower-01',limit:20});assert.equal(saved.status,200);assert.equal(saved.body.level.limit,20);assert.equal(f.db.data.has('users/root'),false);assert.equal(f.db.writes.some(p=>p.startsWith('players/')),false);});
+test('ordinary member and forged body admin fields cannot change awards',async()=>{const f=route({uid:'member',mapped:true,admin:false});for(const op of ['adminOverview','adminSaveLevel','adminAssignPrize','adminRedeem']){const r=await f.request({op,uid:'root',isAdmin:true,levelId:'tower-01',limit:200,cardId:'forged',name:'forged'});assert.equal(r.status,403);assert.equal(r.body.error,'admin')}assert.equal(f.db.writes.length,0);});
+test('new member endpoints derive identity from Firebase and enforce level gate',async()=>{const f=route({uid:'member',mapped:true,admin:false});const start=await f.request({op:'startLevel',levelId:'tower-01',pid:'forged'});assert.equal(start.status,200);assert.equal(start.body.session.floor,0);assert.equal((await f.request({op:'myCards',pid:'forged'})).body.cards.length,0);const stop=await f.request({op:'stopWindow',levelId:'tower-01',sid:start.body.session.sid,seq:1});assert.equal(stop.status,200);assert.equal(stop.body.session.seq,1);assert.equal((await f.request({op:'retryFloor',levelId:'tower-01',sid:start.body.session.sid,seq:2})).body.error,'retry');assert.equal((await f.request({op:'claimCard',levelId:'tower-01'})).body.error,'session');f.db.data.delete('srv/castle_pass_A');assert.equal((await f.request({op:'stopWindow',levelId:'tower-01',sid:start.body.session.sid,seq:2})).body.error,'verify');});
+test('admin requests still require a verified Firebase token',async()=>{assert.equal((await route({tokenOK:false}).request({op:'adminOverview'})).status,401);assert.equal((await route().request({op:'adminOverview'},{})).status,401);});
+test('new route rejects non-object JSON bodies and unsupported operations',async()=>{const f=route({mapped:true});for(const body of [null,[],42,'null','[]','{bad',{op:'unknown'}])assert.equal((await f.request(body)).status,400);});
