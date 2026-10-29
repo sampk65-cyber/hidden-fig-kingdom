@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /docs/
+Disallow: /test.html
+Disallow: /castle-preview.html
+
+Sitemap: https://hidden-fig-kingdom.vercel.app/sitemap.xml
