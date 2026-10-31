@@ -8,17 +8,19 @@
   host.classList.add('summit-level');host.innerHTML='<div class="touch-stage"><canvas width="1024" height="1536" tabindex="0" role="application" aria-label="流光晶塔。左右滑動底部輪盤，第一層配色完成後點選樓梯。亦可使用左右方向鍵與 Enter。"></canvas><p class="touch-hint" role="status" aria-live="polite"></p><button type="button" class="touch-recover" hidden>重新連線</button></div>';
   const canvas=host.querySelector('canvas'),hint=host.querySelector('.touch-hint'),recover=host.querySelector('.touch-recover'),ctx=canvas.getContext('2d');
   const alive=()=>!dead&&host.isConnected&&(!options.isAlive||options.isAlive())&&(!options.identity||identity===options.identity());
+  const makeAudio=()=>window.CastleAudio?.create({enabled:()=>alive()&&!recovery&&!document.hidden&&options.sound?.()!==false,context:options.audioContext,unlock:options.unlockAudio});
+  let audio=makeAudio();
   const on=(el,type,fn)=>el.addEventListener(type,fn,{signal:abort.signal});
   function note(text,duration=3600){clearTimeout(hintTimer);hint.textContent=text;hint.classList.toggle('shown',!!text);if(text&&duration)hintTimer=setTimeout(()=>{if(alive())hint.classList.remove('shown')},duration);}
   function paint(s=session,extra={}){if(alive()&&scene&&s)scene.render(ctx,s.turns*Math.PI/2,s.colors,{floor:s.floor,lit:s.lit,ready:s.ready,...extra});}
   function adopt(response){if(!response?.session||response.session.touchVersion!==2)throw Error('關卡已更新，請重新載入');session=response.session;if(response.card)card=response.card;}
   function animate(duration,draw){return new Promise(resolve=>{const start=performance.now();animationDone=resolve;function frame(now){if(!alive()){animationDone=null;resolve(false);return}const p=Math.min(1,Math.max(0,(now-start)/duration));draw(p);if(p<1)raf=requestAnimationFrame(frame);else{raf=0;animationDone=null;resolve(true);}}raf=requestAnimationFrame(frame);});}
-  function error(e){if(!alive())return;recovery=true;recover.hidden=false;note(e.message||'連線中斷，請重新連線',0);}
+  function error(e){if(!alive())return;recovery=true;audio?.dispose();audio=null;recover.hidden=false;note(e.message||'連線中斷，請重新連線',0);}
   const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
   async function climb(old,next){
    if(next.floor<=old.floor)return true;
    const duration=reduced?220:(old.floor===0?4700:old.floor===3?5000:3100);
-   return animate(duration,p=>paint({...next,floor:old.floor,lit:old.lit},{climb:{from:old.floor,to:next.floor,p}}));
+   return animate(duration,p=>paint({...next,floor:old.floor,lit:old.lit},{climb:{from:old.floor,to:next.floor,p,reduced}}));
   }
   function finish(){
    if(!alive()||!session.complete)return;
@@ -33,9 +35,9 @@
   async function turn(direction){
    if(!alive()||busy||recovery||!session||session.complete||session.ready||document.hidden)return;
    busy=true;note('');const old=structuredClone(session);
-   const job=Touch.turn(old,direction);options.tick?.();
+   const job=Touch.turn(old,direction);audio?.turn(reduced?220:1600);
    const request=options.call('turnDial',{levelId:'tower-01',sid:old.sid,seq:old.seq+1,direction}).then(value=>({value}),error=>({error}));
-   const moved=await animate(reduced?220:1450,p=>{const t=p*p*(3-2*p),colors=old.colors.slice();colors[old.floor]={from:old.colors[old.floor],to:job.colors[old.floor],t};paint({...old,turns:old.turns+direction*t,colors});});
+   const moved=await animate(reduced?220:1600,p=>{const t=p*p*(3-2*p),colors=old.colors.slice();colors[old.floor]={from:old.colors[old.floor],to:job.colors[old.floor],t};paint({...old,turns:old.turns+direction*t,colors});});
    if(!moved)return;
    const result=await request;if(!alive())return;
    try{if(result.error)throw result.error;adopt(result.value);if(!await climb(old,session))return;paint();if(session.floor>old.floor)options.win?.();if(session.complete)finish();else if(session.failures>=3)note('轉動輪盤，換個方向');}
@@ -49,20 +51,20 @@
   }
   async function sync(){
    if(!alive()||busy)return;busy=true;
-   try{const r=await options.call('startLevel',{levelId:'tower-01'});if(!alive())return;adopt(r);recovery=false;recover.hidden=true;note('');paint();if(session.complete)finish();}
+   try{const r=await options.call('startLevel',{levelId:'tower-01'});if(!alive())return;adopt(r);recovery=false;if(!audio)audio=makeAudio();recover.hidden=true;note('');paint();if(session.complete)finish();}
    catch(e){error(e);}finally{if(alive())busy=false;}
   }
   const point=e=>{const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*1024/r.width,y:(e.clientY-r.top)*1536/r.height};};
-  on(canvas,'pointerdown',e=>{if(busy||recovery||!session||session.complete||e.isPrimary===false||e.button>0)return;const p=point(e);if(!Touch.onWheel(p)&&!(session.ready&&Touch.onStairs(p)))return;e.preventDefault();drag={id:e.pointerId,start:p};canvas.setPointerCapture(e.pointerId);});
+  on(canvas,'pointerdown',e=>{audio?.gesture();if(busy||recovery||!session||session.complete||e.isPrimary===false||e.button>0)return;const p=point(e);if(!Touch.onWheel(p)&&!(session.ready&&Touch.onStairs(p)))return;e.preventDefault();drag={id:e.pointerId,start:p};canvas.setPointerCapture(e.pointerId);});
   on(canvas,'pointerup',e=>{if(!drag||drag.id!==e.pointerId)return;const start=drag.start,end=point(e);drag=null;if(session.ready&&Touch.onStairs(start)&&Touch.onStairs(end)&&Math.hypot(end.x-start.x,end.y-start.y)<22)enter();else{const direction=Touch.gesture(start,end);if(direction)turn(direction);}});
   on(canvas,'pointercancel',()=>{drag=null;});on(canvas,'lostpointercapture',()=>{drag=null;});on(canvas,'contextmenu',e=>e.preventDefault());
-  on(canvas,'keydown',e=>{if(e.repeat)return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();turn(e.key==='ArrowLeft'?-1:1);}else if(e.key==='Enter'&&session?.ready){e.preventDefault();enter();}else if(e.key==='Enter'&&session?.complete){e.preventDefault();finish();}});
-  on(recover,'click',()=>{if(!scene&&!busy){recover.hidden=true;busy=true;start();}else sync();});on(document,'visibilitychange',()=>{drag=null;if(!document.hidden&&!busy&&session)sync();});
+  on(canvas,'keydown',e=>{audio?.gesture();if(e.repeat)return;if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();turn(e.key==='ArrowLeft'?-1:1);}else if(e.key==='Enter'&&session?.ready){e.preventDefault();enter();}else if(e.key==='Enter'&&session?.complete){e.preventDefault();finish();}});
+  on(recover,'click',()=>{if(busy)return;recovery=false;if(!audio)audio=makeAudio();audio?.gesture();if(!scene){recover.hidden=true;busy=true;start();}else sync();});on(document,'visibilitychange',()=>{audio?.sync();drag=null;if(!document.hidden&&!busy&&session)sync();});
   async function start(){
    try{const [sources,response]=await Promise.all([loadScene(),options.call('startLevel',{levelId:'tower-01'})]);if(!alive())return;scene=window.CastleTouchScene.makeCastleScene(...sources,(w,h)=>{const c=document.createElement('canvas');c.width=w;c.height=h;return c;});adopt(response);recovery=false;recover.hidden=true;note('');paint();if(session.complete)finish();}
    catch(e){error(e);}finally{if(alive())busy=false;}
   }
-  function dispose(){if(dead)return;dead=true;abort.abort();cancelAnimationFrame(raf);clearTimeout(hintTimer);animationDone?.(false);animationDone=null;drag=null;scene=null;}
+  function dispose(){if(dead)return;dead=true;audio?.dispose();abort.abort();cancelAnimationFrame(raf);clearTimeout(hintTimer);animationDone?.(false);animationDone=null;drag=null;scene=null;}
   start();return {dispose};
  }
  window.CastleLevel={mount,loadScene};

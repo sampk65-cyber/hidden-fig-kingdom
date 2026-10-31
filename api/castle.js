@@ -4,7 +4,7 @@ const admin=require('firebase-admin');
 const {createService}=require('../lib/castle-service');
 module.exports=async(req,res)=>{
  res.setHeader('Cache-Control','no-store');
- if(req.method==='GET')return res.status(200).json({service:'hidden-fig-kingdom castle',version:'V15.21',configured:!!process.env.FIREBASE_SERVICE_ACCOUNT});
+ if(req.method==='GET')return res.status(200).json({service:'hidden-fig-kingdom castle',version:'V15.21.1',configured:!!process.env.FIREBASE_SERVICE_ACCOUNT});
  if(req.method!=='POST'){res.setHeader('Allow','GET, POST');return res.status(405).json({error:'method',msg:'不支援此操作'});}
  try{
   const token=String(req.headers.authorization||'').replace(/^Bearer /,'');if(!/^Bearer \S+$/.test(req.headers.authorization||''))return res.status(401).json({error:'auth',msg:'請先登入王國帳號'});

@@ -836,15 +836,16 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
 @keyframes natureBreeze{from{transform:translateX(-3px)}to{transform:translateX(5px)}}
 @media(prefers-reduced-motion:reduce){#mapSvg .nature-rain,#mapSvg .nature-wind{animation:none}}
 </style>
-<link rel="stylesheet" href="castle/castle.css?v=15.21t3">
+<link rel="stylesheet" href="castle/castle.css?v=15.21.1">
 <script src="castle/core.js?v=15.16"></script>
-<script src="castle/castle.js?v=15.21t3"></script>
-<link rel="stylesheet" href="castle/level.css?v=15.21t3">
-<script src="castle/level-core.js?v=15.21t3"></script>
-<script src="castle/vip.js?v=15.21t3"></script>
-<script src="castle/touch-core.js?v=15.21t3"></script>
-<script src="castle/touch-scene.js?v=15.21t3"></script>
-<script src="castle/level.js?v=15.21t3"></script>
+<script src="castle/castle.js?v=15.21.1"></script>
+<link rel="stylesheet" href="castle/level.css?v=15.21.1">
+<script src="castle/level-core.js?v=15.21.1"></script>
+<script src="castle/vip.js?v=15.21.1"></script>
+<script src="castle/touch-core.js?v=15.21.1"></script>
+<script src="castle/touch-scene.js?v=15.21.1"></script>
+<script src="castle/audio.js?v=15.21.1"></script>
+<script src="castle/level.js?v=15.21.1"></script>
 </head>
 <body>
 <div id="app">
@@ -1218,7 +1219,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V15.21';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.21.1';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -6598,7 +6599,7 @@ if(typeof Castle!=='undefined') Castle.configure({
   member:summitMember,
   cardsChanged:()=>{if(window.CastleVIP)CastleVIP.invalidate();},
   identity:()=>PID && fb?.A?.currentUser ? PID+'|'+fb.A.currentUser.uid : '',
-  toast, tick:()=>SND.tick(), win:()=>SND.win(), sound:()=>AUD.on,
+  toast, tick:()=>SND.tick(), win:()=>SND.win(), sound:()=>AUD.on, audioContext:()=>AUD.ctx, unlockAudio:()=>AUD.unlock(),
   themeSync:()=>THEME.sync(),
   restoreMap:()=>{if(P && $('#home').classList.contains('on'))renderMap();},
   bridge(p){
