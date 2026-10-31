@@ -54,7 +54,7 @@
  function showLevel(){
   if(!window.CastleLevel)return message('關卡尚未載入，請重新整理。');
   const id=epoch;levelController?.dispose();shell('castle-level');const host=document.createElement('div');overlay.appendChild(host);
-  levelController=CastleLevel.mount(host,{call,identity,member:()=>adapter?.member?.(),isAlive:()=>live(id),tick:()=>adapter?.tick?.(),win:()=>adapter?.win?.(),toast:s=>adapter?.toast?.(s),onCardsChanged:()=>adapter?.cardsChanged?.()});
+  levelController=CastleLevel.mount(host,{call,identity,member:()=>adapter?.member?.(),sound:()=>adapter?.sound?.()!==false,audioContext:()=>adapter?.audioContext?.(),unlockAudio:()=>adapter?.unlockAudio?.(),isAlive:()=>live(id),tick:()=>adapter?.tick?.(),win:()=>adapter?.win?.(),toast:s=>adapter?.toast?.(s),onCardsChanged:()=>adapter?.cardsChanged?.()});
   host.querySelector('canvas')?.focus();
  }
  window.Castle={configure(a){adapter=a},marker,bind,close};

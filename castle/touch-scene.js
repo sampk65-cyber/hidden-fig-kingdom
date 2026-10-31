@@ -4,13 +4,27 @@ const CASTLE_PATHS=[
  [[602,728,0],[614,640,0],[603,624,1],[579,610,1],[554,592,1],[530,574,1],[503,554,1],[485,537,1],[494,518,.6],[502,503,0]],
  [[502,503,0],[447,450,0],[457,442,1],[483,425,1],[510,408,1],[536,391,1],[562,375,1],[590,362,.8],[607,342,0],[628,283,0],[664,279,1],[713,270,1],[765,275,1],[815,264,1],[861,255,.5],[881,251,0]]
 ];
+// Round only the small turns on the authored stair route; distance controls the
+// stride so feet keep a steady cadence across short and long route segments.
+const CASTLE_ROUTES=CASTLE_PATHS.map(points=>{
+ const mix=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t),path=[points[0]];
+ for(let i=1;i<points.length-1;i++){
+  const a=points[i-1],b=points[i],c=points[i+1];
+  const incoming=Math.hypot(b[0]-a[0],b[1]-a[1]),outgoing=Math.hypot(c[0]-b[0],c[1]-b[1]);
+  const radius=Math.min(9,incoming*.18,outgoing*.18),start=mix(b,a,radius/incoming),end=mix(b,c,radius/outgoing);
+  path.push(start);for(let j=1;j<=8;j++){const t=j/8;path.push(mix(mix(start,b,t),mix(b,end,t),t));}
+ }
+ path.push(points.at(-1));const lengths=[0];
+ for(let i=1;i<path.length;i++)lengths.push(lengths.at(-1)+Math.hypot(path[i][0]-path[i-1][0],path[i][1]-path[i-1][1]));
+ return {path,lengths};
+});
 function heroPose(floor,climb){
  if(!climb)return floor===0?{x:235,y:1218,scale:1,alpha:1}:floor===4?{x:881,y:251,scale:.55,alpha:0}:{x:CASTLE_PATHS[floor-1].at(-1)[0],y:CASTLE_PATHS[floor-1].at(-1)[1],scale:.68,alpha:0};
- const path=CASTLE_PATHS[Math.min(3,Math.max(0,climb.from))],p=Math.max(0,Math.min(1,climb.p));
- const lengths=[0];for(let i=1;i<path.length;i++)lengths.push(lengths.at(-1)+Math.hypot(path[i][0]-path[i-1][0],path[i][1]-path[i-1][1]));
- const distance=p*lengths.at(-1);let i=1;while(i<path.length-1&&distance>lengths[i])i++;
+ const {path,lengths}=CASTLE_ROUTES[Math.min(3,Math.max(0,climb.from))],p=Math.max(0,Math.min(1,climb.p));
+ const distance=p*p*(3-2*p)*lengths.at(-1);let i=1;while(i<path.length-1&&distance>lengths[i])i++;
  const t=(distance-lengths[i-1])/(lengths[i]-lengths[i-1]),a=path[i-1],b=path[i],y=a[1]+(b[1]-a[1])*t;
- return {x:a[0]+(b[0]-a[0])*t,y,alpha:a[2]+(b[2]-a[2])*t,scale:.55+.45*Math.max(0,Math.min(1,(y-250)/968))};
+ const stride=climb.reduced?0:Math.sin(distance*Math.PI/15.5)*Math.min(1,p*18,(1-p)*18);
+ return {x:a[0]+(b[0]-a[0])*t,y,alpha:a[2]+(b[2]-a[2])*t,scale:.55+.45*Math.max(0,Math.min(1,(y-250)/968)),stepL:Math.max(0,stride)*3,stepR:Math.max(0,-stride)*3,bob:Math.abs(stride)*1.2,lean:stride*.012};
 }
 function makeCastleScene(source, clean, factory) {
   const W=1024,H=1536, TAU=Math.PI*2;
@@ -95,6 +109,19 @@ function makeCastleScene(source, clean, factory) {
     {x:590,y:438,w:30,h:155},
     {x:474,y:250,w:48,h:175}
   ];
+  // Build the light from the glass mask itself. The leadwork stays visible and
+  // the soft spill follows the window, rather than a rectangular colored panel.
+  const windowLights=floorWindows.map((r,f)=>{
+    const pad=40,core=factory(r.w,r.h),cc=core.getContext('2d'),im=cc.createImageData(r.w,r.h),hue=palettes[[1,3,2,4][f]];
+    for(const p of glass){const y=Math.floor(p.i/4/W),x=p.i/4-y*W;if(x<r.x||x>=r.x+r.w||y<r.y||y>=r.y+r.h)continue;
+      const rgb=hslRgb(mod(hue+(p.h-.40)*.2,1),Math.min(.70,p.s*.75+.15),Math.min(.95,.65+p.l*.50)),j=((y-r.y)*r.w+x-r.x)*4;
+      for(let k=0;k<3;k++)im.data[j+k]=rgb[k];im.data[j+3]=p.a*255;
+    }
+    cc.putImageData(im,0,0);
+    const bloom=factory(r.w+pad*2,r.h+pad*2),c=bloom.getContext('2d');
+    c.shadowColor=['#73a4f0','#e0bc65','#e199bd','#bf9ad9'][f];c.shadowBlur=27;c.globalAlpha=.72;c.drawImage(core,pad,pad);
+    return {core,bloom,pad};
+  });
   const banners=[
     {x:644,y:931,w:21,h:89,skew:-7,hue:.61,light:.43},
     {x:457,y:652,w:22,h:91,skew:7,hue:.105,light:.49},
@@ -135,13 +162,17 @@ function makeCastleScene(source, clean, factory) {
     const im=rc.getImageData(0,0,86,145);for(let y=0;y<145;y++)for(let x=0;x<86;x++)im.data[(y*86+x)*4+3]=255*smooth(0,13,Math.min(x,85-x,y,144-y));
     rc.putImageData(im,0,0);bc.drawImage(replacement,195,1100);
   }
+  let wheelAngle=NaN;
   function render(ctx,angle,glassState=[0,0,0,0],state={}){
     angle=mod(angle,TAU);
     ctx.clearRect(0,0,W,H);ctx.drawImage(base,0,0);
+    if(angle!==wheelAngle){
     const pd=patchImage.data;pd.fill(0);
     for(const p of band){const uu=mod(p.u-angle*texW*(4/TAU),texW),ui=Math.floor(uu),u2=(ui+1)%texW,uf=uu-ui,vi=Math.floor(p.v),vi2=Math.min(vi+1,texH-1),vf=p.v-vi;for(let k=0;k<3;k++){const a=tex[(vi*texW+ui)*3+k]*(1-uf)+tex[(vi*texW+u2)*3+k]*uf,b=tex[(vi2*texW+ui)*3+k]*(1-uf)+tex[(vi2*texW+u2)*3+k]*uf;pd[p.i+k]=(a*(1-vf)+b*vf)*p.shade;}pd[p.i+3]=p.edge*255;}
     for(const p of toothPixels){const q=p.at(p.d+angle*p.L*2/TAU),fade=p.a;for(let k=0;k<3;k++)pd[p.i+k]=sample(q.x+q.nx*p.cross,q.y+q.ny*p.cross,k);pd[p.i+3]=fade*255;}
-    pc.putImageData(patchImage,0,0);ctx.drawImage(patch,320,890);
+    pc.putImageData(patchImage,0,0);wheelAngle=angle;
+    }
+    ctx.drawImage(patch,320,890);
     lc.clearRect(0,0,W,H);
     for(let i=0;i<4;i++){
       const state=glassState[i],s=typeof state==='number'?{from:state,to:state,t:0}:state;
@@ -158,17 +189,26 @@ function makeCastleScene(source, clean, factory) {
       let glow=lit[f]?1:0;
       if(state.climb&&state.climb.to===f+1)glow=Math.max(glow,smooth(.65,.95,state.climb.p));
       if(!glow)continue;
-      const r=floorWindows[f],target=[1,3,2,4][f];
-      ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=.48*glow;
-      ctx.shadowColor=['#73a4f0','#e0bc65','#e199bd','#bf9ad9'][f];ctx.shadowBlur=18;
-      ctx.drawImage(glassLayers[target],r.x,r.y,r.w,r.h,r.x,r.y,r.w,r.h);ctx.restore();
+      const r=floorWindows[f],light=windowLights[f];
+      ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=glow;
+      ctx.drawImage(light.bloom,r.x-light.pad,r.y-light.pad);
+      ctx.globalCompositeOperation='source-over';ctx.globalAlpha=.82*glow;
+      ctx.drawImage(light.core,r.x,r.y);ctx.restore();
     }
     ctx.drawImage(bannerLayer,0,0);
     const pose=heroPose(state.floor||0,state.climb);
     if(pose.alpha>0){
-      const bob=state.climb?Math.abs(Math.sin(state.climb.p*Math.PI*26))*2:0;
       ctx.save();ctx.globalAlpha=pose.alpha*.18;ctx.fillStyle='#241d16';ctx.beginPath();ctx.ellipse(pose.x,pose.y,15*pose.scale,4*pose.scale,0,0,TAU);ctx.fill();ctx.restore();
-      ctx.save();ctx.globalAlpha=pose.alpha;ctx.drawImage(hero,pose.x-33*pose.scale,pose.y-108*pose.scale-bob,64*pose.scale,115*pose.scale);ctx.restore();
+      ctx.save();ctx.globalAlpha=pose.alpha;ctx.translate(pose.x,pose.y);ctx.scale(pose.scale,pose.scale);
+      if(state.climb&&!state.climb.reduced){
+        // Articulate the original boots, then overlap the coat to hide seams.
+        for(const [x,w,lift,sign]of [[7,25,pose.stepL,-1],[32,27,pose.stepR,1]]){
+          ctx.save();ctx.translate(x+w/2-33,-22);ctx.rotate(sign*lift*.027);
+          ctx.drawImage(hero,x,86,w,29,-w/2,-lift,w,29);ctx.restore();
+        }
+        ctx.translate(0,-pose.bob);ctx.rotate(pose.lean);ctx.drawImage(hero,0,0,64,94,-33,-108,64,94);
+      }else ctx.drawImage(hero,-33,-108);
+      ctx.restore();
     }
   }
   return {render,stats:{glassPixels:glass.length,bandPixels:band.length,toothPixels:toothPixels.length},size:[W,H]};

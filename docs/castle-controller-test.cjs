@@ -15,17 +15,17 @@ class Element extends EventTarget{
  dispatchEvent(e){const r=super.dispatchEvent(e);this['on'+e.type]?.(e);return r;}
 }
 async function harness({failImage=false}={}){
- const f=fixture(),host=new Element(),document=new Element(),frames=new Map(),calls=[],renders=[];document.hidden=false;document.createElement=tag=>new Element(tag);
+ const f=fixture(),host=new Element(),document=new Element(),frames=new Map(),calls=[],renders=[],sound={turns:[],gestures:0,disposed:false,creations:0};document.hidden=false;document.createElement=tag=>new Element(tag);
  let clock=0,next=1,identity='A',loseTurn=false,imageFailure=failImage;
  class Image{set src(v){queueMicrotask(()=>{if(imageFailure){imageFailure=false;this.onerror();}else this.onload();});}}
- const context={document,Image,AbortController,structuredClone,console,setTimeout,clearTimeout,performance:{now:()=>clock},matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>{const id=next++;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id),CastleTouch:require('../castle/touch-core'),CastleVIP:{cardHTML:()=>'<p>DEMO VIP</p>',download:async()=>{}},CastleTouchScene:{makeCastleScene:()=>({render:(_ctx,angle,colors,state)=>renders.push({angle,colors:structuredClone(colors),...structuredClone(state)})})}};context.window=context;
+ const context={CastleAudio:{create:options=>{sound.creations++;sound.disposed=false;sound.enabled=options.enabled;return {gesture(){sound.gestures++},turn(duration){sound.turns.push(duration)},sync(){sound.lastEnabled=options.enabled()},dispose(){sound.disposed=true}}}},document,Image,AbortController,structuredClone,console,setTimeout,clearTimeout,performance:{now:()=>clock},matchMedia:()=>({matches:false}),requestAnimationFrame:fn=>{const id=next++;frames.set(id,fn);return id;},cancelAnimationFrame:id=>frames.delete(id),CastleTouch:require('../castle/touch-core'),CastleVIP:{cardHTML:()=>'<p>DEMO VIP</p>',download:async()=>{}},CastleTouchScene:{makeCastleScene:()=>({render:(_ctx,angle,colors,state)=>renders.push({angle,colors:structuredClone(colors),...structuredClone(state)})})}};context.window=context;
  vm.runInNewContext(fs.readFileSync(path.join(__dirname,'../castle/level.js'),'utf8'),context);
  const controller=context.CastleLevel.mount(host,{identity:()=>identity,call:async(op,body)=>{calls.push(op);const result=await f.svc[op](member(),body);if(op==='turnDial'&&loseTurn){loseTurn=false;throw Error('response lost');}return result;}});
  const flush=()=>new Promise(resolve=>setImmediate(resolve));await flush();
  async function settle(){for(let i=0;i<15;i++){if(frames.size){clock+=1800;const pending=[...frames.values()];frames.clear();pending.forEach(fn=>fn(clock));}await flush();}}
  function fire(type,p={}){const e=new Event(type,{cancelable:true});for(const[k,v]of Object.entries({pointerId:1,button:0,isPrimary:true,clientX:535,clientY:1140,...p}))Object.defineProperty(e,k,{value:v});host.querySelector('canvas').dispatchEvent(e);}
  const state=()=>[...f.db.data.values()].find(s=>s.kind==='castle-level-session');
- return {host,document,controller,calls,renders,frames,state,settle,flush,fire,lose:()=>loseTurn=true,switchIdentity:()=>identity='B',async swipe(direction){fire('pointerdown');fire('pointerup',{clientX:535+80*direction});await settle();},async stairs(){fire('pointerdown',{clientX:500,clientY:1000});fire('pointerup',{clientX:500,clientY:1000});await settle();}};
+ return {host,document,controller,calls,renders,frames,state,sound,settle,flush,fire,lose:()=>loseTurn=true,switchIdentity:()=>identity='B',async swipe(direction){fire('pointerdown');fire('pointerup',{clientX:535+80*direction});await settle();},async stairs(){fire('pointerdown',{clientX:500,clientY:1000});fire('pointerup',{clientX:500,clientY:1000});await settle();}};
 }
 test('scene has no direction buttons and handles four swipes with a first staircase entry',async()=>{
  const h=await harness();assert.equal(h.host.querySelectorAll('button').filter(b=>!b.hidden).length,0);
@@ -48,4 +48,19 @@ test('disposing or changing identity cancels scene updates after a pending turn'
 test('failed image loading retries through a single start request',async()=>{
  const h=await harness({failImage:true});await h.flush();assert.equal(h.host.querySelector('.touch-recover').hidden,false);
  const before=h.calls.filter(x=>x==='startLevel').length;h.host.querySelector('.touch-recover').dispatchEvent(new Event('click'));await h.settle();assert.equal(h.calls.filter(x=>x==='startLevel').length,before+1);assert(h.renders.length);assert.equal(h.host.querySelector('.touch-recover').hidden,true);await h.swipe(-1);assert.equal(h.state().ready,true);h.controller.dispose();
+});
+
+test('controller binds stone sound to accepted gestures and silences hidden or exited scenes',async()=>{
+ const h=await harness();assert(h.sound.enabled());assert.equal(h.sound.turns.length,0);
+ h.fire('pointerdown');h.fire('pointercancel');h.fire('pointerup',{clientX:450});await h.settle();assert.equal(h.sound.turns.length,0);
+ await h.swipe(1);assert.deepEqual(h.sound.turns,[1600]);assert.equal(h.state().floor,0);
+ await h.swipe(-1);assert.equal(h.sound.turns.length,2);await h.swipe(1);assert.equal(h.sound.turns.length,2);
+ h.document.hidden=true;h.document.dispatchEvent(new Event('visibilitychange'));assert.equal(h.sound.lastEnabled,false);
+ h.controller.dispose();assert.equal(h.sound.disposed,true);assert.equal(h.sound.enabled(),false);
+});
+
+test('failed startup releases audio and successful retry creates one fresh soundtrack',async()=>{
+ const h=await harness({failImage:true});await h.flush();assert.equal(h.sound.disposed,true);assert.equal(h.sound.creations,1);
+ h.host.querySelector('.touch-recover').dispatchEvent(new Event('click'));await h.settle();
+ assert.equal(h.sound.creations,2);assert.equal(h.sound.disposed,false);assert(h.sound.enabled());assert(h.renders.length);h.controller.dispose();assert.equal(h.sound.disposed,true);
 });
