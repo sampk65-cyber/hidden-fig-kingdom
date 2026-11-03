@@ -41,3 +41,11 @@ test('an earned legacy card can be claimed before reopening the updated scene',a
  const r=await f.svc.claimCard(member(),{levelId:'tower-01'}),again=await f.svc.claimCard(member(),{levelId:'tower-01'});
  assert.equal(r.card.serialNumber,1);assert.equal(again.card.id,r.card.id);assert.deepEqual(r.session.lit,[true,true,true,true]);assert.deepEqual(r.session.colors,[1,3,2,4]);assert.equal((await f.svc.adminOverview({uid:'root'})).levels[0].issued,1);
 });
+test('replay changes authoritative palette and keeps one member award across retries and completion',async()=>{
+ const f=fixture(),me=member(),first=await complete(f),body={levelId:'tower-01',restart:true,restartSid:first.session.sid};
+ const next=await f.svc.startLevel(me,body),again=await f.svc.startLevel(me,body);
+ assert.notEqual(next.session.sid,first.session.sid);assert.notDeepEqual(next.session.targets,first.session.targets);assert.deepEqual(next.session.targets.slice().sort(),[1,2,3,4]);assert.deepEqual(again.session,next.session);
+ await assert.rejects(f.svc.turnDial(me,input(next.session,{direction:-1,targets:[1,2,3,4]})),e=>e.code==='bad');
+ const second=await complete(f);assert.deepEqual(second.session.colors,next.session.targets);assert.equal(second.card.id,first.card.id);assert.equal((await f.svc.adminOverview({uid:'root'})).levels[0].issued,1);
+ const stale=await f.svc.startLevel(me,body);assert.equal(stale.session.sid,second.session.sid);assert(stale.session.complete);
+});

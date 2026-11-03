@@ -3,7 +3,7 @@
  function create(options={}){
   const Audio=options.Audio||root.Audio;
   if(!Audio)return {gesture(){},sync(){},turn(){},dispose(){}};
-  const music=new Audio('audio/castle-crystal.mp3?v=15211'),stone=new Audio('audio/castle-stone.mp3?v=15211');
+  const music=new Audio('audio/castle-crystal.mp3?v=15212'),stone=new Audio('audio/castle-stone.mp3?v=15211');
   music.preload='auto';music.loop=true;music.volume=.32;stone.preload='auto';stone.volume=.58;
   let dead=false,wanted=false,needsGesture=false,pending=null,graph=null,owned=null,watch=0,stopTimer=0,turnId=0;
   const enabled=()=>!dead&&(!options.enabled||options.enabled());
