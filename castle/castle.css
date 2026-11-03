@@ -11,3 +11,16 @@
 
 /* V15.20: steady moonlight only during the existing night scene. */
 .castle-night-light{display:none}:root[data-sky="night"] .castle-night-light{display:inline}:root[data-sky="night"] .castle-guardian-image{filter:brightness(1.55) saturate(.9) drop-shadow(0 0 .65px #FFECC7) drop-shadow(0 -.5px 1.3px #D6E7FF77)}
+
+/* Final ten seconds: advance through the chapel door into daylight. */
+.castle-film-screen{position:absolute;width:min(100%,620px);height:100%;overflow:hidden;--film-scale:1;--film-glow:0;--film-wash:0;--film-head:1;--film-brightness:1}
+.castle-film-screen video{max-width:none;transform-origin:50% 53%;transform:scale(var(--film-scale));filter:brightness(var(--film-brightness));will-change:transform}
+.castle-film-glow,.castle-film-wash{position:absolute;inset:0;pointer-events:none}
+.castle-film-glow{background:radial-gradient(ellipse at 50% 53%,#fffced 0%,#fff3c9bb 8%,#ffe3a444 27%,transparent 56%);mix-blend-mode:screen;opacity:var(--film-glow)}
+.castle-film-wash{background:#fff9e9;opacity:var(--film-wash)}
+.castle-film:has(.castle-film-screen) .castle-film-head{opacity:var(--film-head,1)}
+.castle-level.arrives-light:after{content:'';position:fixed;inset:0;z-index:31;background:#fff9e9;pointer-events:none;animation:castle-daylight 1.2s ease-out forwards}
+@keyframes castle-daylight{from{opacity:1}to{opacity:0}}
+@media(prefers-reduced-motion:reduce){.castle-level.arrives-light:after{animation-duration:.2s}}
+
+.castle-film-controls{position:absolute;z-index:4;left:20px;right:20px;bottom:20px;display:flex;align-items:center;gap:12px;background:#071722ad;border-radius:12px;padding:9px 12px}.castle-film-controls button{background:transparent;color:#ffeac0;border:1px solid #dbc18a88;border-radius:8px;min-height:36px;padding:4px 12px;white-space:nowrap}.castle-film-controls input{width:100%;accent-color:#e7ce96}

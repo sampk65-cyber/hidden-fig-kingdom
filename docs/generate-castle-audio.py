@@ -16,27 +16,48 @@ def encode(samples,name):
     print(name,'seconds',len(samples)/RATE,'peak',round(float(np.max(np.abs(samples))),3),'rms',round(float(np.sqrt(np.mean(samples*samples))),3))
 
 def crystal():
-    length=64;out=np.zeros((RATE*length,2),np.float64)
-    def add(note,start,duration,volume,pan=0,bell=True):
-        t=np.arange(int(RATE*duration))/RATE;f=midi(note)
-        if bell:
-            y=sum(a*np.sin(2*np.pi*f*k*t)*np.exp(-t/d) for k,a,d in [(1,1,2.7),(2,.32,1.7),(2.756,.13,.7),(4.07,.05,.35)])
-            y*=np.minimum(t/.018,1)
+    # Original hymn-like 20-bar score, 4/4 at 60 BPM. Bell theme answers a
+    # sustained vowel choir; harp figures leave room around the melody.
+    length=80;out=np.zeros((RATE*length,2),np.float64)
+    def add(note,start,duration,volume,pan=0,kind='bell'):
+        t=np.arange(round(RATE*duration))/RATE;f=midi(note)
+        if kind=='choir':
+            phase=2*np.pi*f*(t+.00055*np.sin(2*np.pi*4.7*t+.4))
+            y=np.zeros_like(t)
+            for k in range(1,17):
+                freq=f*k
+                formant=.14+1.1*np.exp(-((freq-760)/290)**2)+.6*np.exp(-((freq-1180)/360)**2)+.14*np.exp(-((freq-2500)/550)**2)
+                y+=np.sin(k*phase)/(k**1.1)*formant
+            y*=np.minimum(t/1.25,1)*np.minimum((duration-t)/1.8,1)
+            y*=.78+.08*np.sin(2*np.pi*.23*t)
+        elif kind=='harp':
+            y=sum(amp*np.sin(2*np.pi*f*k*t)*np.exp(-t/(1.6/k**.45)) for k,amp in [(1,1),(2,.24),(3,.09),(4,.025)])
+            y*=np.minimum(t/.012,1)*np.minimum((duration-t)/.25,1)
         else:
-            y=(np.sin(2*np.pi*f*t)+.17*np.sin(2*np.pi*f*2*t))*(np.sin(np.pi*np.minimum(t/duration,1))**2)*.35
-        y*=volume*np.minimum((duration-t)/.12,1)
-        for delay,amp,flip in [(0,1,1),(.37,.2,-1),(.83,.13,1),(1.47,.07,-1)]:
+            # Fewer sharp inharmonic partials, softened attack and longer tail.
+            y=sum(amp*np.sin(2*np.pi*f*k*t)*np.exp(-t/decay) for k,amp,decay in [(1,1,3.8),(2,.16,2.4),(3.01,.045,1.7),(4.02,.015,.8)])
+            y*=np.minimum(t/.035,1)*np.minimum((duration-t)/.5,1)
+        y*=volume
+        taps=[(0,1,1),(.113,.14,-1),(.29,.12,1),(.53,.11,-1),(.89,.10,1),(1.37,.085,-1),(1.91,.065,1),(2.63,.045,-1),(3.41,.026,1)]
+        for delay,amp,flip in taps:
             ix=(np.arange(len(t))+round((start+delay)*RATE))%len(out)
             for ch,gain in enumerate([np.sqrt((1-pan*flip)/2),np.sqrt((1+pan*flip)/2)]):out[ix,ch]+=y*amp*gain
-    # A slow, original eight-bar D-major/add9 crystal melody. Each bar is eight seconds.
-    chords=[[50,57,61,64],[47,54,57,62],[43,50,57,59],[45,52,57,61]]
-    melody=[[74,78,81,85],[81,78,76,74],[71,74,78,81],[76,73,69,0],[78,81,86,85],[81,78,74,76],[79,78,74,71],[73,76,81,0]]
-    for bar in range(8):
-        for k,n in enumerate(chords[bar%4]):add(n,bar*8,9,.052,(-1 if k%2 else 1)*.35,False)
+    chords=[[50,57,62,66],[43,55,59,62],[47,54,59,62],[45,57,61,64],
+            [54,57,62,66],[43,55,59,62],[40,55,59,64],[45,57,62,64],
+            [50,57,62,66],[54,57,61,66],[43,55,59,62],[45,57,61,64],
+            [47,54,59,62],[43,55,59,62],[40,55,59,64],[45,57,61,64],
+            [50,57,62,67],[50,57,62,66],[43,55,59,62],[50,57,62,66]]
+    melody=[[74,78],[79,78],[74,71],[73,76],[78,81],[79,78],[76,74],[73,0],
+            [74,78],[81,78],[79,83],[81,76],[78,81],[79,78],[76,79],[81,85],
+            [86,81],[78,74],[79,78],[74,0]]
+    for bar,chord in enumerate(chords):
+        for k,n in enumerate(chord):add(n,bar*4,6.5,.105,(-.45 if k%2 else .45),'choir')
         for beat,n in enumerate(melody[bar]):
-            if n:add(n,bar*8+beat*2,6,.19,(-.4 if beat%2 else .4))
-        for k,n in enumerate(chords[bar%4][1:]):add(n+12,bar*8+1+k*2,4,.055,(k-1)*.5)
-    out*=.68/np.max(np.abs(out));encode(out,'castle-crystal.mp3')
+            if n:add(n,bar*4+beat*2,7,.14,(-.22 if beat%2 else .22))
+        # Gentle rising harp, with an occasional upper response note.
+        order=[0,1,2,3,2,1] if bar%2==0 else [0,2,1,3]
+        for j,k in enumerate(order):add(chord[k]+12,bar*4+.5+j*.5,3.5,.043,(k-1.5)*.27,'harp')
+    out=np.tanh(out*.8);out*=.70/np.max(np.abs(out));encode(out,'castle-crystal.mp3')
 
 def stone():
     rng=np.random.default_rng(15211);t=np.arange(round(RATE*1.6))/RATE
@@ -49,4 +70,4 @@ def stone():
     y=(friction+rumble)*envelope
     out=np.column_stack([y,np.roll(y,31)*.97]);out*=.77/np.max(np.abs(out));encode(out,'castle-stone.mp3')
 
-if __name__=='__main__':crystal();stone()
+if __name__=='__main__':crystal()  # Keep the approved stone effect unchanged.

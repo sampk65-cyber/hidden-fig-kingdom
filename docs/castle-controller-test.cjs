@@ -64,3 +64,12 @@ test('failed startup releases audio and successful retry creates one fresh sound
  h.host.querySelector('.touch-recover').dispatchEvent(new Event('click'));await h.settle();
  assert.equal(h.sound.creations,2);assert.equal(h.sound.disposed,false);assert(h.sound.enabled());assert(h.renders.length);h.controller.dispose();assert.equal(h.sound.disposed,true);
 });
+
+test('victory offers replay with a new palette and a playable first staircase',async()=>{
+ const h=await harness();await h.swipe(-1);await h.stairs();for(const d of [1,-1,1])await h.swipe(d);
+ const previous=structuredClone(h.state().targets),sid=h.state().sid;assert(h.host.querySelector('[data-replay]'));
+ h.host.querySelector('[data-return]').dispatchEvent(new Event('click'));assert(h.host.querySelector('.touch-again'));
+ h.host.querySelector('.touch-again').dispatchEvent(new Event('click'));await h.settle();
+ assert.equal(h.state().floor,0);assert.equal(h.state().complete,false);assert.notEqual(h.state().sid,sid);assert.notDeepEqual(h.state().targets,previous);assert.equal(h.host.querySelector('.tower-victory'),null);
+ await h.swipe(-1);assert.equal(h.state().ready,true);await h.stairs();assert.equal(h.state().floor,1);assert.deepEqual(h.renders.at(-1).targets,h.state().targets);h.controller.dispose();
+});

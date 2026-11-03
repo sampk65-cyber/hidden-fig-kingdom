@@ -111,17 +111,17 @@ function makeCastleScene(source, clean, factory) {
   ];
   // Build the light from the glass mask itself. The leadwork stays visible and
   // the soft spill follows the window, rather than a rectangular colored panel.
-  const windowLights=floorWindows.map((r,f)=>{
-    const pad=40,core=factory(r.w,r.h),cc=core.getContext('2d'),im=cc.createImageData(r.w,r.h),hue=palettes[[1,3,2,4][f]];
+  const windowLights=floorWindows.map(r=>palettes.slice(1).map((hue,color)=>{
+    const pad=40,core=factory(r.w,r.h),cc=core.getContext('2d'),im=cc.createImageData(r.w,r.h);
     for(const p of glass){const y=Math.floor(p.i/4/W),x=p.i/4-y*W;if(x<r.x||x>=r.x+r.w||y<r.y||y>=r.y+r.h)continue;
       const rgb=hslRgb(mod(hue+(p.h-.40)*.2,1),Math.min(.70,p.s*.75+.15),Math.min(.95,.65+p.l*.50)),j=((y-r.y)*r.w+x-r.x)*4;
       for(let k=0;k<3;k++)im.data[j+k]=rgb[k];im.data[j+3]=p.a*255;
     }
     cc.putImageData(im,0,0);
     const bloom=factory(r.w+pad*2,r.h+pad*2),c=bloom.getContext('2d');
-    c.shadowColor=['#73a4f0','#e0bc65','#e199bd','#bf9ad9'][f];c.shadowBlur=27;c.globalAlpha=.72;c.drawImage(core,pad,pad);
+    c.shadowColor=['#73a4f0','#e199bd','#e0bc65','#bf9ad9'][color];c.shadowBlur=27;c.globalAlpha=.72;c.drawImage(core,pad,pad);
     return {core,bloom,pad};
-  });
+  }));
   const banners=[
     {x:644,y:931,w:21,h:89,skew:-7,hue:.61,light:.43},
     {x:457,y:652,w:22,h:91,skew:7,hue:.105,light:.49},
@@ -130,8 +130,9 @@ function makeCastleScene(source, clean, factory) {
   ];
   // Reuse the scene's own woven fabric, edging and embroidered leaf.
   // The small cloth pieces follow the pillar planes and receive their local light.
+  function buildBanners(targets){
   const bannerLayer=factory(W,H),blc=bannerLayer.getContext('2d');
-  for(const b of banners){
+  for(let f=0;f<banners.length;f++){const b={...banners[f],hue:palettes[targets[f]]};
     const cloth=factory(64,256),cc=cloth.getContext('2d'),im=cc.createImageData(64,256);
     for(let y=0;y<256;y++)for(let x=0;x<64;x++){
       const u=x/63,v=y/255;
@@ -154,6 +155,9 @@ function makeCastleScene(source, clean, factory) {
     blc.strokeStyle='rgba(105,90,64,.58)';blc.lineWidth=1.5;
     blc.beginPath();blc.moveTo(-1,.4);blc.lineTo(b.w+1,.4);blc.stroke();blc.restore();
   }
+  return bannerLayer;
+  }
+  let bannerLayer=null,bannerKey='';
   const hero=factory(64,115),hc=hero.getContext('2d');
   const silhouette=[[234,1117],[243,1119],[249,1126],[252,1138],[251,1150],[248,1155],[254,1159],[253,1165],[254,1179],[258,1194],[255,1201],[248,1205],[248,1216],[245,1220],[236,1221],[231,1216],[230,1207],[223,1209],[219,1215],[212,1214],[210,1211],[212,1201],[213,1196],[208,1190],[210,1178],[208,1172],[210,1158],[215,1152],[220,1151],[223,1147],[220,1143],[222,1131],[228,1122]];
   hc.save();hc.beginPath();silhouette.forEach((p,i)=>i?hc.lineTo(p[0]-202,p[1]-1110):hc.moveTo(p[0]-202,p[1]-1110));hc.closePath();hc.clip();hc.drawImage(source,-202,-1110,W,H);hc.restore();
@@ -164,6 +168,8 @@ function makeCastleScene(source, clean, factory) {
   }
   let wheelAngle=NaN;
   function render(ctx,angle,glassState=[0,0,0,0],state={}){
+    const targets=state.targets||[1,3,2,4],key=targets.join();
+    if(key!==bannerKey){bannerLayer=buildBanners(targets);bannerKey=key;}
     angle=mod(angle,TAU);
     ctx.clearRect(0,0,W,H);ctx.drawImage(base,0,0);
     if(angle!==wheelAngle){
@@ -189,7 +195,7 @@ function makeCastleScene(source, clean, factory) {
       let glow=lit[f]?1:0;
       if(state.climb&&state.climb.to===f+1)glow=Math.max(glow,smooth(.65,.95,state.climb.p));
       if(!glow)continue;
-      const r=floorWindows[f],light=windowLights[f];
+      const r=floorWindows[f],light=windowLights[f][targets[f]-1];
       ctx.save();ctx.globalCompositeOperation='screen';ctx.globalAlpha=glow;
       ctx.drawImage(light.bloom,r.x-light.pad,r.y-light.pad);
       ctx.globalCompositeOperation='source-over';ctx.globalAlpha=.82*glow;

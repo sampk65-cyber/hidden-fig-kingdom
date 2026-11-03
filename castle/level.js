@@ -12,7 +12,7 @@
   let audio=makeAudio();
   const on=(el,type,fn)=>el.addEventListener(type,fn,{signal:abort.signal});
   function note(text,duration=3600){clearTimeout(hintTimer);hint.textContent=text;hint.classList.toggle('shown',!!text);if(text&&duration)hintTimer=setTimeout(()=>{if(alive())hint.classList.remove('shown')},duration);}
-  function paint(s=session,extra={}){if(alive()&&scene&&s)scene.render(ctx,s.turns*Math.PI/2,s.colors,{floor:s.floor,lit:s.lit,ready:s.ready,...extra});}
+  function paint(s=session,extra={}){if(alive()&&scene&&s)scene.render(ctx,s.turns*Math.PI/2,s.colors,{floor:s.floor,lit:s.lit,ready:s.ready,targets:s.targets,...extra});}
   function adopt(response){if(!response?.session||response.session.touchVersion!==2)throw Error('關卡已更新，請重新載入');session=response.session;if(response.card)card=response.card;}
   function animate(duration,draw){return new Promise(resolve=>{const start=performance.now();animationDone=resolve;function frame(now){if(!alive()){animationDone=null;resolve(false);return}const p=Math.min(1,Math.max(0,(now-start)/duration));draw(p);if(p<1)raf=requestAnimationFrame(frame);else{raf=0;animationDone=null;resolve(true);}}raf=requestAnimationFrame(frame);});}
   function error(e){if(!alive())return;recovery=true;audio?.dispose();audio=null;recover.hidden=false;note(e.message||'連線中斷，請重新連線',0);}
@@ -22,13 +22,20 @@
    const duration=reduced?220:(old.floor===0?4700:old.floor===3?5000:3100);
    return animate(duration,p=>paint({...next,floor:old.floor,lit:old.lit},{climb:{from:old.floor,to:next.floor,p,reduced}}));
   }
+  async function replay(panel){
+   if(!alive()||busy||!session?.complete)return;busy=true;const sid=session.sid;
+   const button=panel?.querySelector('[data-replay]');if(button)button.disabled=true;
+   try{const response=await options.call('startLevel',{levelId:'tower-01',restart:true,restartSid:sid});if(!alive())return;adopt(response);panel?.remove();host.querySelector('.touch-again')?.remove();note('');paint();canvas.focus();}
+   catch(err){if(alive()){if(panel)panel.querySelector('[data-result]').textContent=err.message;else note(err.message);}}finally{if(alive()){busy=false;if(button?.isConnected)button.disabled=false;}}
+  }
   function finish(){
    if(!alive()||!session.complete)return;
    options.onCardsChanged?.();host.querySelector('.tower-victory')?.remove();
    const panel=document.createElement('section');panel.className='tower-victory';
-   panel.innerHTML='<div class="tower-victory-scroll"><h2>四層之光已亮起</h2>'+(card&&window.CastleVIP?CastleVIP.cardHTML(card):'<p>已保留通關紀錄，目前限量卡已發完。</p>')+'<div class="tower-victory-buttons"><button type="button" class="tower-primary" data-card-action>'+(card?'保存 VIP 卡':'再次確認領卡')+'</button><button type="button" class="tower-secondary" data-return>返回晶塔</button></div><p role="status" data-result></p></div>';
+   panel.innerHTML='<div class="tower-victory-scroll"><h2>四層之光已亮起</h2>'+(card&&window.CastleVIP?CastleVIP.cardHTML(card):'<p>已保留通關紀錄，目前限量卡已發完。</p>')+'<div class="tower-victory-buttons"><button type="button" class="tower-primary" data-card-action>'+(card?'保存 VIP 卡':'再次確認領卡')+'</button><button type="button" class="tower-secondary" data-replay>再玩一次</button><button type="button" class="tower-secondary" data-return>返回晶塔</button></div><p role="status" data-result></p></div>';
    host.appendChild(panel);
-   panel.querySelector('[data-return]').onclick=()=>{panel.remove();canvas.focus();};
+   panel.querySelector('[data-return]').onclick=()=>{panel.remove();host.querySelector('.touch-again')?.remove();const again=document.createElement('button');again.className='touch-again';again.textContent='再玩一次';again.onclick=()=>replay();host.appendChild(again);canvas.focus();};
+   panel.querySelector('[data-replay]').onclick=()=>replay(panel);
    panel.querySelector('[data-card-action]').onclick=async e=>{const b=e.currentTarget;b.disabled=true;try{if(card)await CastleVIP.download(card);else{const r=await options.call('claimCard',{levelId:'tower-01'});if(!alive())return;adopt(r);if(card)finish();else panel.querySelector('[data-result]').textContent='目前尚無可發行名額。';}}catch(err){if(alive())panel.querySelector('[data-result]').textContent=err.message;}finally{if(b.isConnected)b.disabled=false;}};
    panel.querySelector('button')?.focus();
   }

@@ -24,3 +24,5 @@
 .touch-recover{position:absolute;bottom:13%;left:50%;transform:translateX(-50%);min-height:44px;padding:8px 16px;color:#efe2bf;background:#3a3c31;border:1px solid #aa9873;border-radius:6px}
 .touch-stage [hidden]{display:none!important}.summit-level .tower-victory{position:fixed;inset:0;z-index:10020;overflow:auto}
 @media(prefers-reduced-motion:reduce){.touch-hint{transition:none}}
+
+.touch-again{position:absolute;bottom:4%;left:50%;transform:translateX(-50%);min-height:44px;padding:10px 20px;border:1px solid #d6bf80;border-radius:7px;background:#163b32e8;color:#ffe7b3;font:14px system-ui;z-index:5}

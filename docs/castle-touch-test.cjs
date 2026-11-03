@@ -20,3 +20,13 @@ test('gesture classification rejects taps, vertical movement and off-wheel drags
  assert.equal(C.gesture({x:535,y:1140},{x:540,y:1190}),0);
  assert.equal(C.gesture({x:100,y:500},{x:160,y:500}),0);
 });
+test('replay palettes shuffle to a different valid order and wrong turns exclude that floor target',()=>{
+ const C=require(file),previous=C.targets.slice(),targets=C.shuffleTargets(previous,()=>.999);
+ assert.notDeepEqual(targets,previous);assert.deepEqual(targets.slice().sort(),[1,2,3,4]);
+ let s=C.create(targets);
+ for(let floor=0;floor<4;floor++){
+  const d=C.directions[floor],bad=C.turn(s,-d);assert.notEqual(bad.colors[floor],targets[floor]);assert.equal(bad.floor,floor);
+  s=C.turn(s,d);if(s.ready)s=C.enter(s);
+ }
+ assert(s.complete);assert.deepEqual(s.colors,targets);assert.deepEqual(s.targets,targets);
+});
