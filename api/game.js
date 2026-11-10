@@ -3,6 +3,7 @@
 // 需要在 Vercel 專案設定環境變數 FIREBASE_SERVICE_ACCOUNT（Firebase 服務帳戶金鑰 JSON 全文）。
 // Copyright © 2026 Sam pksun. All rights reserved.
 const admin = require('firebase-admin');
+const PoolRules = require('../lib/pool-rules.js');
 
 function initAdmin(){
   if(admin.apps.length) return admin;
@@ -61,12 +62,15 @@ function couponDoc(type, name, extra = {}){
   return { t: type, exp: now + (days || 7) * 864e5, used: false, created: now, name: name || '', srv: true, ...more };
 }
 
-async function poolCfg(db){
-  let c = { ...POOL_DEF }; try{ const s = await db.doc('config/pool').get(); if(s.exists) c = { ...c, ...s.data() }; }catch(e){}
-  const tcfg = {}; for(const k of Object.keys(TCFG_DEF)) tcfg[k] = { ...TCFG_DEF[k], ...((c.tiers || {})[k] || {}) };
-  return { c, tcfg };
+async function readPool(tx, db, day){
+  const cfgRef=db.doc('config/pool'), cycleRef=db.doc('pool/cycles'), dailyRef=db.doc('pool/'+day);
+  const [cs,ss,ds]=await Promise.all([tx.get(cfgRef),tx.get(cycleRef),tx.get(dailyRef)]);
+  const c={...POOL_DEF,...(cs.exists?cs.data():{})};
+  const p=PoolRules.resolve(c,ss.exists?ss.data():null,ds.exists?ds.data():null,day);
+  return {...p,c,ref:p.state?cycleRef:dailyRef};
 }
-function poolInit(c, day){ const z = seedRand('free' + day)() < 1/Math.max(1, +c.zEvery || 3) ? 1 : 0; return { e:+c.e, d:+c.d, c:+c.c, b:+c.b, a:+c.a, z }; }
+function writePool(tx,p){tx.set(p.ref,p.state||p.counts);}
+function tierConfig(c){const out={};for(const k of Object.keys(TCFG_DEF))out[k]={...TCFG_DEF[k],...((c.tiers||{})[k]||{})};return out;}
 function drawTier(p){
   const items = Object.keys(TIER_F).map(k=>({ k, w:(p[k] || 0) * TIER_F[k] })).filter(x=>x.w > 0), sum = items.reduce((a, b)=>a + b.w, 0);
   if(!sum) return null; let x = rnd() * sum; for(const it of items){ if((x -= it.w) <= 0) return it.k; } return items[items.length - 1].k;
@@ -91,8 +95,7 @@ async function opLucky(db, me){
 async function opChaseStart(db, me){
   const day = twDay();
   if(!(await bump(db, `chase_${me.pid}_${day}`, CHASE_DAILY))) throw fail('limit', '今天的寶箱追逐賽玩完了（每天 5 次），明天再來');
-  const { c } = await poolCfg(db), init = poolInit(c, day);
-  const ps = await db.doc('pool/' + day).get(), p = ps.exists ? ps.data() : init;
+  const p = await db.runTransaction(async tx=>{const view=await readPool(tx,db,day);writePool(tx,view);return view.counts;});
   const tiers = []; for(let i = 0; i < 3; i++){ const t = drawTier(p); if(t) tiers.push(t); }
   if(!tiers.length) return { tiers: [] };
   if(!tiers.some(t=>!RARE.includes(t)) && (p.e || p.d)) tiers[tiers.length - 1] = p.e ? 'e' : 'd';
@@ -102,22 +105,22 @@ async function opChaseStart(db, me){
 }
 async function opChaseClaim(db, me, body){
   const ref = db.doc(`srv/chs_${me.pid}`), idx = Math.floor(+body.idx);
-  const day = twDay(), { c, tcfg } = await poolCfg(db), init = poolInit(c, day), pref = db.doc('pool/' + day);
+  const day = twDay();
   const res = await db.runTransaction(async tx=>{
     const s = await tx.get(ref); if(!s.exists) throw fail('session', '找不到這一局，請重新開始');
     const S = s.data();
     if(S.used || S.sid !== body.sid) throw fail('session', '這一局已經領過了');
     if(!(idx >= 0 && idx < S.tiers.length)) throw fail('bad', '寶箱不存在');
     const age = Date.now() - S.t; if(age < 3000 || age > 180000) throw fail('time', '這一局已經超過時間');
-    const ps = await tx.get(pref), p = ps.exists ? ps.data() : { ...init };
+    const view = await readPool(tx,db,day), p = view.counts;
     let k = S.tiers[idx], ok = false;
     if(p[k] > 0){ p[k]--; ok = true; } else if(k !== 'e' && p.e > 0){ k = 'e'; p.e--; ok = true; }
     tx.set(ref, { used: true, usedAt: Date.now(), k, ok }, { merge: true });
-    if(ok) tx.set(pref, p);
-    return { k, ok };
+    if(ok){if(view.state)view.state.tiers[k].remaining=p[k];writePool(tx,view);}
+    return { k, ok, config:view.c };
   });
   if(!res.ok) return { ok: false, k: res.k };
-  const R = tierPrize(tcfg, res.k), T = CHEST[res.k];
+  const R = tierPrize(tierConfig(res.config), res.k), T = CHEST[res.k];
   if(R.rw.pts) return { ok: true, k: res.k, pts: R.rw.pts, prize: R.prize, note: R.note };
   const id = rid(4), extra = R.rw.cp === 'sp' ? { spN: R.prize, spD: R.note || '到農場出示此券兌換', spI: T.icon, days: 14, src: 'chase' } : { src: 'chase' };
   const cdoc = couponDoc(R.rw.cp, me.player.name, extra);

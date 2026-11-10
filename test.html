@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>今天在隱花王國尋寶 V14.5</title>
+<title>今天在隱花王國尋寶 V15.23・示範版</title>
+<script src="lib/pool-rules.js?v=15.23"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <style id="pageStyle"></style>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -942,7 +943,7 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
         <button class="adm-card" data-a="zone"><b>溫室階段</b><small>每週自動輪替，可手動調整</small></button>
         <button class="adm-card" data-a="weather"><b>天氣</b><small>公告當天天氣，決定守護挑戰</small></button>
         <button class="adm-card" data-a="feed"><b>貼文</b><small>留言板貼文、每週通關密語</small></button>
-        <button class="adm-card" data-a="pool"><b>寶箱獎池</b><small>設定每日獎項數量與免單頻率</small></button>
+        <button class="adm-card" data-a="pool"><b>寶箱獎池</b><small>設定寶箱週期與數量</small></button>
         <button class="adm-card" data-a="photo"><b>照片</b><small>依溫室／年／月上傳、看讚數</small></button>
         <button class="adm-card hi" data-a="stats"><b>數據</b><small>排行、寶箱紀錄、公告與私訊</small></button>
         <button class="adm-card" data-a="admins"><b>管理員</b><small>新增 Email＋密碼，各自登入後台</small></button>
@@ -1025,11 +1026,11 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       </div>
     </div>
     <div class="admpane hide" id="ap-pool">
-      <h2 class="h2 wk">寶箱追逐賽・每日獎池</h2>
-      <p class="sub">每天的寶箱數量，所有玩家共用，搶完就沒了。鑽石寶盒是「平均幾天出現一個」，系統每天依機率決定今天有沒有。</p>
+      <h2 class="h2 wk">寶箱追逐賽・週期獎池</h2>
+      <p class="sub">所有玩家共用額度。木箱、鐵箱每日補額；青銅以上可分別設定「每幾天、最多幾箱」。例如每 7 天 2 箱，整期合計最多領取 2 箱，剩餘跨日保留，下期補回設定數量，不累加。</p>
       <div class="card"><p class="lvtxt" style="margin-top:0">由低到高：木箱、鐵箱、銅箱、銀箱、金箱、鑽石。每種寶箱可改數量、獎品、獎品名稱與副標備註（例如把鑽石改成「孫爸特別獎」）。</p>
-      <div id="tierRows"></div><button id="btnPool" class="btn main">儲存（明天起生效）</button><button id="btnPoolReset" class="btn ghost">儲存並立即套用到今天</button><div id="poolMsg" class="lvtxt"></div></div>
-      <div class="card"><b>今日剩餘</b><div id="poolNow"></div></div>
+      <div id="tierRows"></div><button id="btnPool" class="btn main">儲存（各寶箱下期生效）</button><button id="btnPoolReset" class="btn ghost">儲存並立即重設本期</button><div id="poolMsg" class="lvtxt"></div></div>
+      <p class="lvtxt">一般儲存會保留本期剩餘與補額日期；立即重設會補滿所有寶箱，從今天重新計算週期。</p><div class="card"><b>目前剩餘與補額日期</b><div id="poolNow"></div></div>
     </div>
     <div class="admpane hide" id="ap-feed">
       <h2 class="h2 wk">農場留言板貼文</h2>
@@ -1086,7 +1087,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = true;
 
-const APP_VERSION = 'V14.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V15.23';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -3216,9 +3217,10 @@ const Admin = {
   },
   async pool(){
     const c = await poolCfg();
-    $('#tierRows').innerHTML = ['e','d','c','b','a','z'].map(k=>{ const t = TCFG[k], q = k==='z' ? c.zEvery : c[k];
+    $('#tierRows').innerHTML = ['e','d','c','b','a','z'].map(k=>{ const t = TCFG[k], r = PoolRules.rule(c,k), periodic = PoolRules.periodic.includes(k);
       return `<div class="tier-row" data-k="${k}"><div class="tier-h">${chestSvg(k)}<div><b>${CHEST[k].icon} ${CHEST[k].chest}</b><small>${CHEST[k].grade}・${k.toUpperCase()} 級</small></div></div>
-        <div class="grid2"><div><label class="lbl">${k==='z'?'平均幾天出現一個':'每日數量'}</label><input class="field t-q" type="number" inputmode="numeric" value="${q}"></div>
+        <div class="grid2">${periodic?`<div><label class="lbl" for="pool-days-${k}">每幾天</label><input id="pool-days-${k}" class="field t-days" type="number" inputmode="numeric" min="1" max="365" step="1" value="${r.days}"></div>`:''}
+          <div><label class="lbl" for="pool-q-${k}">${periodic?'每期最多幾箱':'每日數量'}</label><input id="pool-q-${k}" class="field t-q" type="number" inputmode="numeric" min="0" max="50" step="1" value="${r.quantity}"></div>
           <div><label class="lbl">獎品</label><select class="field t-r">${Object.entries(REWARDS).map(([id,r])=>`<option value="${id}" ${t.r===id?'selected':''}>${r.n}</option>`).join('')}</select></div>
           <div><label class="lbl">獎品名稱（選填）</label><input class="field t-n" maxlength="14" placeholder="${REWARDS[t.r]?REWARDS[t.r].n:''}" value="${esc(t.name||'')}"></div>
           <div><label class="lbl">副標備註（選填）</label><input class="field t-note" maxlength="30" placeholder="例如：現場送一盒" value="${esc(t.note||'')}"></div></div></div>`; }).join('');
@@ -3396,28 +3398,36 @@ $('#btnPh').onclick = async()=>{
     toast(`已上傳 ${ok} 張到 ${ym.replace('-',' 年 ')} 月`); $('#phFile').value=''; $('#phCap').value=''; Admin.phY = +ym.slice(0,4); Admin.phM = +ym.slice(5); Admin.photo(); }
   btn.disabled = false; btn.textContent = '上傳';
 };
-// V7.4：兩顆按鈕都以畫面上輸入的數字為準；「立即套用」會同時儲存設定並重設今天的獎池
+// V15.23: save config and balances atomically; ordinary saves preserve the active period.
 function poolInputs(){
-  const out = {tiers:{}};
-  document.querySelectorAll('#tierRows .tier-row').forEach(r=>{ const k = r.dataset.k, q = Math.round(+r.querySelector('.t-q').value||0);
-    if(k==='z') out.zEvery = Math.max(1, q||3); else out[k] = Math.max(0, Math.min(50, q));
+  const out = {tiers:{},periods:{}};
+  document.querySelectorAll('#tierRows .tier-row').forEach(r=>{ const k = r.dataset.k;
+    out[k] = r.querySelector('.t-q').value;
+    if(PoolRules.periodic.includes(k)) out.periods[k] = r.querySelector('.t-days').value;
     out.tiers[k] = {r:r.querySelector('.t-r').value, name:r.querySelector('.t-n').value.trim(), note:r.querySelector('.t-note').value.trim()}; });
-  for(const k of Object.keys(TCFG)) TCFG[k] = {...TCFG[k], ...out.tiers[k]}; ZEVERY = out.zEvery;
-  return out; }
-$('#btnPool').onclick = async()=>{ const c = {...poolInputs(), rev:Date.now()}; await DB.set('config/pool', c); toast('獎池設定已儲存，明天起生效'); $('#poolMsg').textContent = `已儲存（${new Date().toLocaleTimeString('zh-TW')}），明天起生效`; Admin.pool(); };
-$('#btnPoolReset').onclick = async()=>{
-  const btn = $('#btnPoolReset'); btn.disabled = true;
+  return PoolRules.validate(out);
+}
+async function savePoolSettings(reset){
+  const buttons=[$('#btnPool'),$('#btnPoolReset')];if(buttons.some(b=>b.disabled))return;
+  buttons.forEach(b=>b.disabled=true);
+  let committed=false;
   try{
-    const c = {...poolInputs(), rev:Date.now()}; await DB.set('config/pool', c);
-    const z = seedRand('free'+today())() < 1/c.zEvery ? 1 : 0, pool = {e:c.e, d:c.d, c:c.c, b:c.b, a:c.a, z};
-    await DB.set('pool/'+today(), pool);
-    $('#poolNow').innerHTML = poolTable(pool);
-    $('#poolMsg').textContent = `已套用到今天（${new Date().toLocaleTimeString('zh-TW')}）${z ? '・今天有 1 張免單' : '・今天沒輪到免單（依「平均幾天一張」隨機）'}`;
-    toast('今天的獎池已更新，玩家會收到新投放提醒');
-  }catch(e){ console.error(e); toast('套用失敗：'+(e.code||e.message||'請稍後再試')); }
-  btn.disabled = false;
-};
-$('#btnWx').onclick = async()=>{
+    const input=poolInputs();
+    await poolTransaction((config,state,legacy,date)=>{
+      const saved=PoolRules.prepareSave(config,state,legacy,input,date,reset);
+      saved.config.rev=Date.now();return {writes:[['config/pool',saved.config],['pool/cycles',saved.state]],result:saved};
+    });
+    committed=true;
+    await Admin.pool();
+    const message=reset?'已儲存並補滿本期，週期從今天重新計算':'已儲存，各寶箱下期生效；本期剩餘不變';
+    $('#poolMsg').textContent=message+'（'+new Date().toLocaleTimeString('zh-TW')+'）';toast(message);
+  }catch(e){console.error(e);const message=committed?'設定已儲存，畫面尚未更新。請重新整理；不需再次重設本期。':'儲存失敗：'+(e.message||e.code||'請稍後再試');$('#poolMsg').textContent=message;toast(message);}
+  finally{buttons.forEach(b=>b.disabled=false);}
+}
+$('#btnPool').onclick = async()=>{await savePoolSettings(false);};
+$('#btnPoolReset').onclick = async()=>{
+  await savePoolSettings(true);
+};$('#btnWx').onclick = async()=>{
   const pests=[...document.querySelectorAll('#wxPests input:checked')].map(x=>x.value);
   await DB.set('config/weather', {mode:$('#wMode').value, temp:+$('#wTemp').value, rain:+$('#wRain').value, wind:+$('#wWind').value, pests, date:today()});
   toast('天氣已發布，玩家重新開啟就會看到');
@@ -5051,10 +5061,10 @@ function openEmerald(){
     try{ const pc = await DB.get('config/pool'); if(pc && pc.rev){ P.poolSeen = pc.rev; $('#poolNews') && $('#poolNews').classList.add('hide'); } }catch(e){}
     const n = P.daily.chase||0, m = spdMul();
     if(n>=5){ toast('今天的寶箱追逐賽玩完了（每天 5 次），明天再來'); return; }
-    openSheet(`<p class="sub">讀取今日獎池…</p>`, true);
+    openSheet(`<p class="sub">讀取目前獎池…</p>`, true);
     const p = await poolToday();
     openSheet(`<div class="big">🎁</div><h2 class="h2 wk">寶箱追逐賽</h2><p class="sub">一次會同時出現 <b>3 個不同等級的寶箱</b>，每個都有自己的倒數，越高級停留越短。看右上角平面圖，選一個在時間內走到它面前，<b>點寶箱就能打開</b>（只能開一個）。</p>
-      <div class="card" style="text-align:left"><b>📦 今日獎池</b><span class="lvtxt">（所有玩家一起搶）</span>${poolTable(p)}</div>
+      <div class="card" style="text-align:left"><b>📦 目前獎池</b><span class="lvtxt">（所有玩家一起搶）</span>${poolTable(p)}</div>
       <div class="card" style="text-align:left"><b>🏃 走路速度</b><p class="sub" style="margin:4px 0 0">畫面左下可以切換「慢、中、快」，最快 ×${m.toFixed(1)}（跟摘果挑戰賽最佳過關指數成正比）。寶箱時間照 ×1 計算，走得快比較有餘裕，走慢比較好控制。</p><p class="lvtxt" style="margin:6px 0 0">今天還能玩 ${5-n} 次</p></div>
       <button class="btn main" id="chGo2">正式開始</button><button class="btn ghost" onclick="closeSheet()">等一下</button>`, true);
     $('#chGo2').onclick = async ()=>{ const b = $('#chGo2'); if(b.disabled) return; b.disabled = true; b.textContent = '準備寶箱中…'; await startChase(p); };
@@ -5097,7 +5107,7 @@ function openEmerald(){
     P.chaseWins = (P.chaseWins||0)+1; Auth.save(); renderAll(); curZone = z6;
     const p = await poolToday();
     openSheet(`${chestSvg(ok ? k : 'e')}<h2 class="h2 wk">${ok ? T.chest : '寶箱'}到手！</h2><p class="lvtxt">在 ${c.name} 區打開</p>${body}
-      <details class="card" style="text-align:left"><summary><b>今日獎池剩餘</b></summary>${poolTable(p)}</details>
+      <details class="card" style="text-align:left"><summary><b>目前獎池剩餘</b></summary>${poolTable(p)}</details>
       <button class="btn main" onclick="closeSheet()">繼續逛溫室</button>`, true);
   }
   const TCOL = {z:'#2BB3EE', a:'#E2A821', b:'#9DB3C6', c:'#B8733A', d:'#6E7C88', e:'#A0703C'};
@@ -5203,24 +5213,47 @@ const CHEST = {e:{chest:'橡木小箱', icon:'📦', grade:'木箱'}, d:{chest:'
 const REWARDS = {p10:{n:'果友值 +10', pts:10}, p20:{n:'果友值 +20', pts:20}, ship:{n:'免運券', cp:'ship'}, c200:{n:'折 200 元券', cp:'c200'},
   half:{n:'半價券', cp:'half'}, free:{n:'免單券', cp:'free'}, custom:{n:'自訂獎品（現場兌換）', cp:'sp'}};
 let TCFG = {e:{r:'p10'}, d:{r:'p20'}, c:{r:'ship'}, b:{r:'c200'}, a:{r:'half'}, z:{r:'free'}}, ZEVERY = 3;
+let POOL_VIEW = null;
 function tc(k){ const t = TCFG[k]||{}, r = REWARDS[t.r] ? t.r : 'p10'; return {r, rw:REWARDS[r], prize:(t.name||'').trim() || REWARDS[r].n, note:(t.note||'').trim()}; }
 const TIERS = ['z','a','b','c','d','e'].map(k=>({k, f:{z:.3,a:.4,b:.6,c:.8,d:1,e:1}[k],
   get chest(){ return CHEST[k].chest; }, get icon(){ return CHEST[k].icon; }, get n(){ return tc(k).prize; },
-  get note(){ return tc(k).note || (k==='z' ? `平均 ${ZEVERY} 天才出現一個` : ''); }}));
+  get note(){ return tc(k).note || (k==='z' && !(POOL_VIEW && POOL_VIEW.state) ? `平均 ${ZEVERY} 天才出現一個` : ''); }}));
 const RARE_TIERS = ['z','a','b'];
-async function poolCfg(){ let c = {...POOL_DEF}; try{ const x = await DB.get('config/pool'); if(x) c = {...c, ...x}; }catch(e){}
+async function poolCfg(){ const c = {...POOL_DEF,...(await DB.get('config/pool')||{})};
   for(const k of Object.keys(TCFG)) TCFG[k] = {...TCFG[k], ...((c.tiers||{})[k]||{})}; ZEVERY = Math.max(1, +c.zEvery||3); return c; }
-async function poolInit(){ const c = await poolCfg(); const z = seedRand('free'+today())() < 1/Math.max(1, c.zEvery||3) ? 1 : 0; return {e:+c.e, d:+c.d, c:+c.c, b:+c.b, a:+c.a, z}; }
-async function poolToday(){ let p = null; const init = await poolInit(); try{ p = await DB.get('pool/'+today()); }catch(e){} return p || init; }
-async function claimPrize(k){   // 搶一個獎項（多人同時搶也不會超發）
-  const init = await poolInit(), key = 'pool/'+today();
-  if(DEMO){ const d = DB._l(); d[key] = d[key] || init; if(d[key][k]>0){ d[key][k]--; DB._s(d); return true; } return false; }
-  return fb.fs.runTransaction(fb.F, async tx=>{ const ref = DB._ref(key), s = await tx.get(ref), d = s.exists() ? s.data() : {...init};
-    if(!(d[k]>0)) return false; d[k]--; tx.set(ref, d); return true; });
+async function poolToday(){
+  const date=PoolRules.day(),c=await poolCfg();
+  const [state,legacy]=await Promise.all([DB.get('pool/cycles'),DB.get('pool/'+date)]);
+  POOL_VIEW={...PoolRules.resolve(c,state,legacy,date),config:c};return POOL_VIEW.counts;
+}
+async function poolTransaction(change){
+  const date=PoolRules.day();
+  if(DEMO){
+    const data=DB._l(),out=change({...POOL_DEF,...data['config/pool']},data['pool/cycles']||null,data['pool/'+date]||null,date);
+    for(const [path,value] of out.writes)data[path]=value;DB._s(data);return out.result;
+  }
+  return fb.fs.runTransaction(fb.F,async tx=>{
+    const paths=['config/pool','pool/cycles','pool/'+date],refs=paths.map(p=>DB._ref(p));
+    const snapshots=await Promise.all(refs.map(r=>tx.get(r))),values=snapshots.map(s=>s.exists()?s.data():null);
+    const out=change({...POOL_DEF,...values[0]},values[1],values[2],date);
+    for(const [path,value] of out.writes)tx.set(DB._ref(path),value);return out.result;
+  });
+}
+async function claimPrize(k){
+  return poolTransaction((c,state,legacy,date)=>{
+    const view=PoolRules.resolve(c,state,legacy,date);
+    if(!(view.counts[k]>0))return {writes:[],result:false};
+    view.counts[k]--;if(view.state)view.state.tiers[k].remaining=view.counts[k];
+    return {writes:[[view.state?'pool/cycles':'pool/'+date,view.state||view.counts]],result:true};
+  });
 }
 function drawTier(p){ const items = TIERS.map(t=>({k:t.k, w:(p[t.k]||0)*t.f})).filter(x=>x.w>0); const sum = items.reduce((a,b)=>a+b.w,0); if(!sum) return null;
   let x = Math.random()*sum; for(const it of items){ if((x-=it.w)<=0) return it.k; } return items[items.length-1].k; }
-function poolTable(p){ return `<table class="ladder">${TIERS.map(t=>`<tr><td>${chestSvg(t.k, true)} <b>${t.chest}</b>・${esc(t.n)}${t.note?`<br><span class="lvtxt">${esc(t.note)}</span>`:''}</td><td style="text-align:right;white-space:nowrap">剩 <b>${p[t.k]||0}</b></td></tr>`).join('')}</table>`; }
+function poolTable(p){ return `<table class="ladder">${TIERS.map(t=>{
+  const period=POOL_VIEW&&POOL_VIEW.state&&POOL_VIEW.state.tiers[t.k],next=POOL_VIEW&&PoolRules.rule(POOL_VIEW.config,t.k);
+  const rule=period?`<br><span class="lvtxt">每 ${period.days} 天最多 ${period.quantity} 箱・下次補額 ${esc(PoolRules.addDays(period.start,period.days))}${next&&(next.days!==period.days||next.quantity!==period.quantity)?`<br>下期：每 ${next.days} 天最多 ${next.quantity} 箱`:''}</span>`:'';
+  return `<tr><td>${chestSvg(t.k, true)} <b>${t.chest}</b>・${esc(t.n)}${t.note?`<br><span class="lvtxt">${esc(t.note)}</span>`:''}${rule}</td><td style="text-align:right;white-space:nowrap">剩 <b>${p[t.k]||0}</b></td></tr>`;
+}).join('')}</table>`; }
 function grantCoupon(type, extra={}){
   const {days, ...more} = extra;
   const c = {id:rid(4), t:type, exp:Date.now()+(days||7)*864e5, used:false, created:Date.now(), src:'chase', ...more};
