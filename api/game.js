@@ -16,9 +16,6 @@ function initAdmin(){
 }
 
 // ---------- 規則參數（和遊戲畫面一致） ----------
-const LEVEL_MIN = [0, 500, 1500, 6000];
-const FREE_RATE = [0, 0, 1/100, 2/100];          // 一般寶箱：各等級開出免單的機率（原本在手機端的權重）
-const LUCKY_DAILY = 6;                            // 每人每天最多檢查幾次（寶箱 3 + 劇情 + 其他獎勵）
 const CHASE_DAILY = 5;                            // 寶箱追逐賽每天 5 次
 const POOL_DEF = { e:20, d:10, c:5, b:3, a:1, zEvery:3 };
 const TIER_F = { z:.3, a:.4, b:.6, c:.8, d:1, e:1 };
@@ -35,7 +32,6 @@ const twDay = (t = Date.now())=>{ const d = new Date(t + 8*3600e3); return d.toI
 function seedRand(s){ let x = 7; for(const c of s) x = (x*31 + c.charCodeAt(0))>>>0; return ()=>{ x = (x*1664525 + 1013904223)>>>0; return x/4294967296; }; }
 function rid(n){ const b = require('crypto').randomBytes(n); return Array.from(b, v=>ALPH[v % ALPH.length]).join(''); }
 const rnd = ()=>require('crypto').randomInt(0, 1e9)/1e9;
-function lvIndex(p){ let i = 0; LEVEL_MIN.forEach((m, k)=>{ if((p||0) >= m) i = k; }); return i; }
 function fail(code, msg){ const e = new Error(msg || code); e.code = code; return e; }
 
 async function whoAmI(req, db){
@@ -57,6 +53,7 @@ async function bump(db, key, max){
 }
 
 function couponDoc(type, name, extra = {}){
+  if(!['ship','c200','half','free','sp'].includes(type)) throw fail('prize', '這個獎項已停用');
   const { days, ...more } = extra;
   const now = Date.now();
   return { t: type, exp: now + (days || 7) * 864e5, used: false, created: now, name: name || '', srv: true, ...more };
@@ -77,19 +74,8 @@ function drawTier(p){
 }
 function tierPrize(tcfg, k){ const t = tcfg[k] || {}, r = REWARDS[t.r] ? t.r : 'p10'; return { r, rw: REWARDS[r], prize: (t.name || '').trim() || REWARDS[r].n, note: (t.note || '').trim() }; }
 
-// ---------- 1. 一般寶箱：伺服器決定有沒有藏免單 ----------
-async function opLucky(db, me){
-  const day = twDay();
-  if(!(await bump(db, `lucky_${me.pid}_${day}`, LUCKY_DAILY))) return { win: false };
-  const p = FREE_RATE[lvIndex(me.player.points)] || 0;
-  if(!(p > 0) || rnd() >= p) return { win: false };
-  const id = rid(4), c = couponDoc('free', me.player.name, { src: 'lucky' });
-  await db.batch()
-    .set(db.doc(`players/${me.pid}/coupons/${id}`), c)
-    .set(db.doc(`players/${me.pid}/inbox/L${Date.now().toString(36)}`), { text: '🎉 寶箱底層還藏著一張「免單券」！已放進優惠券，有效 7 天。', created: Date.now(), read: false })
-    .commit();
-  return { win: true, coupon: { id, ...c } };
-}
+// ---------- 1. 舊版 lucky 相容入口：不再於獎池外額外發券 ----------
+async function opLucky(){ return { win:false }; }
 
 // ---------- 2. 寶箱追逐賽：伺服器抽寶箱等級、扣獎池、發獎 ----------
 async function opChaseStart(db, me){
@@ -128,6 +114,10 @@ async function opChaseClaim(db, me, body){
   return { ok: true, k: res.k, prize: R.prize, note: R.note, coupon: { id, ...cdoc } };
 }
 
+function validateGift(gift){
+  if(!gift || !['pts','sp','cp'].includes(gift.k) || (gift.k==='cp' && !['ship','c200','half','free'].includes(gift.t))) throw fail('prize', '這個獎項已停用，請聯絡農場');
+}
+
 // ---------- 3. 公告／私訊附的寶箱：伺服器發券，一則只能領一次 ----------
 async function opGift(db, me, body){
   const kind = body.kind, id = String(body.id || '').slice(0, 60);
@@ -135,14 +125,14 @@ async function opGift(db, me, body){
   let gift = null;
   if(kind === 'n'){
     const n = await db.doc('config/notice').get(); if(!n.exists || n.data().id !== id || !n.data().gift) throw fail('gone', '這則公告的寶箱已經結束了');
-    gift = n.data().gift;
+    gift = n.data().gift; validateGift(gift);
     const mark = db.doc(`srv/gn_${me.pid}_${id}`);
     const fresh = await db.runTransaction(async tx=>{ const s = await tx.get(mark); if(s.exists) return false; tx.set(mark, { t: Date.now() }); return true; });
     if(!fresh) throw fail('dup', '這個寶箱已經領過了');
   } else if(kind === 'm'){
     const mref = db.doc(`players/${me.pid}/inbox/${id}`);
     gift = await db.runTransaction(async tx=>{ const s = await tx.get(mref); if(!s.exists || !s.data().gift) throw fail('gone', '找不到這個寶箱');
-      if(s.data().claimed) throw fail('dup', '這個寶箱已經領過了'); tx.update(mref, { read: true, claimed: true }); return s.data().gift; });
+      if(s.data().claimed) throw fail('dup', '這個寶箱已經領過了'); validateGift(s.data().gift); tx.update(mref, { read: true, claimed: true }); return s.data().gift; });
   } else throw fail('bad', '資料錯誤');
   const src = kind === 'n' ? '農場公告寶箱' : '農場私訊寶箱';
   if(gift.k === 'pts') return { pts: Math.min(GIFT_PTS_MAX, +gift.n || 0), src };

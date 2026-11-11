@@ -26,3 +26,11 @@ test('partial Web Audio setup reconnects retained sources without rebinding medi
  const a=require(file).create({Audio,context:()=>ctx,watch:false});a.gesture();a.sync();
  assert.equal(sources.length,2);assert(sources.every(n=>n.connected),'Both bound media sources must reconnect after retry');a.dispose();assert(sources.every(n=>!n.connected));
 });
+
+for(const webAudio of [false,true])test('2-second fade-in and 3-second fade-out repeat on every loop '+(webAudio?'with Web Audio':'without Web Audio'),()=>{
+ const media=[],gains=[];
+ class Audio{constructor(){this.paused=true;this.currentTime=0;this.duration=60;this.plays=0;media.push(this)}play(){this.paused=false;this.plays++;return Promise.resolve()}pause(){this.paused=true}}
+ const ctx=webAudio?{state:'running',destination:{},createMediaElementSource:()=>({connect(){},disconnect(){}}),createGain(){const n={gain:{value:1},connect(){},disconnect(){}};gains.push(n);return n;}}:null;
+ const a=require(file).create({Audio,context:()=>ctx,watch:false}),volume=()=>webAudio?gains[0].gain.value:media[0].volume;
+ try{for(const [time,expected]of [[0,0],[1,.16],[2,.32],[30,.32],[57,.32],[58.5,.16],[60,0],[0,0],[1,.16],[2,.32]]){media[0].currentTime=time;a.sync();assert(Math.abs(volume()-expected)<1e-9,`${time}s: ${volume()} != ${expected}`);assert.equal(media[1].volume,webAudio?1:.58);}assert.equal(media[0].plays,1);assert.equal(media[0].loop,true);}finally{a.dispose()}
+});

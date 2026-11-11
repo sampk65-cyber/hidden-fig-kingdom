@@ -4,8 +4,8 @@
   const Audio=options.Audio||root.Audio;
   if(!Audio)return {gesture(){},sync(){},turn(){},dispose(){}};
   const music=new Audio('audio/castle-crystal-user-v16.m4a?v=16'),stone=new Audio('audio/castle-stone.mp3?v=15211');
-  music.preload='auto';music.loop=true;music.volume=.32;stone.preload='auto';stone.volume=.58;
-  let dead=false,wanted=false,needsGesture=false,pending=null,graph=null,owned=null,watch=0,stopTimer=0,turnId=0;
+  music.preload='auto';music.loop=true;music.volume=0;stone.preload='auto';stone.volume=.58;
+  let dead=false,wanted=false,needsGesture=false,pending=null,graph=null,owned=null,watch=0,fadeWatch=0,stopTimer=0,turnId=0;
   const enabled=()=>!dead&&(!options.enabled||options.enabled());
   function connect(gesture=false){
    if(graph?.tracks.every(t=>t.connected))return;
@@ -22,6 +22,16 @@
     track.source.connect(track.gain);track.gain.connect(ctx.destination);track.media.volume=1;track.connected=true;
    }catch(_){}}
   }
+  // Use playback position so every native loop repeats the same envelope.
+  // Web Audio gain also works on mobile browsers that ignore media.volume.
+  function fadeMusic(){
+   if(dead)return;
+   const t=Math.max(0,Number(music.currentTime)||0),d=music.duration;
+   const level=.32*Math.max(0,Math.min(1,t/2,Number.isFinite(d)&&d>0?(d-t)/3:1));
+   const track=graph?.tracks[0];
+   if(track?.connected)track.gain.gain.value=level;
+   else music.volume=level;
+  }
   function stopStone(){clearTimeout(stopTimer);stopTimer=0;turnId++;stone.pause();}
   function playMusic(){
    if(!enabled()||needsGesture||pending||!music.paused)return;
@@ -31,13 +41,13 @@
   }
   function sync(){
    if(!enabled()){wanted=false;pending=null;music.pause();stopStone();return;}
-   if(!wanted){wanted=true;needsGesture=false;}connect();playMusic();
+   if(!wanted){wanted=true;needsGesture=false;}connect();fadeMusic();playMusic();
   }
   function gesture(){
    if(!enabled())return;
    options.unlock?.();connect(true);needsGesture=false;wanted=true;
    const ctx=graph?.ctx;if(ctx&&ctx.state!=='running')try{Promise.resolve(ctx.resume()).catch(()=>{});}catch(_){}
-   playMusic();
+   fadeMusic();playMusic();
   }
   function turn(duration=1600){
    if(!enabled())return;
@@ -46,11 +56,11 @@
    stopTimer=setTimeout(()=>{if(id===turnId)stopStone();},duration+40);
   }
   function dispose(){
-   if(dead)return;dead=true;wanted=false;pending=null;clearInterval(watch);stopStone();music.pause();
+   if(dead)return;dead=true;wanted=false;pending=null;clearInterval(watch);clearInterval(fadeWatch);stopStone();music.pause();
    graph?.nodes.forEach(n=>{try{n.disconnect()}catch(_){}});graph=null;
    if(owned)try{Promise.resolve(owned.close()).catch(()=>{});}catch(_){}
   }
-  if(options.watch!==false){watch=setInterval(sync,250);watch.unref?.();}sync();
+  if(options.watch!==false){watch=setInterval(sync,250);watch.unref?.();fadeWatch=setInterval(fadeMusic,25);fadeWatch.unref?.();}sync();
   return {gesture,sync,turn,dispose};
  }
  return {create};

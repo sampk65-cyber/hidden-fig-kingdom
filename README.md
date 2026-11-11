@@ -19,7 +19,7 @@ art/                  所有圖檔（只換圖不用改程式）
   gh/fig-<階段>.webp         溫室裡的樹：prune 剪枝、set 座果、ripe 採收、winter 度冬
                              （可加 -2、-3 變化圖，自動輪流）
 
-firestore.rules       目前已發布的 Firestore 規則（存檔，改規則從這份接著改）
+firestore.rules       V16.1 規則：待 Firebase 獨立發布（Vercel 不會自動套用）
 docs/                 交接說明與參考圖（不會部署到網站）
 .vercelignore         不部署的檔案：firestore.rules、docs/
 ```

@@ -1,5 +1,5 @@
 rules_version = '2';
-// 隱花王國尋寶 — Firestore 安全規則 V14.2（V4.3＋免單、半價、折200、特別獎改由後端 api/game.js 發放）
+// 隱花王國尋寶 — Firestore 安全規則 V16.1（待 Firebase 發布；全部新券由後端發放）
 service cloud.firestore {
   match /databases/{db}/documents {
 
@@ -185,12 +185,8 @@ service cloud.firestore {
             && get(/databases/$(db)/documents/codes/$(request.resource.data.claimCode)).data.get('type', '') != 'share');
       match /coupons/{cid} {
         allow read: if isAdmin() || (signed() && member(pid));
-        // V14.2：手機只能新增一般寶箱的小額券；免單、半價、折200、特別獎只能由後端發放
-        allow create: if signed() && member(pid)
-          && request.resource.data.used == false
-          && request.resource.data.t in ['n9','n85','n8','ship']
-          && !request.resource.data.keys().hasAny(['srv','src','spN'])
-          && request.resource.data.exp <= request.time.toMillis() + 8*86400000;
+        // V16.1：封鎖仍開著舊頁面的手機直接建立折扣券；後端 Admin SDK 照常發放預設獎品。
+        allow create: if false;
         allow update, delete: if isAdmin();
       }
       match /inbox/{mid} {
