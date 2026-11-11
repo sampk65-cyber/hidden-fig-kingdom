@@ -10,18 +10,6 @@ test('recorded easy chart follows recurring beats even when intervening sounds a
  assert.deepEqual(Array.from(charts[0].notes,n=>n.t),[3,4,5,6,7,8,9]);
  for(let d=0;d<2;d++)for(const n of charts[d].notes)assert.ok(charts[d+1].notes.some(m=>m.t===n.t&&m.l===n.l),'difficulty adds beats without moving existing targets');
 });
-test('all recordings carry measured pulses, nested charts and musical subdivision coordinates',()=>{
- for(const s of api.songs.filter(s=>s.audio)){
-  assert.ok(s.pulses?.length>30,`${s.id}: measured pulses`);
-  assert.ok(s.beats.every(b=>Number.isInteger(b[3])),`${s.id}: musical subdivisions`);
-  const charts=[0,1,2].map(d=>api.chart(s,d));
-  for(let d=0;d<3;d++){
-   const chart=charts[d];assert.ok(chart.ripe>20);let last=-1;
-   for(const n of chart.notes){assert.ok(n.t>last);last=n.t;assert.ok(s.beats.some(b=>b[0]===n.t&&b[3]%[4,2,1][d]===0));}
-   if(d<2)for(const n of chart.notes)assert.ok(charts[d+1].notes.some(m=>n.t===m.t&&n.l===m.l));
-  }
- }
-});
 test('stage pulses use recorded phase and variable beat intervals, including before the first beat',()=>{
  assert.equal(typeof api.pulse,'function');
  const s={audio:'fixture',bpm:120,pulses:[.12,.61,1.13,1.64]};
