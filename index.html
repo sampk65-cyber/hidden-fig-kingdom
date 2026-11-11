@@ -6006,8 +6006,8 @@ function pickGame(done){
   let t0 = performance.now(), score = 0, combo = 0, ripeN = 0, good = 0, bad = 0, drop = 0, over = false, fx = [];
   const now = ()=>(performance.now()-t0)/1000;
   const winW = t=>Math.max(WMIN, W0-(W0-WMIN)*t/SEC) * (roleBase(P.role)==='shiba' ? 1.2 : 1);
-  const mkTree = (slot, delay)=>{ const t = now(), gap = GAP0*(1-.35*t/SEC); return {slot, fr:Array.from({length:NODES},(_,j)=>({at:t+delay+j*gap, w:winW(t+delay+j*gap), st:'on', counted:false}))}; };
-  const trees = SLOTS.map((s,i)=>mkTree(s, .6+i*1.1));
+  const mkTree = (slot, delay)=>{ const t = now(), gap = GAP0*(1-.35*t/SEC); return {slot, fr:Array.from({length:NODES},(_,j)=>({at:t+delay+j*gap+(Math.random()-.5)*gap*.65, w:winW(t+delay+j*gap), st:'on', counted:false}))}; };
+  const trees = SLOTS.map(s=>mkTree(s, .3+Math.random()*4.2));
   const geo = (tr, j)=>{ const s=tr.slot, dp=s.dp, baseY=H*(.5+.42*dp), hgt=H*.7*dp, x=s.x*W, y=baseY-hgt*(.16+j*.088), side=(j%2?1:-1), sc=Math.min(W/390,1.4)*dp;
     return {x:x+side*18*sc, y, side, sc, lx:x-side*26*sc, baseY, top:baseY-hgt, tx:x}; };
   const stage = f=>{ const a=now()-f.at; if(a<0) return 'green'; if(a<TURN) return 'turn'; if(a<TURN+f.w) return 'ripe'; if(a<TURN+f.w+OVER) return 'over'; return 'gone'; };
@@ -6026,7 +6026,9 @@ function pickGame(done){
   function draw(){
     const t = now(); if(over) return;
     // V16: 翡翠溫室成熟採收期 — 只替換摘果挑戰賽 Canvas 畫面
-    const g = cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#DDF4FF'); g.addColorStop(.46,'#F2F8E5'); g.addColorStop(.465,'#82905D'); g.addColorStop(1,'#66513F'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
+    const g = cx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#8DC9F2'); g.addColorStop(.23,'#D3EAF8'); g.addColorStop(.46,'#F6F9E9'); g.addColorStop(.465,'#91A56E'); g.addColorStop(1,'#66513F'); cx.fillStyle=g; cx.fillRect(0,0,W,H);
+    // 自然天光與透光棚布：光線不遮擋遊戲果實
+    const sun=cx.createRadialGradient(W*.82,H*.12,4,W*.82,H*.12,W*.85); sun.addColorStop(0,'rgba(255,255,230,.70)'); sun.addColorStop(.4,'rgba(255,255,235,.18)'); sun.addColorStop(1,'rgba(255,255,255,0)'); cx.fillStyle=sun; cx.fillRect(0,0,W,H*.7);
     // 透光拱棚、金屬骨架及遠近透視
     for(let k=0;k<7;k++){ const depth=k/7, y=H*(.12+depth*.34);
       cx.strokeStyle='rgba(130,159,166,'+(.28+depth*.4)+')'; cx.lineWidth=1.4+depth*1.7;
@@ -6041,13 +6043,18 @@ function pickGame(done){
     cx.fillStyle=path; cx.beginPath(); cx.moveTo(W*.47,H*.46); cx.lineTo(W*.53,H*.46); cx.lineTo(W*.70,H); cx.lineTo(W*.30,H); cx.fill();
     cx.strokeStyle='#58615B'; cx.lineWidth=3;
     for(const side of [-1,1]){ cx.beginPath(); cx.moveTo(W*.5+side*W*.042,H*.46); cx.lineTo(W*.5+side*W*.24,H); cx.stroke(); }
+    // 遠景葉冠與溫室深處的綠色層次
+    for(let k=0;k<28;k++){ const side=k%2?-1:1, depth=Math.floor(k/2)/14, yy=H*(.47+depth*.31), xx=W*.5+side*W*(.07+depth*.55);
+      cx.save(); cx.globalAlpha=.32+depth*.25; palm(cx,xx,yy,(10+depth*23)*Math.min(W/390,1.4),side*.5,k%3===0?'#3F823A':'#77A64B'); cx.restore();
+    }
     [...trees].sort((a,b)=>a.slot.dp-b.slot.dp).forEach(tr=>{
       const g0 = geo(tr,0); const sc=g0.sc;
       cx.strokeStyle='#756246'; cx.lineWidth=7*sc; cx.lineCap='round'; cx.beginPath(); cx.moveTo(g0.tx,g0.baseY); cx.lineTo(g0.tx,g0.top); cx.stroke();
       cx.strokeStyle='rgba(135,151,146,.78)'; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(g0.tx+2,g0.top); cx.lineTo(g0.tx+2,0); cx.stroke();
       tr.fr.forEach((f,j)=>{ const gg=geo(tr,j);
         cx.strokeStyle='#638143'; cx.lineWidth=2.4*sc; cx.beginPath(); cx.moveTo(gg.tx,gg.y+5*sc); cx.lineTo(gg.lx,gg.y-6*sc); cx.stroke();
-        palm(cx, gg.lx, gg.y-6*sc, 32*sc, -gg.side*.7, j%3===0?'#77AD38':j%3===1?'#4D923B':'#39813C');
+        palm(cx, gg.lx, gg.y-6*sc, 36*sc, -gg.side*.7, j%3===0?'#77AD38':j%3===1?'#4D923B':'#39813C');
+        cx.save(); cx.globalAlpha=.38; palm(cx,gg.lx+7*sc,gg.y-11*sc,24*sc,-gg.side*.55,'#B5D76B'); cx.restore();
         if(j===4){ cx.fillStyle='#E67B38'; cx.fillRect(gg.tx-4*sc, gg.y-3*sc, 8*sc, 6*sc); }
       });
       tr.fr.forEach((f,j)=>{
@@ -6064,7 +6071,7 @@ function pickGame(done){
         cx.fillStyle='#64883B'; cx.fillRect(gg.x-r*.12,gg.y-r*1.43,r*.24,r*.22);
         if(d===0 && stage(f)==='ripe'){ cx.strokeStyle='rgba(255,236,140,.9)'; cx.lineWidth=2; cx.beginPath(); cx.arc(gg.x,gg.y,r*1.5,0,Math.PI*2); cx.stroke(); }
       });
-      if(tr.fr.every(f=>f.st!=='on')){ const i=trees.indexOf(tr); trees[i]=mkTree(tr.slot, .8); }      // 這株採完，換下一株
+      if(tr.fr.every(f=>f.st!=='on')){ const i=trees.indexOf(tr); trees[i]=mkTree(tr.slot, .5+Math.random()*2.4); }      // 這株採完，換下一株
     });
     fx = fx.filter(e=>t-e.t<.8); fx.forEach(e=>{ cx.globalAlpha=1-(t-e.t)/.8; cx.fillStyle=e.col; cx.font='900 16px "Noto Sans TC",sans-serif'; cx.textAlign='center'; cx.fillText(e.txt, e.x, e.y-20-(t-e.t)*40); cx.globalAlpha=1; });
     $('#pkT').textContent = Math.max(0, Math.ceil(SEC-t));
