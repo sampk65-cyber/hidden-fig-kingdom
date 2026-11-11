@@ -4557,17 +4557,38 @@ function renderFeed(){
   const show = ()=>{
     const p = FEED[FEED.i], likes = P.likes||[], cms = (p.cms||[]).slice(0,10);
     const lk = likes.includes(p.id), nc = (p.cms||[]).length;
+    // 每篇貼文的個人讚狀態；目前後端尚無公開總讚數，避免顯示虛假的總數
     box.innerHTML = `<div class="fm"><span class="fm-ic">📣</span><div class="fm-t" id="fmT">${esc(p.text)}</div></div>
       ${cms.length ? `<div class="fm-cm" id="fmCm"><div class="fm-cmv" id="fmCmV"></div></div>` : ''}
       <div class="fm-act"><span class="fm-date">${fmDate(p.created).replace(/（.）/,'')}</span>${FEED.length>1?`<button class="fm-nb" id="fmPrev" aria-label="上一則" ${FEED.i>=FEED.length-1?'disabled':''}>‹</button><span class="fm-pg">${FEED.i+1}/${FEED.length}</span><button class="fm-nb" id="fmNext" aria-label="下一則" ${FEED.i===0?'disabled':''}>›</button>`:''}<div class="fm-dots"></div>
-      <button class="fm-ib ${lk?'sel':''}" data-like="${p.id}" aria-label="讚">${lk?'💚':'🤍'}</button><button class="fm-ib" data-cm="${p.id}" aria-label="留言">💬${nc?`<b>${nc}</b>`:''}</button><button class="fm-ib" data-shp="${p.id}" aria-label="分享">📣</button><a class="fm-ib fm-fb" href="${FB_PAGE}" target="_blank" rel="noopener" aria-label="農場粉專">📘</a></div>`;
+      <button class="fm-ib ${lk?'sel':''}" data-like="${p.id}" aria-label="${lk?'已按讚':'按讚'}" aria-pressed="${lk}">${lk?'💚 已讚':'🤍 讚'}</button><button class="fm-ib" data-cm="${p.id}" aria-label="留言">💬${nc?`<b>${nc}</b>`:''}</button><button class="fm-ib" data-shp="${p.id}" aria-label="分享">📣</button><a class="fm-ib fm-fb" href="${FB_PAGE}" target="_blank" rel="noopener" aria-label="農場粉專">📘</a></div>`;
     clearInterval(FEED.ctm);
     if(cms.length){ let k = 0; const tick = ()=>{ const v = document.getElementById('fmCmV'); if(!v) return clearInterval(FEED.ctm); const c = cms[k % cms.length]; k++;
         v.classList.remove('in'); void v.offsetWidth; v.innerHTML = `💬 <b>${esc(c.name||'王國居民')}</b>：${esc(c.text)}`; v.classList.add('in'); };
       tick(); if(cms.length>1) FEED.ctm = setInterval(tick, 2600); }
     box.querySelector('#fmCm') && (box.querySelector('#fmCm').onclick = ()=>openComments(p.id)); box.querySelector('#fmT').onclick = ()=>openComments(p.id);
-    box.querySelector('[data-like]').onclick = ()=>{ const id=p.id; P.likes=P.likes||[]; if(P.likes.includes(id)) return; P.likes.push(id); P.daily.likes=(P.daily.likes||0)+1;
-      if(P.daily.likes<=3) socialReward(.5,'謝謝你按讚'); else { Auth.save(); toast('謝謝你按讚 💚'); } show(); };
+    box.querySelector('[data-like]').onclick = async ()=>{
+      const id=p.id, btn=box.querySelector('[data-like]');
+      if(P.guest || !PID){ toast('登入會員後才能按讚'); return; }
+      P.likes=P.likes||[];
+      if(P.likes.includes(id)){ toast('這篇貼文已經按過讚 💚'); return; }
+      btn.disabled=true; btn.textContent='儲存中…'; FEED.hold=Date.now();
+      // 先寫入玩家檔案，成功後才發放每日按讚獎勵；避免點擊後看似成功卻未儲存
+      const prevLikes=P.likes.slice(), prevDaily=P.daily.likes||0;
+      try{
+        P.likes.push(id);
+        P.daily.likes=prevDaily+1;
+        if(!DEMO) await DB.update('players/'+PID, playerPayload());
+        else Auth.save();
+        if(P.daily.likes<=3) socialReward(.5,'謝謝你按讚');
+        else { Auth.save(); toast('謝謝你按讚 💚'); }
+        show();
+      }catch(e){
+        console.error('農場貼文按讚儲存失敗',e);
+        P.likes=prevLikes; P.daily.likes=prevDaily;
+        toast('按讚未儲存成功，請檢查網路後重試'); show();
+      }
+    };
     box.querySelector('[data-cm]').onclick = ()=>openComments(p.id);
     box.querySelector('[data-shp]').onclick = ()=>sharePost(p);
     const go = d=>{ FEED.i = Math.max(0, Math.min(FEED.length-1, FEED.i+d)); FEED.hold = Date.now(); show(); };
