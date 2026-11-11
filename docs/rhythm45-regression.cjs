@@ -6,9 +6,11 @@ function harness(fetcher){
  vm.runInContext(html.slice(html.indexOf('const RHY_SONGS ='),html.indexOf('/* ---------- V10.6：農場翻牌'))+';globalThis.api={songs:RHY_SONGS,chart:rhyChart,pulse:rhyPulseIndex,load:typeof rhyLoadBeatmaps==="function"?rhyLoadBeatmaps:null};',c);return c.api;
 }
 test('six selectable recordings use the uploaded beatmaps without changing hit times or lanes',async()=>{
- const a=harness();assert.equal(a.songs.length,6,'only the six replacement tracks are selectable');
+ const a=harness();assert.equal(a.songs.filter(s=>s.audio?.startsWith('rhythm45/audio/')).length,6,'the six replacement tracks remain selectable');
+ const retained=JSON.stringify(a.songs.filter(s=>!s.audio?.startsWith('rhythm45/audio/')));
  assert.equal(typeof a.load,'function');await a.load();
- for(const s of a.songs){const file=path.basename(s.audio),source=maps[file];assert.ok(source);assert.ok(fs.existsSync(path.join(root,s.audio)));
+ assert.equal(JSON.stringify(a.songs.filter(s=>!s.audio?.startsWith('rhythm45/audio/'))),retained,'loading new beatmaps must not overwrite restored songs');
+ for(const s of a.songs.filter(s=>s.audio?.startsWith('rhythm45/audio/'))){const file=path.basename(s.audio),source=maps[file];assert.ok(source);assert.ok(fs.existsSync(path.join(root,s.audio)));
   assert.equal(s.duration,45);assert.equal(JSON.stringify(s.beats),JSON.stringify(source.beats));
   const charts=[0,1,2].map(d=>a.chart(s,d));
   for(let d=0;d<3;d++){const chart=charts[d];assert.equal(chart.length,45);assert.ok(chart.ripe>=10);
