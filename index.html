@@ -4468,6 +4468,11 @@ function treeSvg3m(days){
     if(fruitCount>j){const ripe=stage===8&&j<Math.max(1,Math.round((d-84)/2)),fy=y+15,fx=x+side*(12+reach*.32);s+=`<path d="M${fx} ${fy-8}q7 1 7 8q0 9 -7 9q-7 0 -7 -9q0 -7 7 -8Z" fill="${ripe?'#823C68':'#9ABF60'}" stroke="${ripe?'#64304E':'#6E9545'}" stroke-width="1.1"/><path d="M${fx} ${fy-9}l2 -4" stroke="#648B48" stroke-width="1.4"/>`;}
   }
   if(stage===1)s+=`<path d="M${x} ${top}q-7 -11 -13 -3 M${x} ${top}q7 -11 13 -3" stroke="#A3C873" stroke-width="3" fill="none"/>`;
+  // V16.2：以翡翠溫室既有高解析植株素材呈現，不改 90 天生長機制
+  const art=stage<=1?'fig-winter.webp':stage<=3?'fig-prune.webp':stage<=6?'fig-set.webp':stage===7?'fig-set.webp':'fig-ripe-airy-v2.webp';
+  const artHeight=Math.max(28,H0-top+12), artY=H0-artHeight;
+  // 已有的 SVG 枝葉作為素材未載入時的備援；成熟期使用實際溫室素材覆蓋
+  s+=`<image href="art/gh/${art}" x="57" y="${artY}" width="142" height="${artHeight+14}" preserveAspectRatio="xMidYMax meet"/>`;
   s+=`<text x="${x+37}" y="${Math.max(17,top)}" font-size="12" font-weight="700" fill="#56A384">${hM.toFixed(1)}m</text></svg>`;
   return s;
 }
@@ -6029,6 +6034,8 @@ function pickGame(done){
   const winW = t=>Math.max(WMIN, W0-(W0-WMIN)*t/SEC) * (roleBase(P.role)==='shiba' ? 1.2 : 1);
   const mkTree = (slot, delay)=>{ const t = now(), gap = GAP0*(1-.35*t/SEC); return {slot, fr:Array.from({length:NODES},(_,j)=>({at:t+delay+j*gap+(Math.random()-.5)*gap*.65, w:winW(t+delay+j*gap), st:'on', counted:false}))}; };
   const trees = SLOTS.map(s=>mkTree(s, .3+Math.random()*4.2));
+  // 翡翠溫室已使用的高解析成熟植株圖層；素材尚未載入時保留 Canvas 備援
+  const pickFigArt = new Image(); pickFigArt.decoding='async'; pickFigArt.src='art/gh/fig-ripe-airy-v2.webp';
   const geo = (tr, j)=>{ const s=tr.slot, dp=s.dp, baseY=H*(.5+.42*dp), hgt=H*.7*dp, x=s.x*W, y=baseY-hgt*(.16+j*.088), side=(j%2?1:-1), sc=Math.min(W/390,1.4)*dp;
     return {x:x+side*18*sc, y, side, sc, lx:x-side*26*sc, baseY, top:baseY-hgt, tx:x}; };
   const stage = f=>{ const a=now()-f.at; if(a<0) return 'green'; if(a<TURN) return 'turn'; if(a<TURN+f.w) return 'ripe'; if(a<TURN+f.w+OVER) return 'over'; return 'gone'; };
@@ -6070,12 +6077,16 @@ function pickGame(done){
     }
     [...trees].sort((a,b)=>a.slot.dp-b.slot.dp).forEach(tr=>{
       const g0 = geo(tr,0); const sc=g0.sc;
+      if(pickFigArt.complete && pickFigArt.naturalWidth){
+        const spriteH=Math.max(30,g0.baseY-g0.top+35*sc), spriteW=115*sc;
+        cx.save(); cx.globalAlpha=.96; cx.drawImage(pickFigArt,g0.tx-spriteW/2,g0.baseY-spriteH,spriteW,spriteH); cx.restore();
+      }
       cx.strokeStyle='#756246'; cx.lineWidth=7*sc; cx.lineCap='round'; cx.beginPath(); cx.moveTo(g0.tx,g0.baseY); cx.lineTo(g0.tx,g0.top); cx.stroke();
       cx.strokeStyle='rgba(135,151,146,.78)'; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(g0.tx+2,g0.top); cx.lineTo(g0.tx+2,0); cx.stroke();
       tr.fr.forEach((f,j)=>{ const gg=geo(tr,j);
         cx.strokeStyle='#638143'; cx.lineWidth=2.4*sc; cx.beginPath(); cx.moveTo(gg.tx,gg.y+5*sc); cx.lineTo(gg.lx,gg.y-6*sc); cx.stroke();
-        palm(cx, gg.lx, gg.y-6*sc, 36*sc, -gg.side*.7, j%3===0?'#77AD38':j%3===1?'#4D923B':'#39813C');
-        cx.save(); cx.globalAlpha=.38; palm(cx,gg.lx+7*sc,gg.y-11*sc,24*sc,-gg.side*.55,'#B5D76B'); cx.restore();
+        if(!(pickFigArt.complete && pickFigArt.naturalWidth)) palm(cx, gg.lx, gg.y-6*sc, 36*sc, -gg.side*.7, j%3===0?'#77AD38':j%3===1?'#4D923B':'#39813C');
+        if(!(pickFigArt.complete && pickFigArt.naturalWidth)){ cx.save(); cx.globalAlpha=.38; palm(cx,gg.lx+7*sc,gg.y-11*sc,24*sc,-gg.side*.55,'#B5D76B'); cx.restore(); }
         if(j===4){ cx.fillStyle='#E67B38'; cx.fillRect(gg.tx-4*sc, gg.y-3*sc, 8*sc, 6*sc); }
       });
       tr.fr.forEach((f,j)=>{
