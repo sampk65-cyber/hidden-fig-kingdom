@@ -1,0 +1,130 @@
+[
+  {
+    "file": "usefulpix-round-midnight-in-nyc-139545-45.mp3",
+    "audio_sha256": "9da59685ec8510b39acd647ef09420dc9167cf25fca9b6264eef40e8ded0e3a1",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 90,
+    "offbeat_fraction": 0.5,
+    "median_bpm": 89.87,
+    "note_counts": [
+      32,
+      63,
+      122
+    ],
+    "max_attack_to_tracked_grid_ms": 49.34,
+    "rms": 0.248
+  },
+  {
+    "file": "sergequadrado-cinematic-jazz-16587-45.mp3",
+    "audio_sha256": "e5feb78a0aef3917d1d8b8ae2b62de5c065c1f4af076bb8e93f89e1b3e75dfa0",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 85.1,
+    "offbeat_fraction": 0.5,
+    "median_bpm": 85.42,
+    "note_counts": [
+      29,
+      58,
+      113
+    ],
+    "max_attack_to_tracked_grid_ms": 55.15,
+    "rms": 0.1552
+  },
+  {
+    "file": "geoffharvey-sunny-morning-jazz-178472-45.mp3",
+    "audio_sha256": "dc10a4201c29f40528a28f088312f9f80bcad4b82b33657892a00c45004fe0a0",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 80,
+    "offbeat_fraction": 0.5,
+    "median_bpm": 79.51,
+    "note_counts": [
+      28,
+      54,
+      108
+    ],
+    "max_attack_to_tracked_grid_ms": 49.34,
+    "rms": 0.1997
+  },
+  {
+    "file": "sergequadrado-mystical-thing-21569-45.mp3",
+    "audio_sha256": "7e80302aa3672c4d366d5d0572e5c90632962f5386cbe362908b4ccef7ab422e",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 120,
+    "offbeat_fraction": 0.5,
+    "median_bpm": 120.18,
+    "note_counts": [
+      40,
+      81,
+      162
+    ],
+    "max_attack_to_tracked_grid_ms": 52.24,
+    "rms": 0.2096
+  },
+  {
+    "file": "paoloargento-the-best-jazz-club-in-new-orleans-164472-45.mp3",
+    "audio_sha256": "915c91b018a728865a09c32c7e763d92d7fd50fb96077ae4d9daa6aca05e1e9c",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 133.9,
+    "offbeat_fraction": 0.6667,
+    "median_bpm": 134.23,
+    "note_counts": [
+      47,
+      87,
+      177
+    ],
+    "max_attack_to_tracked_grid_ms": 55.15,
+    "rms": 0.2988
+  },
+  {
+    "file": "monument_music-soothing-moments-178951-45.mp3",
+    "audio_sha256": "9d5372aa4f02976a7b93d065723564bd4918bd2ead5c4dd7c802acdc0db8a972",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 120,
+    "offbeat_fraction": 0.5,
+    "median_bpm": 120.19,
+    "note_counts": [
+      42,
+      83,
+      162
+    ],
+    "max_attack_to_tracked_grid_ms": 49.34,
+    "rms": 0.3086
+  },
+  {
+    "file": "music_for_videos-a-jazz-piano-110481-45.mp3",
+    "audio_sha256": "53876513335159708cef62c0dcb9f621aa583daca896bed0a6ec30aebebf4057",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 72.5,
+    "offbeat_fraction": 0.5,
+    "median_bpm": 72.28,
+    "note_counts": [
+      25,
+      50,
+      101
+    ],
+    "max_attack_to_tracked_grid_ms": 46.44,
+    "rms": 0.2547
+  },
+  {
+    "file": "music_for_videos-jazz-trio-165265-45.mp3",
+    "audio_sha256": "15e82318b7a33887d58441b5d37c86a3dd093ec9a45f3c701ffe24c82ac24c63",
+    "source_start_seconds": 0,
+    "decoded_seconds": 45.0,
+    "bpm_prior": 70,
+    "offbeat_fraction": 0.5,
+    "median_bpm": 69.37,
+    "note_counts": [
+      24,
+      49,
+      96
+    ],
+    "max_attack_to_tracked_grid_ms": 55.15,
+    "rms": 0.2453
+  }
+]

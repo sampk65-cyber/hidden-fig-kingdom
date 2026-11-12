@@ -17,7 +17,7 @@ const guardStart=source.indexOf('/* Shared game native-action guard */'),guard=s
    </script>`});});
   await page.goto('http://rhythm.test/');
   await page.evaluate(()=>{localStorage.setItem('hfk_rhythm_song','wulin');rhythmGame(r=>results.push(r));});
-  assert.equal(await page.locator('#rhSongs [data-song]').count(),19);assert.match(await page.locator('.rh-intro').innerText(),/新增 6 首 45 秒/);
+  assert.equal(await page.locator('#rhSongs [data-song]').count(),25);assert.match(await page.locator('.rh-intro').innerText(),/新增 8 首 45 秒/);
   await page.locator('#rhPreview').click();await page.waitForFunction(()=>document.querySelector('#rhPreview').getAttribute('aria-pressed')==='true');
   const durations=await page.evaluate(async()=>{const out=[];for(const s of RHY_SONGS.filter(s=>s.audio?.startsWith('rhythm45/audio/'))){const b=await rhyLoadAudio(s);out.push({name:s.n,duration:b.duration,notes:[0,1,2].map(d=>rhyChart(s,d).ripe)});}return out;});
   for(const s of durations)assert.ok(Math.abs(s.duration-45)<.02,s.name);console.log('Decoded tracks:',JSON.stringify(durations));
