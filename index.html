@@ -1221,7 +1221,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V16.5';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V16.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -6022,6 +6022,52 @@ function grantCoupon(type, extra={}){
 // 特別獎券用自己的名稱與說明，其他券照原本類型
 function cpT(c){ return c.t==='pts' ? {id:'pts', big:'+'+(c.pts??6), sub:'果友值', c:'#6E9E3E'} : c.t==='sp' ? {id:'sp', big:c.spN||'特別獎', sub:c.spD||'', c:'#D4A017'} : (COUPON_T.find(x=>x.id===c.t) || {id:c.t, big:'優惠券', sub:'', c:'#6E6470'}); }
 
+// V16.6: leaves keep their source aspect ratio; screen height only spaces the fruit nodes.
+function pickDrawLeaf(cx, image, x, y, width, angle, shade=0){
+  if(!(image.complete && image.naturalWidth)){
+    palm(cx,x,y,width*.65,angle,shade?'#4D8738':'#79A942'); return;
+  }
+  const height=width*image.naturalHeight/image.naturalWidth;
+  cx.save(); cx.translate(x,y); cx.rotate(angle);
+  cx.drawImage(image,-width*.5,-height,width,height);
+  cx.restore();
+}
+function pickFruitSprite(image,color,stage,cache){
+  if(!(image.complete && image.naturalWidth))return null;
+  // Quantized color variants retain the original continuous ripening palette without per-frame filters.
+  const tint='#'+color.slice(1).match(/../g).map(v=>Math.min(255,Math.round(parseInt(v,16)/16)*16).toString(16).padStart(2,'0')).join(''),key=stage+tint;
+  if(cache.has(key))return cache.get(key);
+  const c=document.createElement('canvas');c.width=128;c.height=128;const g=c.getContext('2d');
+  g.drawImage(image,0,0,128,128);g.globalCompositeOperation='color';g.fillStyle=tint;g.fillRect(0,0,128,128);
+  g.globalCompositeOperation='destination-in';g.drawImage(image,0,0,128,128);
+  g.globalCompositeOperation='source-atop';g.globalAlpha=stage==='over'?.76:stage==='green'?.24:.10;g.fillStyle=tint;g.fillRect(0,0,128,128);
+  cache.set(key,c);return c;
+}
+function pickDrawPlant(cx,tr,geo,leaf){
+  const g=geo(tr,0), sc=g.sc, height=g.baseY-g.top;
+  // A tapered living stem with bark detail, in the same position as the original fruit nodes.
+  const bark=cx.createLinearGradient(g.tx-4*sc,0,g.tx+4*sc,0);
+  bark.addColorStop(0,'#645943'); bark.addColorStop(.35,'#BDA580'); bark.addColorStop(.62,'#998267'); bark.addColorStop(1,'#615C40');
+  cx.fillStyle=bark; cx.beginPath(); cx.moveTo(g.tx-3.9*sc,g.baseY);
+  cx.bezierCurveTo(g.tx-4*sc,g.baseY-height*.3,g.tx-1.5*sc,g.top+height*.2,g.tx-1.2*sc,g.top);
+  cx.lineTo(g.tx+1.2*sc,g.top); cx.bezierCurveTo(g.tx+2.5*sc,g.top+height*.3,g.tx+2*sc,g.baseY-height*.3,g.tx+3.9*sc,g.baseY); cx.closePath(); cx.fill();
+  cx.strokeStyle='rgba(76,64,43,.40)'; cx.lineWidth=.65*sc;
+  for(let k=0;k<35;k++){const y=g.baseY-height*(k+.5)/36,x=g.tx+Math.sin(k*2.4)*1.7*sc;
+    cx.beginPath();cx.moveTo(x,y);cx.lineTo(x+sc,y+2.8*sc);cx.stroke();}
+  // Keep the existing training cord and orange tie.
+  cx.strokeStyle='rgba(135,151,146,.78)'; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(g.tx+2,g.top); cx.lineTo(g.tx+2,0); cx.stroke();
+  tr.fr.forEach((f,j)=>{
+    const n=geo(tr,j), w=(70+(j%3)*6)*sc, lx=n.tx-n.side*(14+(j%3)*3)*sc, ly=n.y+8*sc;
+    cx.strokeStyle='#728A43'; cx.lineWidth=2.2*sc; cx.lineCap='round';cx.beginPath();cx.moveTo(n.tx,n.y+11*sc);cx.quadraticCurveTo(n.tx-n.side*8*sc,n.y+5*sc,lx,ly);cx.stroke();
+    pickDrawLeaf(cx,leaf,lx,ly,w,-n.side*(.55+(j%3)*.12));
+    if(j%2===0)pickDrawLeaf(cx,leaf,n.tx,n.y-12*sc,48*sc,n.side*.92,1);
+    // Fruit pedicels meet the unchanged clickable centers, not a decorative fruit in a photograph.
+    cx.strokeStyle='#82934C';cx.lineWidth=1.8*sc;cx.beginPath();cx.moveTo(n.tx,n.y+6*sc);cx.quadraticCurveTo(n.x,n.y-29*sc,n.x,n.y-18*sc);cx.stroke();
+    if(j===4){cx.fillStyle='#E67B38';cx.fillRect(n.tx-4*sc,n.y-3*sc,8*sc,6*sc);}
+  });
+  pickDrawLeaf(cx,leaf,g.tx,g.top+22*sc,38*sc,-.24);
+}
+
 /* ---------- 摘果挑戰賽：由下往上、一葉一果依序成熟，紅紫色才採 ---------- */
 const PICK_TASK = {id:'pick', n:'摘果挑戰賽', i:'🧺',
   d:'無花果從枝條最下面的節位先成熟，一節一葉一果，由下往上依序轉色。太綠不夠甜，太黑就過熟容易裂果、發酵，要在紅紫色的時候採收。',
@@ -6040,8 +6086,10 @@ function pickGame(done){
   const winW = t=>Math.max(WMIN, W0-(W0-WMIN)*t/SEC) * (roleBase(P.role)==='shiba' ? 1.2 : 1);
   const mkTree = (slot, delay)=>{ const t = now(), gap = GAP0*(1-.35*t/SEC); return {slot, fr:Array.from({length:NODES},(_,j)=>({at:t+delay+j*gap+(Math.random()-.5)*gap*.65, w:winW(t+delay+j*gap), st:'on', counted:false}))}; };
   const trees = SLOTS.map(s=>mkTree(s, .3+Math.random()*4.2));
-  // 翡翠溫室已使用的高解析成熟植株圖層；素材尚未載入時保留 Canvas 備援
-  const pickFigArt = new Image(); pickFigArt.decoding='async'; pickFigArt.src='art/gh/fig-ripe-airy-v2.webp';
+  const pickLeafArt = new Image(); pickLeafArt.decoding='async'; pickLeafArt.src='art/gh/pick-fig-leaf-v16.6.webp';
+  const pickFruitArt = new Image(); pickFruitArt.decoding='async'; pickFruitArt.src='art/gh/pick-fig-fruit-v16.6.webp';
+  const fruitSprites=new Map();
+  let plantLayer=null, plantLayerReady=false;
   const geo = (tr, j)=>{ const s=tr.slot, dp=s.dp, baseY=H*(.5+.42*dp), hgt=H*.7*dp, x=s.x*W, y=baseY-hgt*(.16+j*.088), side=(j%2?1:-1), sc=Math.min(W/390,1.4)*dp;
     return {x:x+side*18*sc, y, side, sc, lx:x-side*26*sc, baseY, top:baseY-hgt, tx:x}; };
   const stage = f=>{ const a=now()-f.at; if(a<0) return 'green'; if(a<TURN) return 'turn'; if(a<TURN+f.w) return 'ripe'; if(a<TURN+f.w+OVER) return 'over'; return 'gone'; };
@@ -6077,36 +6125,35 @@ function pickGame(done){
     cx.fillStyle=path; cx.beginPath(); cx.moveTo(W*.47,H*.46); cx.lineTo(W*.53,H*.46); cx.lineTo(W*.70,H); cx.lineTo(W*.30,H); cx.fill();
     cx.strokeStyle='#58615B'; cx.lineWidth=3;
     for(const side of [-1,1]){ cx.beginPath(); cx.moveTo(W*.5+side*W*.042,H*.46); cx.lineTo(W*.5+side*W*.24,H); cx.stroke(); }
-    // 遠景葉冠與溫室深處的綠色層次
-    for(let k=0;k<28;k++){ const side=k%2?-1:1, depth=Math.floor(k/2)/14, yy=H*(.47+depth*.31), xx=W*.5+side*W*(.07+depth*.55);
-      cx.save(); cx.globalAlpha=.32+depth*.25; palm(cx,xx,yy,(10+depth*23)*Math.min(W/390,1.4),side*.5,k%3===0?'#3F823A':'#77A64B'); cx.restore();
+    // Cache only the plant artwork. Fruit, timing and pointer coordinates remain live and unchanged.
+    const leafReady=!!(pickLeafArt.complete && pickLeafArt.naturalWidth);
+    if(!plantLayer || plantLayerReady!==leafReady){
+      plantLayer=document.createElement('canvas');plantLayer.width=W*dpr;plantLayer.height=H*dpr;
+      const pc=plantLayer.getContext('2d');pc.setTransform(dpr,0,0,dpr,0,0);
+      // Distant foliage uses the same natural leaf proportions as the six playable plants.
+      for(let k=0;k<28;k++){const side=k%2?-1:1, depth=Math.floor(k/2)/14, yy=H*(.47+depth*.31), xx=W*.5+side*W*(.07+depth*.55);
+        pickDrawLeaf(pc,pickLeafArt,xx,yy,(20+depth*40)*Math.min(W/390,1.4),side*.65);}
+      [...trees].sort((a,b)=>a.slot.dp-b.slot.dp).forEach(tr=>pickDrawPlant(pc,tr,geo,pickLeafArt));
+      plantLayerReady=leafReady;
     }
+    cx.drawImage(plantLayer,0,0,W,H);
+    // All playable fruit stays above the foliage so a wider leaf never hides a target.
     [...trees].sort((a,b)=>a.slot.dp-b.slot.dp).forEach(tr=>{
-      const g0 = geo(tr,0); const sc=g0.sc;
-      if(pickFigArt.complete && pickFigArt.naturalWidth){
-        const spriteH=Math.max(30,g0.baseY-g0.top+35*sc), spriteW=115*sc;
-        cx.save(); cx.globalAlpha=.96; cx.drawImage(pickFigArt,g0.tx-spriteW/2,g0.baseY-spriteH,spriteW,spriteH); cx.restore();
-      }
-      cx.strokeStyle='#756246'; cx.lineWidth=7*sc; cx.lineCap='round'; cx.beginPath(); cx.moveTo(g0.tx,g0.baseY); cx.lineTo(g0.tx,g0.top); cx.stroke();
-      cx.strokeStyle='rgba(135,151,146,.78)'; cx.lineWidth=1.2; cx.beginPath(); cx.moveTo(g0.tx+2,g0.top); cx.lineTo(g0.tx+2,0); cx.stroke();
-      tr.fr.forEach((f,j)=>{ const gg=geo(tr,j);
-        cx.strokeStyle='#638143'; cx.lineWidth=2.4*sc; cx.beginPath(); cx.moveTo(gg.tx,gg.y+5*sc); cx.lineTo(gg.lx,gg.y-6*sc); cx.stroke();
-        if(!(pickFigArt.complete && pickFigArt.naturalWidth)) palm(cx, gg.lx, gg.y-6*sc, 36*sc, -gg.side*.7, j%3===0?'#77AD38':j%3===1?'#4D923B':'#39813C');
-        if(!(pickFigArt.complete && pickFigArt.naturalWidth)){ cx.save(); cx.globalAlpha=.38; palm(cx,gg.lx+7*sc,gg.y-11*sc,24*sc,-gg.side*.55,'#B5D76B'); cx.restore(); }
-        if(j===4){ cx.fillStyle='#E67B38'; cx.fillRect(gg.tx-4*sc, gg.y-3*sc, 8*sc, 6*sc); }
-      });
       tr.fr.forEach((f,j)=>{
         const st = stage(f); if(f.st==='on' && st!=='green' && st!=='turn' && !f.counted){ f.counted=true; ripeN++; }
         if(f.st==='on' && st==='gone'){ f.st='drop'; drop++; score-=1; SND.bad(); combo=0; const gg=geo(tr,j); float(gg.x,gg.y,'掉落 -1','#8C6A4E'); hud(); }
         if(f.st!=='on') return; const gg=geo(tr,j), r=15*gg.sc*(stage(f)==='green'?.8+Math.min(.2,(now()-f.at+6)/30):1);
         // 波姬紅：青綠 → 黃綠 → 紅紫 → 紫紅；保留原成熟判定與點擊座標
+        const fruitSprite=pickFruitSprite(pickFruitArt,color(f),st,fruitSprites);
+        if(fruitSprite){cx.drawImage(fruitSprite,gg.x-r*1.3,gg.y-r*1.6,r*2.6,r*2.6);}else{
         const fg=cx.createLinearGradient(gg.x-r,gg.y-r,gg.x+r,gg.y+r);
         fg.addColorStop(0,stage(f)==='green'?'#C5E56D':stage(f)==='turn'?'#E8B663':'#D86B7A');
         fg.addColorStop(.42,color(f)); fg.addColorStop(1,stage(f)==='over'?'#21131B':'#54223F');
-        cx.fillStyle=fg; cx.beginPath(); cx.moveTo(gg.x,gg.y-r*1.3); cx.bezierCurveTo(gg.x+r*.72,gg.y-r*.88,gg.x+r*1.13,gg.y+r*.67,gg.x,gg.y+r); cx.bezierCurveTo(gg.x-r*1.13,gg.y+r*.67,gg.x-r*.72,gg.y-r*.88,gg.x,gg.y-r*1.3); cx.fill();
+        cx.fillStyle=fg; cx.beginPath(); cx.moveTo(gg.x,gg.y-r*1.3); cx.bezierCurveTo(gg.x+r*.12,gg.y-r*.45,gg.x+r*1.02,gg.y-r*.27,gg.x+r*.92,gg.y+r*.32); cx.bezierCurveTo(gg.x+r*.84,gg.y+r*1.2,gg.x-r*.84,gg.y+r*1.2,gg.x-r*.92,gg.y+r*.32); cx.bezierCurveTo(gg.x-r*1.02,gg.y-r*.27,gg.x-r*.12,gg.y-r*.45,gg.x,gg.y-r*1.3); cx.fill();
         cx.save(); cx.globalAlpha=.35; cx.strokeStyle='#F9DDA0'; cx.lineWidth=Math.max(.5,r*.07);
         for(const side of [-1,1]){ cx.beginPath(); cx.moveTo(gg.x+side*r*.15,gg.y-r*.75); cx.quadraticCurveTo(gg.x+side*r*.72,gg.y,gg.x+side*r*.34,gg.y+r*.65); cx.stroke(); } cx.restore();
         cx.fillStyle='#64883B'; cx.fillRect(gg.x-r*.12,gg.y-r*1.43,r*.24,r*.22);
+        }
         if(d===0 && stage(f)==='ripe'){ cx.strokeStyle='rgba(255,236,140,.9)'; cx.lineWidth=2; cx.beginPath(); cx.arc(gg.x,gg.y,r*1.5,0,Math.PI*2); cx.stroke(); }
       });
       if(tr.fr.every(f=>f.st!=='on')){ const i=trees.indexOf(tr); trees[i]=mkTree(tr.slot, .5+Math.random()*2.4); }      // 這株採完，換下一株
