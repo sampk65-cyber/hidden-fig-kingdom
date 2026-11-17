@@ -1221,7 +1221,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V16.6';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V16.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1683,9 +1683,9 @@ const RHY_SONGS = [
 ];
 // Packs load independently; retained songs keep their original timing data.
 const RHY_BEATMAPS=new Map();
-function rhyBeatmapURL(song){return song?.beatmap||(song?.audio?.startsWith('rhythm45/audio/')?'rhythm45/beatmaps.json?v=16.3':null);}
+function rhyBeatmapURL(song){return song?.beatmap||(song?.audio?.startsWith('rhythm45/audio/')?'rhythm45/beatmaps.json?v=16.7':null);}
 function rhyLoadBeatmaps(song){
-  const url=rhyBeatmapURL(song)||'rhythm45/beatmaps.json?v=16.3';
+  const url=rhyBeatmapURL(song)||'rhythm45/beatmaps.json?v=16.7';
   if(RHY_BEATMAPS.has(url))return RHY_BEATMAPS.get(url);
   const promise=(async()=>{
     const response=await fetch(url);if(!response.ok)throw new Error('beatmap_fetch');
@@ -1694,9 +1694,14 @@ function rhyLoadBeatmaps(song){
       if(!data||data.duration!==45||!Array.isArray(data.beats)||data.beats.length<10||!Number.isFinite(data.bpm_estimate)||data.bpm_estimate<=0)throw new Error('beatmap_invalid');
       if(!data.beats.every((b,i)=>Array.isArray(b)&&Number.isFinite(b[0])&&b[0]>=0&&b[0]<45&&Number.isInteger(b[1])&&b[1]>=0&&b[1]<=2&&Number.isFinite(b[2])&&Number.isInteger(b[3])&&(!i||b[0]>data.beats[i-1][0])))throw new Error('beatmap_invalid');
       if(data.pulses!==undefined&&(!Array.isArray(data.pulses)||!data.pulses.length||!data.pulses.every((t,i)=>Number.isFinite(t)&&t>=0&&t<45&&(!i||t>data.pulses[i-1]))))throw new Error('beatmap_pulses_invalid');
+      if(data.hardBeats!==undefined&&(!Array.isArray(data.hardBeats)||data.hardBeats.length<10||!data.hardBeats.every((b,i)=>Array.isArray(b)&&Number.isFinite(b[0])&&b[0]>=0&&b[0]<45&&Number.isInteger(b[1])&&b[1]>=0&&b[1]<=2&&Number.isFinite(b[2])&&Number.isInteger(b[3])&&(!i||b[0]>data.hardBeats[i-1][0]))))throw new Error('beatmap_hard_invalid');
+      if(data.hardPulses!==undefined&&(!Array.isArray(data.hardPulses)||!data.hardPulses.length||!data.hardPulses.every((t,i)=>Number.isFinite(t)&&t>=0&&t<45&&(!i||t>data.hardPulses[i-1]))))throw new Error('beatmap_hard_pulses_invalid');
       return data;
     });
-    songs.forEach((s,i)=>{s.beats=loaded[i].beats;s.pulses=loaded[i].pulses||s.beats.map(b=>b[0]);s.bpm=loaded[i].bpm_estimate;});
+    songs.forEach((s,i)=>{s.beats=loaded[i].beats;s.pulses=loaded[i].pulses||s.beats.map(b=>b[0]);s.bpm=loaded[i].bpm_estimate;
+      if(loaded[i].hardBeats)s.hardBeats=loaded[i].hardBeats;
+      if(loaded[i].hardPulses)s.hardPulses=loaded[i].hardPulses;
+    });
     return maps;
   })().catch(error=>{RHY_BEATMAPS.delete(url);throw error;});
   RHY_BEATMAPS.set(url,promise);return promise;
@@ -1730,7 +1735,7 @@ function rhyChart(song,d){
     // Keep one musical motif across difficulties. Extra notes subdivide it;
     // loud vocals never displace a quieter main beat. Assign lanes before filtering.
     const picked=[],last=[-9,-9,-9],division=[4,2,1][d];
-    for(const [t,raw,weight,step] of song.beats){
+    for(const [t,raw,weight,step] of (d===2&&song.hardBeats?song.hardBeats:song.beats)){
       if(t<2.6||t>song.duration-.5)continue;
       let lane=-1;for(let k=0;k<3;k++){const l=(raw+k)%3;if(t-last[l]>=.24){lane=l;break;}}
       if(lane<0)continue;last[lane]=t;
@@ -1755,9 +1760,10 @@ function rhyChart(song,d){
   notes.sort((a,b)=>a.t-b.t);return {notes,length,fall:[2.4,2,1.7][d],ripe:notes.filter(n=>!n.g).length};
 }
 // The stage and notes share the recording's measured beat phase, not BPM from zero.
-function rhyPulseIndex(song,time){
-  if(!song.pulses)return Math.floor(time/(60/song.bpm));
-  let lo=0,hi=song.pulses.length;while(lo<hi){const mid=(lo+hi)>>1;if(song.pulses[mid]<=time)lo=mid+1;else hi=mid;}
+function rhyPulseIndex(song,time,d){
+  const pulses=d===2&&song.hardPulses?song.hardPulses:song.pulses;
+  if(!pulses)return Math.floor(time/(60/song.bpm));
+  let lo=0,hi=pulses.length;while(lo<hi){const mid=(lo+hi)>>1;if(pulses[mid]<=time)lo=mid+1;else hi=mid;}
   return lo-1;
 }
 // Audible device time. Source scheduling must continue to use ctx.currentTime.
@@ -1910,7 +1916,7 @@ function rhyRun(done,SONG,d){
     const pct=Math.max(5,Math.min(100,Math.round(pts/(ripe*2)*100))),accuracy=Math.round((perfect+good*.5)/ripe*100);pct>=50?SND.win():SND.lose();done({score:pct,detail:`${SONG.n}・準確率 ${accuracy}%・完美 ${perfect}・不錯 ${good}・漏接 ${miss}・最高連擊 ${maxC}`});};
   $('#rhyX').onclick=()=>end(true);$('#rhPauseQuit').onclick=()=>end(true);$('#rhPause').onclick=pause;
   const loop=()=>{if(over||paused)return;if(player.suspended()){pause();return;}const now=player.now(),lineY=F.clientHeight*.82;$('#rhBar').style.width=Math.max(0,(1-now/endTime)*100)+'%';
-    const b=rhyPulseIndex(SONG,now);if(b>lastBeat&&now>=0){lastBeat=b;F.classList.remove('pulse');void F.offsetWidth;F.classList.add('pulse');}
+    const b=rhyPulseIndex(SONG,now,d);if(b>lastBeat&&now>=0){lastBeat=b;F.classList.remove('pulse');void F.offsetWidth;F.classList.add('pulse');}
     notes.forEach(n=>{if(n.done)return;const dt=n.t-now;if(dt>FALL)return;if(!n.el){n.el=document.createElement('div');n.el.className='rh-fig'+(n.g?' green':'');n.el.innerHTML=RHY_FIG_SVG;lanes[n.l].appendChild(n.el);}n.el.style.transform=`translateY(${lineY-dt/FALL*lineY}px)`;if(dt<-.22){n.done=true;n.el.remove();if(!n.g){miss++;ng++;combo=0;judge('NG','bad','漏接熟果');}}});
     if(now>=endTime)return end(false);raf=requestAnimationFrame(loop);
   };

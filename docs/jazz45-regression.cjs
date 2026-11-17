@@ -2,9 +2,9 @@ const fs=require('node:fs'),vm=require('node:vm'),path=require('node:path'),cryp
 const root=path.join(__dirname,'..'),html=fs.readFileSync(path.join(root,'index.html'),'utf8'),fixture=require('./jazz45-retained-fixture.json');
 const hash=x=>crypto.createHash('sha256').update(JSON.stringify(x)).digest('hex');
 function harness(fetcher){const c=vm.createContext({console,Math,performance,setInterval,clearInterval,setTimeout,clearTimeout,fetch:fetcher|| (async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,url.split('?')[0]),'utf8'))}))});vm.runInContext(html.slice(html.indexOf('const RHY_SONGS ='),html.indexOf('/* ---------- V10.6：農場翻牌'))+';globalThis.api={songs:RHY_SONGS,chart:rhyChart,load:rhyLoadBeatmaps};',c);return c.api;}
-test('only positions 18 and 19 are replaced: first 17 recordings and all 51 charts stay unchanged',async()=>{
+test('first 17 recordings remain; only the separately tested Peace advanced override may differ',async()=>{
  const a=harness();assert.equal(a.songs.length,25);await a.load();
- for(let i=0;i<17;i++){assert.equal(a.songs[i].id,fixture[i].id);assert.equal(hash(a.songs[i]),fixture[i].hash);for(let d=0;d<3;d++)assert.equal(hash(a.chart(a.songs[i],d)),fixture[i].charts[d]);}
+ for(let i=0;i<17;i++){assert.equal(a.songs[i].id,fixture[i].id);const {hardBeats,hardPulses,...original}=a.songs[i];assert.equal(hash(original),fixture[i].hash);for(let d=0;d<3;d++)if(!(original.id==='peace45'&&d===2))assert.equal(hash(a.chart(a.songs[i],d)),fixture[i].charts[d]);}
  assert.ok(!a.songs.some(s=>['aurora','earth'].includes(s.id)));assert.equal(new Set(a.songs.map(s=>s.id)).size,25);
 });
 test('eight jazz recordings have independent loaded maps and three nested 45-second charts',async()=>{

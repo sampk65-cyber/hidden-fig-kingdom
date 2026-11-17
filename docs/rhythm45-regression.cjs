@@ -5,7 +5,7 @@ function harness(fetcher){
  const c=vm.createContext({console,Math,performance,setInterval,clearInterval,setTimeout,clearTimeout,fetch:fetcher|| (async url=>({ok:true,json:async()=>JSON.parse(fs.readFileSync(path.join(root,url.split('?')[0]),'utf8'))}))});
  vm.runInContext(html.slice(html.indexOf('const RHY_SONGS ='),html.indexOf('/* ---------- V10.6：農場翻牌'))+';globalThis.api={songs:RHY_SONGS,chart:rhyChart,pulse:rhyPulseIndex,load:typeof rhyLoadBeatmaps==="function"?rhyLoadBeatmaps:null};',c);return c.api;
 }
-test('six selectable recordings use the uploaded beatmaps without changing hit times or lanes',async()=>{
+test('six recordings use their declared beatmaps with only the optional advanced override',async()=>{
  const a=harness();assert.equal(a.songs.filter(s=>s.audio?.startsWith('rhythm45/audio/')).length,6,'the six replacement tracks remain selectable');
  const retained=JSON.stringify(a.songs.filter(s=>!s.audio?.startsWith('rhythm45/audio/')));
  assert.equal(typeof a.load,'function');await a.load();
@@ -14,8 +14,9 @@ test('six selectable recordings use the uploaded beatmaps without changing hit t
   assert.equal(s.duration,45);assert.equal(JSON.stringify(s.beats),JSON.stringify(source.beats));
   const charts=[0,1,2].map(d=>a.chart(s,d));
   for(let d=0;d<3;d++){const chart=charts[d];assert.equal(chart.length,45);assert.ok(chart.ripe>=10);
-   for(const n of chart.notes){assert.ok(source.beats.some(b=>b[0]===n.t&&b[1]===n.l));assert.ok(n.t>=chart.fall&&n.t<44.5);assert.equal(a.pulse(s,n.t),source.beats.findIndex(b=>b[0]===n.t));}
-   if(d<2){assert.ok(chart.ripe<charts[d+1].ripe);for(const n of chart.notes)assert.ok(charts[d+1].notes.some(m=>m.t===n.t&&m.l===n.l));}
+   const beats=d===2&&source.hardBeats?source.hardBeats:source.beats,pulses=d===2&&source.hardPulses?source.hardPulses:source.beats.map(b=>b[0]);
+   for(const n of chart.notes){assert.ok(beats.some(b=>b[0]===n.t&&b[1]===n.l));assert.ok(n.t>=chart.fall&&n.t<44.5);assert.equal(a.pulse(s,n.t,d),pulses.filter(t=>t<=n.t).length-1);}
+   if(d<2){assert.ok(chart.ripe<charts[d+1].ripe);for(const n of chart.notes)assert.ok(charts[d+1].notes.some(m=>(d===1&&source.hardBeats?Math.abs(m.t-n.t)<=.085:m.t===n.t)&&m.l===n.l));}
   }
  }
 });
