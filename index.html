@@ -653,6 +653,9 @@ body.admin #app{max-width:1100px}
 .adm-card.hi{background:color-mix(in srgb,var(--fig) 13%,var(--card))}.adm-card.hi b{color:color-mix(in srgb,var(--fig) 65%,var(--ink))}
 .adm-bar{position:sticky;top:env(safe-area-inset-top,0px);display:flex;align-items:center;gap:10px;background:var(--bg);padding:8px 0;z-index:5;margin-bottom:6px}.adm-bar b{font-size:16px}
 #admin{padding:14px 16px 40px}
+.adm-pw-field{display:flex;align-items:center;gap:8px;margin:6px 0 10px}
+.adm-pw-field .field{flex:1;min-width:0;margin:0}
+.adm-pw-field .chip{flex:none;min-height:44px}
 .admtabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--bg);padding:8px 0;z-index:5}
 .zrow{display:flex;gap:10px;align-items:center}
 .zrow b{min-width:8.5em;flex:none;white-space:nowrap;font-size:14px}
@@ -1054,7 +1057,10 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
     <label class="lbl" for="admEmail">管理員 Email</label>
     <input id="admEmail" class="field" type="email" autocomplete="username">
     <label class="lbl" for="admPw">密碼</label>
-    <input id="admPw" class="field" type="password" autocomplete="current-password">
+    <div class="adm-pw-field">
+      <input id="admPw" class="field" type="password" autocomplete="current-password" autocapitalize="none" spellcheck="false">
+      <button type="button" class="chip" aria-controls="admPw">顯示密碼</button>
+    </div>
     <button id="btnAdm" class="btn main">登入</button>
     <p class="hint" id="admHint"></p>
   </div>
@@ -1177,7 +1183,11 @@ figure.ph figcaption{display:flex;justify-content:space-between;gap:8px;font-siz
       <div class="card"><b>➕ 新增管理員</b>
         <label class="lbl" for="aName">稱呼</label><input id="aName" class="field" maxlength="20" placeholder="例如：小明">
         <label class="lbl" for="aEmail">Email</label><input id="aEmail" class="field" type="email" autocomplete="off" placeholder="name@example.com">
-        <label class="lbl" for="aPw">密碼（至少 6 字元，請告知對方）</label><input id="aPw" class="field" type="text" autocomplete="new-password">
+        <label class="lbl" for="aPw">密碼（至少 6 字元，請告知對方）</label>
+        <div class="adm-pw-field">
+          <input id="aPw" class="field" type="password" autocomplete="new-password" autocapitalize="none" spellcheck="false">
+          <button type="button" class="chip" aria-controls="aPw">顯示密碼</button>
+        </div>
         <button id="btnAddAdm" class="btn main">新增管理員</button>
         <p class="lvtxt">已經有 Firebase 帳號的 Email，輸入他原本的密碼即可加入。對方登入後可到 Firebase 主控台重設密碼。</p></div>
       <div class="card"><b>目前管理員</b><div id="admList"></div></div>
@@ -1221,7 +1231,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V16.7';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V16.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -3459,6 +3469,8 @@ const Admin = {
     if(u && !u.isAnonymous && await DB.get('admins/'+u.uid).catch(()=>null)){ Login.uid=u.uid; Admin.main(); }
   },
   main(){
+    $('#admPw').value = '';
+    setAdminPasswordVisible($('#admPw'), false);
     $('#admLogin').classList.add('hide'); $('#admMain').classList.remove('hide');
     $('#admVer').textContent = '版本 '+APP_VERSION; Admin.home();
     const v = new URLSearchParams(location.search).get('v');          // 掃顧客券 QR 進來：直接查這張券
@@ -3466,6 +3478,7 @@ const Admin = {
     if(new URLSearchParams(location.search).has('summit')) Admin.tab('summit');
   },
   home(){
+    setAdminPasswordVisible($('#aPw'), false);
     if(window.CastleVIP) CastleVIP.disposeAdmin();
     $('#admHome').classList.remove('hide'); $('#admBar').classList.add('hide');
     document.querySelectorAll('.admpane').forEach(p=>p.classList.add('hide')); window.scrollTo(0,0);
@@ -3692,7 +3705,9 @@ const Admin = {
       catch(e){ if(e.code!=='auth/email-already-in-use') throw e; uid = (await fb.auth.signInWithEmailAndPassword(A2, email, pw)).user.uid; }
       await fb.auth.signOut(A2);
       await DB.set('admins/'+uid, {email, name:name||email.split('@')[0], created:Date.now(), by:Login.uid});
-      $('#aEmail').value=''; $('#aPw').value=''; $('#aName').value=''; toast(`已新增管理員 ${email}`); Admin.admins();
+      $('#aEmail').value=''; $('#aPw').value=''; $('#aName').value='';
+      setAdminPasswordVisible($('#aPw'), false);
+      toast(`已新增管理員 ${email}`); Admin.admins();
     }catch(e){ console.error(e); toast({'auth/wrong-password':'這個 Email 已有帳號，密碼不對','auth/invalid-credential':'這個 Email 已有帳號，密碼不對','auth/weak-password':'密碼太簡單，至少 6 個字元','auth/invalid-email':'Email 格式不對','permission-denied':'權限不足：請先更新 Firestore 規則到 V4.0'}[e.code] || ('新增失敗：'+(e.code||e.message)), 4000); }
     btn.disabled = false; btn.textContent = '新增管理員';
   },
@@ -3735,6 +3750,17 @@ const Admin = {
       catch(e){ console.error(e); btn.disabled = false; btn.textContent = '送出私訊'; toast('送出失敗：請確認 Firestore 規則已加上 inbox'); } };
   }
 };
+function setAdminPasswordVisible(field, visible){
+  field.type = visible ? 'text' : 'password';
+  field.nextElementSibling.textContent = visible ? '隱藏密碼' : '顯示密碼';
+}
+const adminPasswordFields = document.querySelectorAll('.adm-pw-field .field');
+for(const field of adminPasswordFields){
+  field.nextElementSibling.onclick = ()=>setAdminPasswordVisible(field, field.type === 'password');
+}
+document.addEventListener('visibilitychange', ()=>{
+  if(document.hidden) adminPasswordFields.forEach(field=>setAdminPasswordVisible(field, false));
+});
 $('#btnAdm').onclick = async()=>{
   $('#btnAdm').disabled = true;
   try{ await Login.admin($('#admEmail').value.trim(), $('#admPw').value); Admin.main(); }
