@@ -1231,7 +1231,7 @@ const FIREBASE_CONFIG = {
 // ② 測試工具（補滿能量、模擬隔天）。正式上線改成 false
 const TEST_TOOLS = false;   // 正式版：不顯示測試工具
 
-const APP_VERSION = 'V16.8';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
+const APP_VERSION = 'V16.9';   // 遊戲版本號：顯示在果粉等級卡右上角，每次更新改這裡
 const DEMO = !FIREBASE_CONFIG.apiKey;   // 沒填設定 = 示範模式，資料只存在這台裝置
 const FB_VER = '10.12.2';
 const ALPH = '23456789ABCDEFGHJKMNPQRSTUVWXYZ';   // 去掉容易看錯的 0 O 1 I L
@@ -1262,9 +1262,10 @@ const DB = {
   },
   set(path, data){ return DB.batch([{op:'set', path, data}]); },
   update(path, data){ return DB.batch([{op:'update', path, data}]); },
-  async batch(ops){   // 多筆寫入一次完成（全部成功或全部失敗）
+  async batch(ops, newMemberUid){   // 多筆寫入一次完成（全部成功或全部失敗）
     if(DEMO){
       const d = DB._l();
+      if(newMemberUid && d['users/'+newMemberUid]?.pid) throw new Error('這支手機已有會員，請重新掃碼回到原帳號。');
       for(const o of ops){
         if(o.op==='set'){ d[o.path] = JSON.parse(JSON.stringify(o.data)); continue; }
         if(!d[o.path]) throw new Error('找不到資料');
@@ -1272,17 +1273,30 @@ const DB = {
       }
       DB._s(d); return;
     }
-    const b = fb.fs.writeBatch(fb.F);
-    for(const o of ops){
-      const data = {};
-      for(const [k,v] of Object.entries(o.data)) data[k] = (v && v.$union) ? fb.fs.arrayUnion(...v.$union) : (v && v.$inc!=null) ? fb.fs.increment(v.$inc) : v;
-      o.op==='set' ? b.set(DB._ref(o.path), data) : b.update(DB._ref(o.path), data);
+    const write = writer=>{
+      for(const o of ops){
+        const data = {};
+        for(const [k,v] of Object.entries(o.data)) data[k] = (v && v.$union) ? fb.fs.arrayUnion(...v.$union) : (v && v.$inc!=null) ? fb.fs.increment(v.$inc) : v;
+        o.op==='set' ? writer.set(DB._ref(o.path), data) : writer.update(DB._ref(o.path), data);
+      }
+    };
+    if(newMemberUid){
+      return fb.fs.runTransaction(fb.F, async tx=>{
+        const current = await tx.get(DB._ref('users/'+newMemberUid));
+        if(current.exists() && current.data().pid) throw new Error('這支手機已有會員，請重新掃碼回到原帳號。');
+        write(tx);
+      });
     }
-    await b.commit();
+    const batch = fb.fs.writeBatch(fb.F); write(batch); await batch.commit();
   },
   async del(path){
     if(DEMO){ const d = DB._l(); delete d[path]; DB._s(d); return; }
     await fb.fs.deleteDoc(DB._ref(path));
+  },
+  async membersForUid(uid){
+    if(DEMO) return (await DB.list('players')).filter(p=>p.uids?.includes(uid)).map(p=>p.id);
+    const query = fb.fs.query(fb.fs.collection(fb.F, 'players'), fb.fs.where('uids','array-contains',uid), fb.fs.limit(2));
+    return (await fb.fs.getDocsFromServer(query)).docs.map(doc=>doc.id);
   },
   async list(coll, field, val){
     if(DEMO){
@@ -2450,11 +2464,60 @@ function newPlayer(uid){
 async function loadMine(){
   if(!Login.uid) return false;
   const u = await DB.get('users/'+Login.uid); if(!u || !u.pid) return false;
-  const p = await DB.get('players/'+u.pid); if(!p) return false;
+  const p = await DB.get('players/'+u.pid); if(!p) throw new Error('原會員資料暫時無法讀取，請稍後重試或請農場協助。');
   P = p; PID = u.pid; if(ROLE_MIGRATE[P.role]) P.role = ROLE_MIGRATE[P.role];
   LOADED = {points:+P.points||0, boxes:+P.boxes||0};
-  try{ if(P.rtok) localStorage.setItem('hfk_card', PID+'.'+P.rtok); }catch(e){}   // V5.5：本機備份會員卡，登入狀態遺失時自動找回
+  rememberMemberCard(PID, P);
   return true;
+}
+function rememberMemberCard(pid, player){
+  try{ if(player.rtok) localStorage.setItem('hfk_card', pid+'.'+player.rtok); }catch(e){}
+}
+async function restoreDeviceMember(){
+  if(PID && P && !P.guest && P.uids?.includes(Login.uid)) return true;
+  if(await loadMine()) return true;
+  let card;
+  try{ card = localStorage.getItem('hfk_card'); }catch(e){}
+  if(card){
+    await Login.anon();
+    await bindMemberCard(card);
+    return true;
+  }
+  if(!Login.uid) return false;
+  const members = await DB.membersForUid(Login.uid);
+  if(!members.length) return false;
+  if(members.length>1) throw new Error('這支手機曾登入多個會員，請使用要找回的原會員卡。');
+  await DB.set('users/'+Login.uid, {pid:members[0]});
+  if(!await loadMine()) throw new Error('原會員尚未載入，請重新整理。');
+  return true;
+}
+let pendingMemberInvite = null;
+function memberChoice(invite, create, suggestedId=''){
+  show('login');
+  openSheet(`<h2 class="h2 wk">你玩過隱花王國嗎？</h2><p class="sub">玩過的會員可以用原會員卡或會員編號與密碼，接著原本的進度玩。</p>
+    <button class="btn main" id="qrReturning">找回原帳號</button>
+    ${create ? '<button class="btn ghost" id="qrFirstTime">我是第一次玩，建立新會員</button>' : ''}`, true);
+  $('#qrReturning').onclick = ()=>{
+    pendingMemberInvite = invite;
+    closeSheet();
+    if(suggestedId) $('#pwId').value = suggestedId;
+    $('#pwId').focus();
+  };
+  if(create) $('#qrFirstTime').onclick = async e=>{
+    if(e.currentTarget.disabled) return;
+    e.currentTarget.disabled = true;
+    pendingMemberInvite = null; closeSheet();
+    try{ await create(); }
+    catch(err){ info('⚠️','無法完成加入', esc(err.message||'請檢查網路並重新掃碼。')); }
+  };
+}
+function enterCurrentMember(family){
+  if(!P.role){
+    if(family) pendingMemberInvite = {family};
+    return openCreate();
+  }
+  startHome();
+  if(family) return famJoinExisting(family);
 }
 async function loadCoupons(){
   try{ MY_COUPONS = await DB.list('players/'+PID+'/coupons'); /* V11.3：已用、過期也載入，收合顯示 */ }catch(e){ MY_COUPONS = []; }
@@ -2464,59 +2527,58 @@ function shareOps(pid){
   for(let k=0;k<2;k++){ const id=rid(10); ids.push(id); ops.push({op:'set', path:'codes/'+id, data:{type:'share', fromPid:pid, pts:0, used:false, usedBy:null, rewarded:false, created:Date.now()}}); }
   return {ops, ids};
 }
-function info(icon, h, p){
+function info(icon, h, p, keepUrl=false){
   show('login');
   openSheet(`<div class="big pop">${icon}</div><h2 class="h2 wk">${h}</h2><p class="sub">${p}</p><button class="btn main" id="btnInfo">好</button>`, true);
   $('#btnInfo').onclick = ()=>{ closeSheet(); if(P) P.role ? startHome() : openCreate(); };
-  history.replaceState(null,'',location.pathname);
+  if(!keepUrl) history.replaceState(null,'',location.pathname);
 }
-async function redeem(raw){
+async function redeem(raw, firstVisit=false){
   const code = String(raw).toUpperCase().replace(/[^0-9A-Z]/g,'');
   const c = await DB.get('codes/'+code);
   if(!c) return info('🔍','找不到這個 QR 碼','請確認是隱花王國果盒上的 QR，或重新掃描一次。');
-  const mine = await loadMine();
+  const mine = await restoreDeviceMember();
   if(mine) await loadCoupons();
   if(c.used){
-    if(mine && c.usedPid===PID){ if(c.type==='share'){ history.replaceState(null,'',location.pathname); toast('歡迎回來'); return P.role ? startHome() : openCreate(); } history.replaceState(null,'',location.pathname); toast('這盒已經兌換過了，歡迎回來'); return P.role ? startHome() : openCreate(); }
-    if(c.type==='share'){ history.replaceState(null,'',location.pathname);   // V12.2：分享券只能用來加入一次，用過就不能拿來登入（分享者手上也有這個連結）
-      return info('🎟️','這張分享券已經使用過了','分享券只能用來加入一次。<br>如果你就是用這張券加入的人，請掃描「我的會員卡」，或在登入頁用<b>會員編號＋會員密碼</b>登入。'); }
-    if(mine && c.usedPid && c.usedPid!==PID){   // V10.0：這台裝置正在用別的帳號 → 詢問是否切換
-      await Auth.flush();
-      return openSheet(`<div class="big pop">🔄</div><h2 class="h2 wk">切換帳號？</h2><p class="sub">這個 QR 屬於另一個帳號。切換後，這台裝置會改登入那個帳號；目前帳號的資料都保留在雲端，之後可用它的 QR 或會員卡再切回來。</p>
-        <button class="btn main" id="swGo">切換到這個帳號</button><button class="btn ghost" id="swNo">留在目前帳號</button>`, true), $('#swNo').onclick = ()=>{ closeSheet(); history.replaceState(null,'',location.pathname); P.role ? startHome() : openCreate(); },
-        $('#swGo').onclick = async()=>{ try{ await DB.batch([{op:'update', path:'players/'+c.usedPid, data:{uids:{$union:[Login.uid]}, claimCode:code}}, {op:'set', path:'users/'+Login.uid, data:{pid:c.usedPid}}]);
-          history.replaceState(null,'',location.pathname); closeSheet(); await loadMine(); await loadCoupons(); FRESH_LOGIN = true; KICKED = false; toast('已切換帳號'); P.role ? startHome() : openCreate(); }
-          catch(e){ console.error(e); toast('切換失敗，請確認規則已更新'); } };
+    if(mine && c.type==='box' && c.usedPid && c.usedPid!==PID){
+      show('login');
+      openSheet(`<h2 class="h2 wk">這張果盒屬於另一位會員</h2><p class="sub">這支手機登入的是 ${esc(P.name||PID)}（${esc(PID)}）。果盒原會員編號是 ${esc(c.usedPid)}。</p>
+        <button class="btn main" id="qrKeepMember">回到目前會員</button>
+        <button class="btn ghost" id="qrBoxMember">用會員卡找回果盒原帳號</button>`, true);
+      $('#qrKeepMember').onclick = ()=>{ closeSheet(); history.replaceState(null,'',location.pathname); enterCurrentMember(); };
+      $('#qrBoxMember').onclick = ()=>{ closeSheet(); $('#pwId').value=c.usedPid; $('#pwId').focus(); };
+      return;
     }
-    if(!mine && c.usedPid){   // V9.9：用過的 QR＝該帳號的登入鑰匙，任何裝置都能回到同一個帳號
-      try{
-        await DB.batch([{op:'update', path:'players/'+c.usedPid, data:{uids:{$union:[Login.uid]}, claimCode:code}}, {op:'set', path:'users/'+Login.uid, data:{pid:c.usedPid}}]);
-        history.replaceState(null,'',location.pathname); await loadMine(); await loadCoupons(); FRESH_LOGIN = true;
-        toast('歡迎回來，已登入你的帳號'); return P.role ? startHome() : openCreate();
-      }catch(e){ console.error(e); }
+    if(mine){
+      history.replaceState(null,'',location.pathname);
+      toast(c.usedPid===PID ? '歡迎回來，這張 QR 已使用過' : '這張 QR 已使用過，已回到你原本的帳號');
+      return enterCurrentMember();
     }
-    return info('🔒','這個 QR 碼已經用過了', mine ? '這個 QR 屬於另一個帳號，每個 QR 只能兌換一次。' : '請掃描「我的會員卡」，或用會員編號＋會員密碼登入。');
+    return memberChoice(null, null, c.type==='box' ? c.usedPid : '');
   }
+  if(!mine && !firstVisit) return memberChoice({code}, ()=>redeem(code, true));
   FRESH_LOGIN = true;
   const now = Date.now(), used = {used:true, usedBy:Login.uid, usedAt:now};
   if(c.type==='share'){
-    if(mine) return info('🎟️','你已經是王國居民了','這張分享券留給還沒加入的親友吧。');
+    if(mine) { history.replaceState(null,'',location.pathname); toast('歡迎回來，已登入原本的帳號'); return enterCurrentMember(); }
     const pid = rid(8), np = newPlayer(Login.uid); np.lastCode = code; np.invitedBy = c.fromPid;
     await DB.batch([
       {op:'update', path:'codes/'+code, data:{...used, usedPid:pid}},
       {op:'set', path:'players/'+pid, data:np},
       {op:'set', path:'users/'+Login.uid, data:{pid}}
-    ]);
-    P = np; PID = pid; MY_COUPONS = [];
+    ], Login.uid);
+    rememberMemberCard(pid, np); P = np; PID = pid; MY_COUPONS = [];
     return boxStory(c, true);
   }
   const pts = c.pts||0;
   if(mine){
-    clearTimeout(saveTimer);
     const before = lvIndex(P.points), sh = shareOps(PID);
-    P.points += pts; P.boxes = (P.boxes||0)+1; P.lastCode = code; P.shares = [...(P.shares||[]), ...sh.ids];
-    P.fam = P.fam || {intimacy:0, games:0, best:0, names:['我','家人']}; P.fam.intimacy += 20; famSync(20);   // 兌換果盒：家庭親密值 +20
-    await DB.batch([{op:'update', path:'codes/'+code, data:{...used, usedPid:PID}}, {op:'update', path:'players/'+PID, data:playerPayload()}, ...sh.ops]);
+    const fam = P.fam || {games:0, best:0, names:['我','家人']};
+    const changes = {points:P.points+pts, boxes:(P.boxes||0)+1, lastCode:code,
+      shares:[...(P.shares||[]), ...sh.ids], fam:{...fam, intimacy:(fam.intimacy||0)+20}};
+    await DB.batch([{op:'update', path:'codes/'+code, data:{...used, usedPid:PID}},
+      {op:'update', path:'players/'+PID, data:changes}, ...sh.ops]);
+    Object.assign(P, changes); famSync(20);
     boxStory(c, false);
     if(lvIndex(P.points)>before) P._lvUp = lvIndex(P.points);
     return;
@@ -2528,8 +2590,8 @@ async function redeem(raw){
     {op:'set', path:'players/'+pid, data:np},
     {op:'set', path:'users/'+Login.uid, data:{pid}},
     ...sh.ops
-  ]);
-  P = np; PID = pid; MY_COUPONS = [];
+  ], Login.uid);
+  rememberMemberCard(pid, np); P = np; PID = pid; MY_COUPONS = [];
   boxStory(c, true);
 }
 function boxStory(c, isNew){
@@ -2540,16 +2602,31 @@ function boxStory(c, isNew){
   openSheet(`<div class="big pop">${c.type==='share'?'🎟️':'📦'}</div><h2 class="h2 wk">${isNew?'歡迎來到隱花王國':'兌換成功'}</h2><p class="sub">${body}</p><button class="btn main" id="btnGo">${isNew?'建立我的角色':'進入王國'}</button>`, true);
   $('#btnGo').onclick = ()=>{ closeSheet(); if(P.role){ startHome(); if(P._lvUp){ const l=P._lvUp; delete P._lvUp; setTimeout(()=>levelUp(l), 700); } } else openCreate(); };
 }
+async function bindMemberCard(tok){
+  if(!/^[A-Z0-9]{8}\.[A-Z0-9]{16}$/.test(String(tok))) throw new Error('會員卡格式不符，請核對編號與 16 碼密碼。');
+  const [pid, key] = tok.split('.');
+  let player;
+  try{ player = await DB.get('players/'+pid); }
+  catch(err){ if(err.code!=='permission-denied') throw err; }
+  if((player && player.rtok!==key) || (DEMO && !player)) throw new Error('會員編號或密碼不符。');
+  const ops = [{op:'set', path:'users/'+Login.uid, data:{pid}}];
+  if(!player || !(player.uids||[]).includes(Login.uid)){
+    ops.unshift({op:'update', path:'players/'+pid, data:{uids:{$union:[Login.uid]}, claim:key}});
+  }
+  if(PID && PID!==pid) await Auth.flush();
+  await DB.batch(ops);
+  if(!await loadMine() || PID!==pid) throw new Error('請重試原會員卡。');
+  FRESH_LOGIN = true; KICKED = false;
+}
 async function recover(tok){
-  const [pid, rt] = String(tok).split('.');
-  if(!pid || !rt) return info('🔍','會員卡無法辨識','請重新掃描會員卡上的 QR。');
-  try{
-    if(DEMO){ const p = await DB.get('players/'+pid); if(!p || p.rtok!==rt) throw new Error('bad'); }
-    await DB.batch([{op:'update', path:'players/'+pid, data:{uids:{$union:[Login.uid]}, claim:rt}}, {op:'set', path:'users/'+Login.uid, data:{pid}}]);
-  }catch(e){ try{ localStorage.removeItem('hfk_card'); }catch(_){} return info('🔒','找回失敗','會員卡無效或已更換，請聯絡農場協助。'); }
+  try{ await bindMemberCard(tok); }
+  catch(e){ return info('🔒','尚未找回帳號','請核對會員卡或密碼，確認網路後再試。手機已保存的會員卡會保留。'); }
+  const invite = pendingMemberInvite;
+  pendingMemberInvite = null;
   history.replaceState(null,'',location.pathname);
-  await loadMine(); await loadCoupons(); FRESH_LOGIN = true;
-  toast('帳號已找回'); P.role ? startHome() : openCreate();
+  if(invite?.code) return redeem(invite.code);
+  await loadCoupons(); toast('已找回原帳號');
+  return enterCurrentMember(invite?.family);
 }
 $('#btnCode').onclick = async ()=>{
   const v = $('#codeIn').value.trim();
@@ -2599,7 +2676,9 @@ $('#btnCreate').onclick = async()=>{
   if(r==='error'){ toast('暱稱登記失敗，請檢查網路後再試'); return; }
   Object.assign(P, {role:draft.role, mat:draft.mat, color:draft.color, name:nick, route:draft.route||'active'});
   if(P.famId && !DEMO) DB.batch([{op:'update', path:'fams/'+P.famId, data:{['names.'+PID]:nick, by:PID}}]).catch(()=>{});
-  Auth.save(); startHome();
+  const family = pendingMemberInvite?.family;
+  pendingMemberInvite = null;
+  Auth.save(); await enterCurrentMember(family);
 };
 // V8.9：暱稱登記表（不能和別人同名）。先搶先贏；改名時釋放舊暱稱
 function nameKey(n){ return encodeURIComponent(String(n||'').trim().toLowerCase().replace(/\s+/g,'')).slice(0,120); }
@@ -3473,6 +3552,8 @@ const Admin = {
     setAdminPasswordVisible($('#admPw'), false);
     $('#admLogin').classList.add('hide'); $('#admMain').classList.remove('hide');
     $('#admVer').textContent = '版本 '+APP_VERSION; Admin.home();
+    const member = new URLSearchParams(location.search).get('member');
+    if(member && /^[A-Z0-9]{8}$/.test(member)) return Admin.memberCard(member);
     const v = new URLSearchParams(location.search).get('v');          // 掃顧客券 QR 進來：直接查這張券
     if(v){ Admin.tab('coupon'); $('#cpIn').value = v.toUpperCase(); Admin.findCoupon(); }
     if(new URLSearchParams(location.search).has('summit')) Admin.tab('summit');
@@ -3733,6 +3814,25 @@ const Admin = {
     }catch(e){ console.error(e); msg.textContent = '匯出失敗：'+(e.message||''); }
     btns.forEach(b=>b.disabled = false);
   },
+  async memberCard(pid){
+    try{
+      if(!/^[A-Z0-9]{8}$/.test(pid) || !Login.uid || !await DB.get('admins/'+Login.uid)) throw new Error();
+      const player = await DB.get('players/'+pid);
+      if(!player?.rtok){ toast('找不到這位會員的原卡'); return; }
+      openSheet(`<h2 class="h2 wk">${esc(player.name||'王國居民')}的原會員卡</h2>
+        <p class="sub">會員編號 <b>${esc(pid)}</b></p>
+        <p class="sub">會員密碼 <b id="admMemberKey">••••••••••••••••</b></p>
+        <button class="chip" id="admShowMemberKey">顯示會員密碼</button>
+        <button class="btn main" id="admSaveMemberCard">下載原會員卡</button>
+        <button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
+      let visible = false;
+      $('#admShowMemberKey').onclick = ()=>{ visible = !visible;
+        $('#admMemberKey').textContent = visible ? player.rtok : '••••••••••••••••';
+        $('#admShowMemberKey').textContent = visible ? '隱藏會員密碼' : '顯示會員密碼';
+      };
+      $('#admSaveMemberCard').onclick = ()=>downloadMemberCard(pid, player);
+    }catch(err){ toast('無法讀取會員卡，請確認管理員登入狀態與網路'); }
+  },
   async player(pid){
     const p = (Admin.ps||[]).find(x=>x.id===pid); if(!p) return;
     const tm = t=>new Date(t).toLocaleString('zh-TW', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
@@ -3740,10 +3840,12 @@ const Admin = {
     let inbox = []; try{ inbox = (await DB.list(`players/${pid}/inbox`)).sort((a,b)=>b.created-a.created).slice(0,5); }catch(e){}
     openSheet(`<h2 class="h2" style="margin-top:0">${LEVELS[lvIndex(p.points)].icon} ${esc(p.name||'（未命名）')}</h2><p class="lvtxt" style="margin:-4px 0 6px">會員編號 ${pid}</p>
       <p class="sub">${LEVELS[lvIndex(p.points)].n}・${p.points} 分・${p.boxes||0} 盒・寶箱追逐賽贏 ${p.chaseWins||0} 次</p>
+      <button class="btn ghost" id="admOriginalCard">查看原會員卡</button>
       <div class="card" style="text-align:left"><b>💬 對這位玩家發言</b><textarea id="pmText" class="field" rows="3" maxlength="200" placeholder="例如：謝謝你常來巡園，下次來農場送你一顆！"></textarea>${giftSel('pg')}<button id="btnPm" class="btn main">送出私訊</button>
         ${inbox.length ? `<div class="lvtxt">最近私訊：${inbox.map(m=>`<br>・${tm(m.created)} ${esc(m.text)}${m.gift?`【🎁 ${esc(giftText(m.gift))}・${m.claimed?'已領':'未領'}】`:''}（${m.read?'已讀':'未讀'}）`).join('')}</div>` : ''}</div>
       <details class="card fold-c" style="text-align:left"><summary><b>🎁 寶箱紀錄（最近 ${log.length} 筆）</b><small>依年月日整理，點開查看</small></summary>${log.length ? logTree(log, t=>{ const d = new Date(t); return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`; }, null, true) : '<p class="sub">還沒有紀錄</p>'}</details>
       <button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
+    $('#admOriginalCard').onclick = ()=>Admin.memberCard(pid);
     $('#btnPm').onclick = async()=>{ const v = $('#pmText').value.trim(), btn = $('#btnPm'); if(!v){ toast('請輸入內容'); return; } if(btn.disabled) return;
       const gift = readGift('pg'); btn.disabled = true; btn.textContent = '送出中…';
       try{ await DB.set(`players/${pid}/inbox/M${Date.now().toString(36)}`, {text:v, created:Date.now(), read:false, ...(gift?{gift, claimed:false}:{})}); toast(gift?'私訊和寶箱已送出':'私訊已送出，玩家下次打開遊戲會看到'); Admin.player(pid); }
@@ -4211,42 +4313,54 @@ async function famInvite(){
   openSheet(`<h2 class="h2 wk">邀請家人加入</h2><div id="famInv"><p class="sub">準備中…</p></div><button class="btn ghost" onclick="closeSheet()">關閉</button>`, true);
   try{
     if(!P.famId){
-      await DB.set('fams/'+PID, {owner:PID, members:[PID], names:{[PID]:P.name||'我'}, intimacy:(P.fam&&P.fam.intimacy)||0, games:0, t:Date.now()});
-      P.famId = PID; Auth.save();
+      const existing = await DB.get('fams/'+PID);
+      const ops = [{op:'update', path:'players/'+PID, data:{famId:PID}}];
+      if(!existing) ops.push({op:'set', path:'fams/'+PID, data:{owner:PID, members:[PID], names:{[PID]:P.name||'我'}, intimacy:(P.fam&&P.fam.intimacy)||0, games:0, t:Date.now()}});
+      await DB.batch(ops); P.famId = PID;
     }
     const f = await famLoad(true), box = $('#famInv'); if(!box || !f) return;
     const left = FAM_MAX - f.members.length, names = f.members.map(id=>esc((f.names||{})[id]||'家人')).join('、');
     box.innerHTML = left>0 && f.owner===PID
-      ? `<div class="mqr">${qrSvg(SITE_URL+'?fam='+P.famId)}</div><p class="sub">家人用自己的手機掃描：<b>還沒帳號會直接建立新帳號</b>，已有帳號會加入你的家庭。親密值全家共用。</p><p class="lvtxt">目前成員：${names}・還能邀請 <b>${left}</b> 人</p>`
+      ? `<div class="mqr">${qrSvg(SITE_URL+'?fam='+P.famId)}</div><p class="sub">家人用自己的手機掃描：<b>會先找回手機上的原會員</b>，第一次玩才選擇建立新會員。親密值全家共用。</p><p class="lvtxt">目前成員：${names}・還能邀請 <b>${left}</b> 人</p>`
       : `<p class="sub">${f.owner===PID ? '家庭已滿（邀請人＋2 位家人）' : '只有邀請人可以邀請家人'}。</p><p class="lvtxt">目前成員：${names}</p>`;
   }catch(e){ console.error(e); const b = $('#famInv'); if(b) b.innerHTML = '<p class="sub">建立家庭失敗，請確認網路，或請農場更新規則。</p>'; }
 }
-async function famJoinNew(fid){
-  let f = null; try{ f = await DB.get('fams/'+fid); }catch(e){}
+async function openFamilyInvite(fid, firstVisit=false){
+  if(await restoreDeviceMember()){
+    await loadCoupons();
+    history.replaceState(null,'',location.pathname);
+    return enterCurrentMember(fid);
+  }
+  const f = await DB.get('fams/'+fid);
   if(!f) return info('🔍','找不到這個家庭邀請','請邀請人重新產生家人 QR。');
-  if(f.members.length >= FAM_MAX) return info('👨‍👩‍👧','這個家庭已經滿了','每個家庭最多邀請 2 位家人。');
-  const host = esc((f.names||{})[f.owner]||'家人');
-  show('login'); openSheet(`<div class="big pop">👨‍👩‍👧</div><h2 class="h2 wk">${host} 邀請你加入隱花王國</h2><p class="sub">建立你自己的帳號，和 ${host} 一起累積家庭親密值。</p><button class="btn main" id="fjGo">建立我的帳號</button>`, true);
-  $('#fjGo').onclick = async()=>{
-    const pid = rid(8), np = newPlayer(Login.uid); np.famId = fid; np.invitedBy = f.owner;
-    try{
-      await DB.batch([{op:'set', path:'players/'+pid, data:np}, {op:'set', path:'users/'+Login.uid, data:{pid}},
-        {op:'update', path:'fams/'+fid, data:{members:{$union:[pid]}, ['names.'+pid]:'新家人', lastJoin:pid}}]);
-    }catch(e){ console.error(e); return info('⚠️','加入失敗','家庭可能已滿或邀請已失效，請邀請人重新產生 QR。'); }
-    history.replaceState(null,'',location.pathname); P = np; PID = pid; MY_COUPONS = []; LOADED = {points:0, boxes:0}; FRESH_LOGIN = true; closeSheet(); openCreate();
-  };
+  const hasRoom = f.members.length < FAM_MAX;
+  if(!firstVisit) return memberChoice({family:fid}, hasRoom ? ()=>openFamilyInvite(fid, true) : null);
+  if(!hasRoom) return info('👨‍👩‍👧','這個家庭已經滿了','已有帳號的成員可以使用原會員卡登入。');
+  const pid = rid(8), np = newPlayer(Login.uid);
+  np.famId = fid; np.invitedBy = f.owner;
+  await DB.batch([{op:'set', path:'players/'+pid, data:np}, {op:'set', path:'users/'+Login.uid, data:{pid}},
+    {op:'update', path:'fams/'+fid, data:{members:{$union:[pid]}, ['names.'+pid]:'新家人', lastJoin:pid}}], Login.uid);
+  rememberMemberCard(pid, np);
+  history.replaceState(null,'',location.pathname); P = np; PID = pid; MY_COUPONS = []; LOADED = {points:0, boxes:0}; FRESH_LOGIN = true;
+  openCreate();
 }
 async function famJoinExisting(fid){
   if(P.famId===fid || P.guest) return;
   if(P.famId) { toast('你已經在一個家庭裡了'); return; }
   let f = null; try{ f = await DB.get('fams/'+fid); }catch(e){}
+  if(f && f.members.includes(PID)){
+    await DB.update('players/'+PID, {famId:fid}); P.famId = fid; await famLoad(true); renderFamily(); return;
+  }
   if(!f || f.members.length >= FAM_MAX) { toast(f ? '這個家庭已經滿了' : '找不到這個家庭邀請'); return; }
   const host = esc((f.names||{})[f.owner]||'家人');
   openSheet(`<div class="big pop">👨‍👩‍👧</div><h2 class="h2 wk">加入 ${host} 的家庭？</h2><p class="sub">加入後親密值全家共用。</p><button class="btn main" id="fjYes">加入</button><button class="btn ghost" onclick="closeSheet()">先不要</button>`, true);
   $('#fjYes').onclick = async()=>{
-    try{ await DB.batch([{op:'update', path:'fams/'+fid, data:{members:{$union:[PID]}, ['names.'+PID]:P.name||'家人', lastJoin:PID}}]); }
-    catch(e){ console.error(e); toast('加入失敗，家庭可能已滿'); return; }
-    P.famId = fid; Auth.save(); closeSheet(); await famLoad(true); renderFamily(); toast('已加入家庭 🎉');
+    if($('#fjYes').disabled) return;
+    $('#fjYes').disabled = true;
+    try{ await DB.batch([{op:'update', path:'fams/'+fid, data:{members:{$union:[PID]}, ['names.'+PID]:P.name||'家人', lastJoin:PID}},
+      {op:'update', path:'players/'+PID, data:{famId:fid}}]); }
+    catch(e){ console.error(e); $('#fjYes').disabled = false; toast('加入失敗，家庭可能已滿'); return; }
+    P.famId = fid; closeSheet(); await famLoad(true); renderFamily(); toast('已加入家庭 🎉');
   };
 }
 
@@ -6600,7 +6714,7 @@ function compressImage(file, maxSide, q){
 }
 
 /* ---------- V6.8：會員卡圖片、資料備份、從相簿或備份檔登入（每個帳號唯一一張登入 QR） ---------- */
-function cardLink(){ return `${SITE_URL}?r=${PID}.${P.rtok}`; }
+function cardLink(pid=PID, key=P.rtok){ return `${SITE_URL}?r=${pid}.${key}`; }
 async function copyText(t, msg){
   try{ await navigator.clipboard.writeText(t); }
   catch(e){ const a = document.createElement('textarea'); a.value = t; a.style.position='fixed'; a.style.opacity='0'; document.body.appendChild(a); a.select(); try{ document.execCommand('copy'); }catch(_){} a.remove(); }
@@ -6608,18 +6722,19 @@ async function copyText(t, msg){
 }
 function saveBlob(blob, name){ const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 2000); }
 function stampDone(kind){ if(kind==='card') P.cardSaved = true; else { P.cardSaved = true; P.bkAt = Date.now(); } Auth.save(); if($('#home').classList.contains('on')) renderMe(); }
-async function downloadCard(){
-  if(!P || !P.rtok){ toast('找不到會員卡資料'); return; }
+function downloadCard(){ return downloadMemberCard(PID, P, ()=>stampDone('card')); }
+async function downloadMemberCard(pid, player, onSaved){
+  if(!player || !player.rtok){ toast('找不到會員卡資料'); return; }
   if(typeof qrcode==='undefined'){ toast('QR 元件還沒載入，請重新整理再試'); return; }
   const W = 720, H = 1180, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   const font = (w, n)=>`${w} ${n}px "Noto Sans TC", system-ui, sans-serif`;
   x.fillStyle = '#F7F3EA'; x.fillRect(0, 0, W, H);
   x.fillStyle = '#5B2346'; x.fillRect(0, 0, W, 150);
   x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = font(900, 44); x.fillText('隱花王國・會員卡', W/2, 70); x.font = font(500, 22); x.fillText('Hidden Flower Kingdom Member Card', W/2, 112);
-  const L = LEVELS[lvIndex(P.points||0)];
-  x.fillStyle = '#2A1F2D'; x.font = font(900, 40); x.fillText(P.name || '王國居民', W/2, 220);
-  x.fillStyle = '#6E6470'; x.font = font(500, 24); x.fillText(`${L.n}・${P.points||0} 分・會員編號 ${PID}`, W/2, 262);
-  const q = qrcode(0, 'M'); q.addData(cardLink()); q.make(); const n = q.getModuleCount(), cell = Math.floor(480 / (n + 8)), size = cell * (n + 8), ox = (W - size)/2, oy = 300;
+  const L = LEVELS[lvIndex(player.points||0)];
+  x.fillStyle = '#2A1F2D'; x.font = font(900, 40); x.fillText(player.name || '王國居民', W/2, 220);
+  x.fillStyle = '#6E6470'; x.font = font(500, 24); x.fillText(`${L.n}・${player.points||0} 分・會員編號 ${pid}`, W/2, 262);
+  const q = qrcode(0, 'M'); q.addData(cardLink(pid, player.rtok)); q.make(); const n = q.getModuleCount(), cell = Math.floor(480 / (n + 8)), size = cell * (n + 8), ox = (W - size)/2, oy = 300;
   x.fillStyle = '#fff'; x.fillRect(ox, oy, size, size); x.fillStyle = '#000';
   for(let r=0;r<n;r++) for(let k=0;k<n;k++) if(q.isDark(r,k)) x.fillRect(ox + (k+4)*cell, oy + (r+4)*cell, cell, cell);
   x.fillStyle = '#5B2346'; x.font = font(900, 26); x.fillText('這是你帳號唯一的登入 QR', W/2, oy + size + 56);
@@ -6628,10 +6743,10 @@ async function downloadCard(){
   // V12.2：會員卡印上會員編號＋會員密碼，換手機時掃 QR 或輸入這組都能登入
   const by = oy + size + 156; x.fillStyle = '#fff'; x.strokeStyle = '#5B2346'; x.lineWidth = 3; x.beginPath(); x.roundRect ? x.roundRect(80, by, W-160, 118, 18) : x.rect(80, by, W-160, 118); x.fill(); x.stroke();
   x.fillStyle = '#6E6470'; x.font = font(500, 20); x.fillText('會員編號', W/2-150, by+40); x.fillText('會員密碼', W/2+110, by+40);
-  x.fillStyle = '#2A1F2D'; x.font = font(900, 30); x.fillText(PID, W/2-150, by+86); x.font = '700 26px ui-monospace, Menlo, Consolas, monospace'; x.fillText(P.rtok, W/2+110, by+86);
+  x.fillStyle = '#2A1F2D'; x.font = font(900, 30); x.fillText(pid, W/2-150, by+86); x.font = '700 26px ui-monospace, Menlo, Consolas, monospace'; x.fillText(player.rtok, W/2+110, by+86);
   x.fillStyle = '#C9566E'; x.font = font(700, 22); x.fillText('請勿分享給他人・同一時間只能在一支手機使用', W/2, by + 160);
   x.fillStyle = '#9A8F98'; x.font = font(400, 16); x.fillText('Copyright © 2026 Sam pksun. All rights reserved.', W/2, H - 28);
-  c.toBlob(b=>{ if(!b){ toast('產生圖片失敗'); return; } saveBlob(b, `隱花王國會員卡_${PID}.png`); stampDone('card'); toast('會員卡已下載，請存到相簿保存'); }, 'image/png');
+  c.toBlob(b=>{ if(!b){ toast('產生圖片失敗'); return; } saveBlob(b, `隱花王國會員卡_${pid}.png`); if(onSaved) onSaved(); toast('會員卡已下載，請存到相簿保存'); }, 'image/png');
 }
 function downloadBackup(){
   if(!P || !P.rtok){ toast('找不到帳號資料'); return; }
@@ -6729,13 +6844,17 @@ async function boot(){
   const c = q.get('c'), r = q.get('r');
   const famQ = q.get('fam');
   try{
-    if(c || r){ await Login.anon(); return c ? await redeem(c) : await recover(r); }
-    if(famQ && !(await loadMine())){ await Login.anon(); if(await loadMine()){ await loadCoupons(); setTimeout(()=>famJoinExisting(famQ), 2500); return P.role ? startHome() : openCreate(); } return famJoinNew(famQ); }
-    if(famQ) setTimeout(()=>famJoinExisting(famQ), 2500);
-    if(await loadMine()){ await loadCoupons(); return P.role ? startHome() : openCreate(); }
-    let card = null; try{ card = localStorage.getItem('hfk_card'); }catch(e){}
-    if(card){ await Login.anon(); return await recover(card); }
-  }catch(e){ console.error(e); return info('⚠️','讀取失敗', esc(e.message||'請檢查網路後重新整理。')); }
+    if(r){ await Login.anon(); return await recover(r); }
+    const requestedMember = q.get('recover');
+    if(requestedMember && /^[A-Z0-9]{8}$/.test(requestedMember)){
+      show('login'); $('#pwId').value = requestedMember; $('#pwKey').focus(); return;
+    }
+    if(c || famQ){
+      await Login.anon();
+      return c ? await redeem(c) : await openFamilyInvite(famQ);
+    }
+    if(await restoreDeviceMember()){ await loadCoupons(); return enterCurrentMember(); }
+  }catch(e){ console.error(e); return info('⚠️','讀取失敗', esc(e.message||'請檢查網路後重新整理。'), true); }
   show('login');
 }
 /* V15.21: authenticated summit bridge, membership snapshots omit recovery keys. */
